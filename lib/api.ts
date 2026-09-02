@@ -43,8 +43,12 @@ function parseErrorMessage(errorData: any, status: number): { message: string; e
   return { message, errorName };
 }
 
+export const INACTIVITY_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 1 Day (24 Hours)
+export const ABSOLUTE_SESSION_MAX_MS = 7 * 24 * 60 * 60 * 1000; // 7 Days
+
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
+  if (!isSessionValid()) return null;
   return localStorage.getItem("authToken");
 }
 
@@ -55,16 +59,54 @@ export function getStoredRefreshToken(): string | null {
 
 export function setAuthSession(token: string, user: any, refreshToken?: string) {
   if (typeof window === "undefined") return;
+  const now = Date.now();
   localStorage.setItem("authToken", token);
   if (refreshToken) {
     localStorage.setItem("refreshToken", refreshToken);
   }
   localStorage.setItem("user", JSON.stringify(user));
   localStorage.setItem("isLoggedIn", "true");
+  localStorage.setItem("sessionCreatedAt", String(now));
+  localStorage.setItem("lastActiveAt", String(now));
 
-  const expires = new Date();
-  expires.setDate(expires.getDate() + 7);
-  document.cookie = `auth-token=${token}; path=/; expires=${expires.toUTCString()}; SameSite=Strict`;
+  const maxExpires = new Date(now + ABSOLUTE_SESSION_MAX_MS);
+  document.cookie = `auth-token=${token}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Strict`;
+  document.cookie = `session-created=${now}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Strict`;
+  document.cookie = `last-active=${now}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Strict`;
+}
+
+export function touchActivity() {
+  if (typeof window === "undefined") return;
+  const now = Date.now();
+  localStorage.setItem("lastActiveAt", String(now));
+  const maxExpires = new Date(now + ABSOLUTE_SESSION_MAX_MS);
+  document.cookie = `last-active=${now}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Strict`;
+}
+
+export function isSessionValid(): boolean {
+  if (typeof window === "undefined") return false;
+  const token = localStorage.getItem("authToken");
+  if (!token) return false;
+
+  const now = Date.now();
+  const sessionCreatedAt = Number(localStorage.getItem("sessionCreatedAt") || 0);
+  const lastActiveAt = Number(localStorage.getItem("lastActiveAt") || 0);
+
+  // 1. Check 7-day absolute session expiration
+  if (sessionCreatedAt > 0 && now - sessionCreatedAt > ABSOLUTE_SESSION_MAX_MS) {
+    console.warn("Session expired: 7-day absolute lifetime exceeded.");
+    clearAuthSession();
+    return false;
+  }
+
+  // 2. Check 1-day inactivity timeout
+  if (lastActiveAt > 0 && now - lastActiveAt > INACTIVITY_TIMEOUT_MS) {
+    console.warn("Session expired: 24-hour inactivity timeout reached.");
+    clearAuthSession();
+    return false;
+  }
+
+  return true;
 }
 
 export function clearAuthSession() {
@@ -73,7 +115,11 @@ export function clearAuthSession() {
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("user");
   localStorage.removeItem("isLoggedIn");
+  localStorage.removeItem("sessionCreatedAt");
+  localStorage.removeItem("lastActiveAt");
   document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict";
+  document.cookie = "session-created=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict";
+  document.cookie = "last-active=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict";
 }
 
 let refreshPromise: Promise<string> | null = null;
@@ -81,6 +127,7 @@ let refreshPromise: Promise<string> | null = null;
 export async function refreshTokenApi(customRefreshToken?: string): Promise<{ idToken: string; refreshToken?: string }> {
   const refreshToken = customRefreshToken || getStoredRefreshToken();
   if (!refreshToken) {
+    clearAuthSession();
     throw new ApiError("No refresh token stored", 401);
   }
 
@@ -105,6 +152,11 @@ export async function refreshTokenApi(customRefreshToken?: string): Promise<{ id
       }
     }
     const { message, errorName } = parseErrorMessage(errorBody, response.status);
+    // If refresh token call fails, force full logout
+    clearAuthSession();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("onSpot:unauthorized", { detail: { reason: "refresh_failed" } }));
+    }
     throw new ApiError(message, response.status, errorName, errorBody);
   }
 
@@ -123,6 +175,7 @@ export async function refreshTokenApi(customRefreshToken?: string): Promise<{ id
     refreshToken;
 
   if (!newIdToken) {
+    clearAuthSession();
     throw new ApiError("Failed to extract refreshed token from response", 500);
   }
 
@@ -131,9 +184,10 @@ export async function refreshTokenApi(customRefreshToken?: string): Promise<{ id
     if (newRefreshToken) {
       localStorage.setItem("refreshToken", newRefreshToken);
     }
-    const expires = new Date();
-    expires.setDate(expires.getDate() + 7);
-    document.cookie = `auth-token=${newIdToken}; path=/; expires=${expires.toUTCString()}; SameSite=Strict`;
+    touchActivity();
+    const sessionCreatedAt = Number(localStorage.getItem("sessionCreatedAt") || Date.now());
+    const maxExpires = new Date(sessionCreatedAt + ABSOLUTE_SESSION_MAX_MS);
+    document.cookie = `auth-token=${newIdToken}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Strict`;
   }
 
   return { idToken: newIdToken, refreshToken: newRefreshToken };
@@ -144,7 +198,19 @@ export async function fetchApi<T = any>(
   options: RequestInit = {},
   isRetry: boolean = false
 ): Promise<T> {
-  const token = getStoredToken();
+  const isAuthEndpoint =
+    endpoint.includes("/auth/login") ||
+    endpoint.includes("/auth/refresh-token") ||
+    endpoint.includes("/auth/register");
+
+  // Validate session timeout on protected calls
+  if (!isAuthEndpoint && typeof window !== "undefined" && !isSessionValid()) {
+    clearAuthSession();
+    window.dispatchEvent(new CustomEvent("onSpot:unauthorized", { detail: { reason: "session_expired" } }));
+    throw new ApiError("Session expired. Please log in again.", 401);
+  }
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
@@ -193,7 +259,7 @@ export async function fetchApi<T = any>(
         console.warn("Auto token refresh failed:", refreshErr);
         clearAuthSession();
         if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("onSpot:unauthorized"));
+          window.dispatchEvent(new CustomEvent("onSpot:unauthorized", { detail: { reason: "refresh_failed" } }));
         }
       }
     }
@@ -212,10 +278,16 @@ export async function fetchApi<T = any>(
     const { message, errorName } = parseErrorMessage(errorBody, response.status);
 
     if (response.status === 401 && typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("onSpot:unauthorized"));
+      clearAuthSession();
+      window.dispatchEvent(new CustomEvent("onSpot:unauthorized", { detail: { reason: "unauthorized" } }));
     }
 
     throw new ApiError(message, response.status, errorName, errorBody);
+  }
+
+  // Successful authenticated response: touch activity timestamp
+  if (!isAuthEndpoint && typeof window !== "undefined") {
+    touchActivity();
   }
 
   // Handle empty or 204 responses

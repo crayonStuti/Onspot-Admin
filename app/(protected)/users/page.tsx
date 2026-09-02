@@ -531,13 +531,13 @@ export default function UsersPage() {
                             </button>
 
                             {/* Edit */}
-                            <button
+                            {/* <button
                               onClick={() => handleEditUser(user)}
                               title="Edit"
                               className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
                             >
                               <Edit2 className="w-4 h-4" />
-                            </button>
+                            </button> */}
 
                             {/* Delete */}
                             <button
@@ -549,13 +549,13 @@ export default function UsersPage() {
                             </button>
 
                             {/* More */}
-                            <button
+                            {/* <button
                               onClick={() => handleViewUser(user)}
                               title="More"
                               className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
                             >
                               <MoreVertical className="w-4 h-4" />
-                            </button>
+                            </button> */}
                           </div>
                         </td>
                       </tr>
