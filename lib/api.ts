@@ -48,9 +48,17 @@ export function getStoredToken(): string | null {
   return localStorage.getItem("authToken");
 }
 
-export function setAuthSession(token: string, user: any) {
+export function getStoredRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("refreshToken");
+}
+
+export function setAuthSession(token: string, user: any, refreshToken?: string) {
   if (typeof window === "undefined") return;
   localStorage.setItem("authToken", token);
+  if (refreshToken) {
+    localStorage.setItem("refreshToken", refreshToken);
+  }
   localStorage.setItem("user", JSON.stringify(user));
   localStorage.setItem("isLoggedIn", "true");
 
@@ -62,18 +70,86 @@ export function setAuthSession(token: string, user: any) {
 export function clearAuthSession() {
   if (typeof window === "undefined") return;
   localStorage.removeItem("authToken");
+  localStorage.removeItem("refreshToken");
   localStorage.removeItem("user");
   localStorage.removeItem("isLoggedIn");
   document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict";
 }
 
-export async function fetchApi<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
+let refreshPromise: Promise<string> | null = null;
+
+export async function refreshTokenApi(customRefreshToken?: string): Promise<{ idToken: string; refreshToken?: string }> {
+  const refreshToken = customRefreshToken || getStoredRefreshToken();
+  if (!refreshToken) {
+    throw new ApiError("No refresh token stored", 401);
+  }
+
+  const url = `${API_URL}/auth/refresh-token`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refreshToken }),
+  });
+
+  if (!response.ok) {
+    let errorBody: any = null;
+    try {
+      errorBody = await response.json();
+    } catch {
+      try {
+        errorBody = await response.text();
+      } catch {
+        errorBody = null;
+      }
+    }
+    const { message, errorName } = parseErrorMessage(errorBody, response.status);
+    throw new ApiError(message, response.status, errorName, errorBody);
+  }
+
+  const data = await response.json();
+  const newIdToken =
+    data.idToken ||
+    data.token ||
+    data.accessToken ||
+    data.data?.idToken ||
+    data.data?.token ||
+    data.data?.accessToken;
+
+  const newRefreshToken =
+    data.refreshToken ||
+    data.data?.refreshToken ||
+    refreshToken;
+
+  if (!newIdToken) {
+    throw new ApiError("Failed to extract refreshed token from response", 500);
+  }
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem("authToken", newIdToken);
+    if (newRefreshToken) {
+      localStorage.setItem("refreshToken", newRefreshToken);
+    }
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 7);
+    document.cookie = `auth-token=${newIdToken}; path=/; expires=${expires.toUTCString()}; SameSite=Strict`;
+  }
+
+  return { idToken: newIdToken, refreshToken: newRefreshToken };
+}
+
+export async function fetchApi<T = any>(
+  endpoint: string,
+  options: RequestInit = {},
+  isRetry: boolean = false
+): Promise<T> {
   const token = getStoredToken();
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
 
-  if (token) {
+  if (token && !headers["Authorization"]) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
@@ -91,6 +167,37 @@ export async function fetchApi<T = any>(endpoint: string, options: RequestInit =
   });
 
   if (!response.ok) {
+    // Check if 401 and we can attempt a token refresh
+    const isAuthRefreshEndpoint = endpoint.includes("/auth/refresh-token");
+    const storedRefreshToken = getStoredRefreshToken();
+
+    if (response.status === 401 && !isRetry && !isAuthRefreshEndpoint && storedRefreshToken) {
+      try {
+        if (!refreshPromise) {
+          refreshPromise = refreshTokenApi()
+            .then((res) => res.idToken)
+            .finally(() => {
+              refreshPromise = null;
+            });
+        }
+        const newToken = await refreshPromise;
+
+        // Retry the failed request with the new token
+        const retryHeaders = {
+          ...headers,
+          Authorization: `Bearer ${newToken}`,
+        };
+
+        return await fetchApi<T>(endpoint, { ...options, headers: retryHeaders }, true);
+      } catch (refreshErr) {
+        console.warn("Auto token refresh failed:", refreshErr);
+        clearAuthSession();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("onSpot:unauthorized"));
+        }
+      }
+    }
+
     let errorBody: any = null;
     try {
       errorBody = await response.json();
@@ -292,9 +399,88 @@ export async function deleteMembership(membershipId: string): Promise<any> {
   });
 }
 
+/* =========================================================================
+   STATES API
+   ========================================================================= */
+
+export interface StateItem {
+  state_id: string;
+  state_code: string;
+  state_name: string;
+  state_flag_image?: string;
+  state_description?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: any;
+}
+
 export async function getStates(page: number = 1, limit: number = 100): Promise<any> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   return await fetchApi(`/states?${params.toString()}`);
+}
+
+export async function getStateById(stateId: string): Promise<any> {
+  return await fetchApi(`/states/${stateId}`);
+}
+
+export async function createState(data: any): Promise<any> {
+  const isFormData = data instanceof FormData;
+  return await fetchApi("/states", {
+    method: "POST",
+    body: isFormData ? data : JSON.stringify(data),
+  });
+}
+
+export async function updateState(stateId: string, data: any): Promise<any> {
+  const isFormData = data instanceof FormData;
+  return await fetchApi(`/states/${stateId}`, {
+    method: "PUT",
+    body: isFormData ? data : JSON.stringify(data),
+  });
+}
+
+export async function deleteState(stateId: string): Promise<any> {
+  return await fetchApi(`/states/${stateId}`, { method: "DELETE" });
+}
+
+/* =========================================================================
+   LICENSE ISSUERS API
+   ========================================================================= */
+
+export interface LicenseIssuerItem {
+  id: string;
+  organisation: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: any;
+}
+
+export async function getLicenseIssuers(
+  page: number = 1,
+  limit: number = 10,
+  search: string = ""
+): Promise<any> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (search) params.append("search", search);
+  return await fetchApi(`/license-issuers?${params.toString()}`);
+}
+
+export async function createLicenseIssuer(data: { organisation: string }): Promise<any> {
+  return await fetchApi("/license-issuers", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateLicenseIssuer(issuerId: string, data: { organisation: string }): Promise<any> {
+  return await fetchApi(`/license-issuers/${issuerId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteLicenseIssuer(issuerId: string): Promise<any> {
+  return await fetchApi(`/license-issuers/${issuerId}`, { method: "DELETE" });
 }
 
 /* =========================================================================

@@ -19,7 +19,11 @@ const navItems = [
     href: "/dashboard",
     iconType: "svg",
     svg: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-[26px] h-[26px]">
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-[26px] h-[26px]"
+      >
         <rect x="3" y="3" width="8" height="8" rx="1.5" />
         <rect x="13" y="3" width="8" height="5" rx="1.5" />
         <rect x="13" y="11" width="8" height="10" rx="1.5" />
@@ -32,7 +36,11 @@ const navItems = [
     href: "/users",
     iconType: "svg",
     svg: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-[26px] h-[26px]">
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-[26px] h-[26px]"
+      >
         <circle cx="12" cy="8" r="4.2" />
         <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z" />
       </svg>
@@ -43,7 +51,11 @@ const navItems = [
     href: "/memberships",
     iconType: "svg",
     svg: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-[26px] h-[26px]">
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-[26px] h-[26px]"
+      >
         <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
       </svg>
     ),
@@ -53,8 +65,26 @@ const navItems = [
     href: "/licenses",
     iconType: "svg",
     svg: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-[26px] h-[26px]">
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-[26px] h-[26px]"
+      >
         <path d="M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2H2V7zm0 4h20v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6zm3 3v2h5v-2H5z" />
+      </svg>
+    ),
+  },
+  {
+    label: "States",
+    href: "/states",
+    iconType: "svg",
+    svg: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-[26px] h-[26px]"
+      >
+        <path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z" />
       </svg>
     ),
   },
@@ -63,7 +93,11 @@ const navItems = [
     href: "/resources",
     iconType: "svg",
     svg: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-[26px] h-[26px]">
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-[26px] h-[26px]"
+      >
         <path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6zm7 1.5L18.5 9H14a1 1 0 0 1-1-1V3.5z" />
       </svg>
     ),
@@ -91,7 +125,11 @@ const navItems = [
     href: "/reports",
     iconType: "svg",
     svg: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-[26px] h-[26px]">
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-[26px] h-[26px]"
+      >
         <rect x="3" y="13" width="4.5" height="8" rx="1" />
         <rect x="9.75" y="7" width="4.5" height="14" rx="1" />
         <rect x="16.5" y="10" width="4.5" height="11" rx="1" />
@@ -103,7 +141,11 @@ const navItems = [
     href: "/leaderboard",
     iconType: "svg",
     svg: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="w-[26px] h-[26px]">
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-[26px] h-[26px]"
+      >
         <circle cx="9" cy="8" r="3.6" />
         <path d="M2 21c0-3.87 3.13-7 7-7s7 3.13 7 7H2z" />
         <circle cx="17" cy="9" r="2.6" />
@@ -116,6 +158,20 @@ const navItems = [
     href: "/community",
     iconType: "img",
     imgSrc: "/images/community.png",
+  },
+  {
+    label: "License Issuers",
+    href: "/license-issuers",
+    iconType: "svg",
+    svg: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="w-[26px] h-[26px]"
+      >
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
+      </svg>
+    ),
   },
 ];
 
@@ -211,7 +267,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             }`}
           >
             <span className="w-7 h-7 flex items-center justify-center text-[#2d4a23] flex-shrink-0">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-[26px] h-[26px]">
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-[26px] h-[26px]"
+              >
                 <path d="M12 2a6 6 0 0 0-6 6c0 7-3 9-3 9h18s-3-2-3-9a6 6 0 0 0-6-6zm-2 19a2 2 0 0 0 4 0h-4z" />
               </svg>
             </span>
@@ -228,7 +288,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             }`}
           >
             <span className="w-7 h-7 flex items-center justify-center text-[#2d4a23] flex-shrink-0">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-[26px] h-[26px]">
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-[26px] h-[26px]"
+              >
                 <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.03 7.03 0 0 0-1.69-.98l-.38-2.65A.488.488 0 0 0 14 2h-4a.488.488 0 0 0-.49.42l-.38 2.65c-.61.25-1.17.58-1.69.98l-2.49-1a.566.566 0 0 0-.18-.03c-.17 0-.34.09-.43.25l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46a.5.5 0 0 0 .61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.05.24.25.42.49.42h4c.24 0 .44-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.06.02.12.03.18.03.17 0 .34-.09.43-.25l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" />
               </svg>
             </span>

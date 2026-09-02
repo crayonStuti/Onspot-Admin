@@ -50,7 +50,12 @@ export default function LoginPage() {
         throw new ApiError("Access denied. Only admin users can access this system.", 403);
       }
 
-      setAuthSession(response.idToken, response.user);
+      const refreshToken =
+        response.refreshToken ||
+        (response as any).data?.refreshToken ||
+        (response as any).token?.refreshToken;
+
+      setAuthSession(response.idToken || (response as any).token, response.user, refreshToken);
       toast.success("Login successful");
       router.push("/users");
     } catch (err: any) {
@@ -73,6 +78,7 @@ export default function LoginPage() {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
+      const refreshToken = result.user.refreshToken;
 
       // Check user profile from backend with token
       const profile = await fetchApi<{ role?: string; [key: string]: any }>("/user-profile/me", {
@@ -96,7 +102,7 @@ export default function LoginPage() {
         photoURL: result.user.photoURL,
       };
 
-      setAuthSession(idToken, userData);
+      setAuthSession(idToken, userData, refreshToken);
       toast.success("Signed in with Google successfully.");
       router.push("/users");
     } catch (err: any) {
@@ -124,6 +130,7 @@ export default function LoginPage() {
     try {
       const result = await signInWithPopup(auth, appleProvider);
       const idToken = await result.user.getIdToken();
+      const refreshToken = result.user.refreshToken;
 
       const profile = await fetchApi<{ role?: string; [key: string]: any }>("/user-profile/me", {
         headers: { Authorization: `Bearer ${idToken}` },
@@ -143,7 +150,7 @@ export default function LoginPage() {
         role: profile.role || "admin",
       };
 
-      setAuthSession(idToken, userData);
+      setAuthSession(idToken, userData, refreshToken);
       toast.success("Signed in with Apple successfully.");
       router.push("/users");
     } catch (err: any) {
