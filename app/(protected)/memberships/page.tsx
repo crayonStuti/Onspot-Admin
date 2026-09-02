@@ -627,7 +627,7 @@ export default function MembershipsPage() {
               >
                 Close
               </button>
-              <button
+              {/* <button
                 onClick={() => {
                   setViewModal(false);
                   handleOpenEdit(selectedPlan);
@@ -636,7 +636,7 @@ export default function MembershipsPage() {
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 Edit Plan
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
