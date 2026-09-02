@@ -64,7 +64,9 @@ export default function ResourcesPage() {
 
   // View Details Modal
   const [viewModal, setViewModal] = useState(false);
-  const [selectedResource, setSelectedResource] = useState<ResourceItem | null>(null);
+  const [selectedResource, setSelectedResource] = useState<ResourceItem | null>(
+    null,
+  );
   const [viewLoading, setViewLoading] = useState(false);
 
   // Add / Edit Modal State
@@ -89,12 +91,16 @@ export default function ResourcesPage() {
     rules: "",
   });
   const [categoryIconFile, setCategoryIconFile] = useState<File | null>(null);
-  const [categoryIconPreview, setCategoryIconPreview] = useState<string | null>(null);
+  const [categoryIconPreview, setCategoryIconPreview] = useState<string | null>(
+    null,
+  );
   const [resourceFile, setResourceFile] = useState<File | null>(null);
 
   // Delete State
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [resourceToDelete, setResourceToDelete] = useState<ResourceItem | null>(null);
+  const [resourceToDelete, setResourceToDelete] = useState<ResourceItem | null>(
+    null,
+  );
   const [deleting, setDeleting] = useState(false);
 
   // Load States from API
@@ -109,12 +115,17 @@ export default function ResourcesPage() {
         if (statesRes.status === "fulfilled" && statesRes.value) {
           const list = Array.isArray(statesRes.value)
             ? statesRes.value
-            : statesRes.value?.data?.states || statesRes.value?.data || statesRes.value?.states || [];
+            : statesRes.value?.data?.states ||
+              statesRes.value?.data ||
+              statesRes.value?.states ||
+              [];
           setStatesList(Array.isArray(list) ? list : []);
         }
 
         if (typesRes.status === "fulfilled" && typesRes.value) {
-          const list = Array.isArray(typesRes.value) ? typesRes.value : typesRes.value?.data || [];
+          const list = Array.isArray(typesRes.value)
+            ? typesRes.value
+            : typesRes.value?.data || [];
           setActivityTypes(Array.isArray(list) ? list : []);
         }
       } catch (err) {
@@ -128,7 +139,12 @@ export default function ResourcesPage() {
   const fetchResourcesList = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getAdminResources(page, limit, searchQuery, selectedStateId);
+      const res = await getAdminResources(
+        page,
+        limit,
+        searchQuery,
+        selectedStateId,
+      );
 
       if (res && res.data) {
         setResources(res.data.resources || []);
@@ -184,7 +200,8 @@ export default function ResourcesPage() {
       resource_url: "",
       category: "General",
       content: "",
-      state_id: selectedStateId && selectedStateId !== "all" ? selectedStateId : "",
+      state_id:
+        selectedStateId && selectedStateId !== "all" ? selectedStateId : "",
       is_published: true,
       activity: "",
       species: "",
@@ -222,7 +239,10 @@ export default function ResourcesPage() {
         category: resource.category || "General",
         content: resource.content || "",
         state_id: String(resource.state_id || resource.state?.state_id || ""),
-        is_published: resource.is_published === "1" || resource.is_published === true || resource.is_published === 1,
+        is_published:
+          resource.is_published === "1" ||
+          resource.is_published === true ||
+          resource.is_published === 1,
         activity: resource.seasonalData?.activity || "",
         species: resource.seasonalData?.species || "",
         season_name: resource.seasonalData?.season_name || "",
@@ -313,7 +333,9 @@ export default function ResourcesPage() {
 
     try {
       await deleteResource(resourceToDelete.id);
-      toast.success(`Resource "${resourceToDelete.title}" deleted successfully`);
+      toast.success(
+        `Resource "${resourceToDelete.title}" deleted successfully`,
+      );
       setDeleteConfirmOpen(false);
       setResourceToDelete(null);
       fetchResourcesList();
@@ -375,8 +397,12 @@ export default function ResourcesPage() {
             >
               <option value="">All States</option>
               {statesList.map((s, idx) => {
-                const sName = typeof s === "string" ? s : s?.state_name || s?.name || `State ${idx + 1}`;
-                const sId = typeof s === "string" ? s : s?.state_id || s?.id || sName;
+                const sName =
+                  typeof s === "string"
+                    ? s
+                    : s?.state_name || s?.name || `State ${idx + 1}`;
+                const sId =
+                  typeof s === "string" ? s : s?.state_id || s?.id || sName;
                 return (
                   <option key={sId} value={sId}>
                     {sName}
@@ -388,13 +414,13 @@ export default function ResourcesPage() {
         </div>
 
         {/* Add Resource Button */}
-        <button
+        {/* <button
           onClick={handleOpenAdd}
           className="h-10 px-4 rounded-xl bg-[#0E3E27] hover:bg-[#092c1b] text-white text-[13px] font-semibold shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Resource</span>
-        </button>
+        </button> */}
       </section>
 
       {/* ===================== RESOURCES TABLE CARD (1:1 HTML) ===================== */}
@@ -403,13 +429,27 @@ export default function ResourcesPage() {
           <table className="w-full text-left border-collapse text-[13px]">
             <thead>
               <tr className="border-b border-[#ececec]">
-                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">Resource Title</th>
-                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">State</th>
-                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">Category</th>
-                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">Type</th>
-                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">Last Updated</th>
-                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">Visibility</th>
-                <th className="py-3 px-3 text-right font-semibold text-[#111111] text-[13px]">Actions</th>
+                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
+                  Resource Title
+                </th>
+                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
+                  State
+                </th>
+                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
+                  Category
+                </th>
+                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
+                  Type
+                </th>
+                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
+                  Last Updated
+                </th>
+                <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
+                  Visibility
+                </th>
+                <th className="py-3 px-3 text-right font-semibold text-[#111111] text-[13px]">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f1ed] text-[13px]">
@@ -418,7 +458,9 @@ export default function ResourcesPage() {
                   <td colSpan={7} className="py-16 text-center text-[#7D848D]">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Loader2 className="w-6 h-6 animate-spin text-[#0E3E27]" />
-                      <span className="text-[13px] font-medium text-[#7D848D]">Loading resources...</span>
+                      <span className="text-[13px] font-medium text-[#7D848D]">
+                        Loading resources...
+                      </span>
                     </div>
                   </td>
                 </tr>
@@ -427,8 +469,12 @@ export default function ResourcesPage() {
                   <td colSpan={7} className="py-16 text-center text-[#7D848D]">
                     <div className="flex flex-col items-center justify-center gap-1.5">
                       <AlertCircle className="w-8 h-8 text-gray-300" />
-                      <p className="text-[13px] font-semibold text-gray-700">No resources found</p>
-                      <p className="text-xs text-[#7D848D]">Try adjusting your search or state filter</p>
+                      <p className="text-[13px] font-semibold text-gray-700">
+                        No resources found
+                      </p>
+                      <p className="text-xs text-[#7D848D]">
+                        Try adjusting your search or state filter
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -436,29 +482,39 @@ export default function ResourcesPage() {
                 resources.map((item) => {
                   const stateDisplay =
                     item.state_name ||
-                    (typeof item.state === "object" ? item.state?.state_name : item.state) ||
+                    (typeof item.state === "object"
+                      ? item.state?.state_name
+                      : item.state) ||
                     "All States";
                   const isPublished =
                     item.is_published === true ||
                     item.is_published === "1" ||
                     item.is_published === 1;
-                  const updatedDate = item.updated_at || item.created_at
-                    ? new Date(item.updated_at || item.created_at!).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })
-                    : "—";
+                  const updatedDate =
+                    item.updated_at || item.created_at
+                      ? new Date(
+                          item.updated_at || item.created_at!,
+                        ).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })
+                      : "—";
 
                   return (
-                    <tr key={item.id} className="hover:bg-[#fbfbf8] transition-colors">
+                    <tr
+                      key={item.id}
+                      className="hover:bg-[#fbfbf8] transition-colors"
+                    >
                       {/* Resource Title (Bold title + Subtitle text) */}
                       <td className="py-3.5 px-3 align-middle">
                         <div className="font-semibold text-[#1f1f1f] text-[13.5px] max-w-sm truncate">
                           {item.title}
                         </div>
                         <div className="text-[11.5px] text-[#9a9a96] mt-0.5 max-w-sm truncate">
-                          {item.description || item.resource_url || "Official deer seasons dates, bag limits and rules."}
+                          {item.description ||
+                            item.resource_url ||
+                            "Official deer seasons dates, bag limits and rules."}
                         </div>
                       </td>
 
@@ -474,7 +530,9 @@ export default function ResourcesPage() {
 
                       {/* Type (Plain Text uppercase) */}
                       <td className="py-3.5 px-3 text-[#7D848D] align-middle whitespace-nowrap">
-                        {item.resource_type ? item.resource_type.toUpperCase() : "PDF"}
+                        {item.resource_type
+                          ? item.resource_type.toUpperCase()
+                          : "PDF"}
                       </td>
 
                       {/* Last Updated (DD/MM/YYYY) */}
@@ -508,13 +566,13 @@ export default function ResourcesPage() {
                           </button>
 
                           {/* Edit */}
-                          <button
+                          {/* <button
                             onClick={() => handleOpenEdit(item)}
                             title="Edit"
                             className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
                           >
                             <Edit2 className="w-4 h-4" />
-                          </button>
+                          </button> */}
 
                           {/* Delete */}
                           <button
@@ -546,7 +604,8 @@ export default function ResourcesPage() {
         {/* ===================== TABLE FOOTER & PAGINATION (1:1 HTML) ===================== */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 pb-1 text-[12.5px] text-[#888] border-t border-[#f1f1ed] mt-2">
           <div>
-            Showing 1 to {resources.length} of {totalItems || resources.length} resources
+            Showing 1 to {resources.length} of {totalItems || resources.length}{" "}
+            resources
           </div>
 
           <div className="flex items-center gap-1">
@@ -563,7 +622,10 @@ export default function ResourcesPage() {
             {paginationItems.map((item, idx) => {
               if (item === "…") {
                 return (
-                  <span key={idx} className="min-w-[28px] h-7 flex items-center justify-center text-[#888]">
+                  <span
+                    key={idx}
+                    className="min-w-[28px] h-7 flex items-center justify-center text-[#888]"
+                  >
                     …
                   </span>
                 );
@@ -620,12 +682,16 @@ export default function ResourcesPage() {
             <form onSubmit={handleSaveForm} className="py-4 space-y-4">
               {/* Title */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Resource Title *</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Resource Title *
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
                   placeholder="e.g., Minnesota Deer Hunting Regulations Guide 2026"
                   className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
                 />
@@ -634,10 +700,17 @@ export default function ResourcesPage() {
               {/* Type, State, Category in 3 cols */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Type *</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Type *
+                  </label>
                   <select
                     value={formData.resource_type}
-                    onChange={(e) => setFormData({ ...formData, resource_type: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        resource_type: e.target.value,
+                      })
+                    }
                     className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27] capitalize cursor-pointer"
                   >
                     {RESOURCE_TYPES.map((t) => (
@@ -649,16 +722,26 @@ export default function ResourcesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">State</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    State
+                  </label>
                   <select
                     value={formData.state_id}
-                    onChange={(e) => setFormData({ ...formData, state_id: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, state_id: e.target.value })
+                    }
                     className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27] cursor-pointer"
                   >
                     <option value="">National / All States</option>
                     {statesList.map((s, idx) => {
-                      const sName = typeof s === "string" ? s : s?.state_name || s?.name || `State ${idx + 1}`;
-                      const sId = typeof s === "string" ? s : s?.state_id || s?.id || sName;
+                      const sName =
+                        typeof s === "string"
+                          ? s
+                          : s?.state_name || s?.name || `State ${idx + 1}`;
+                      const sId =
+                        typeof s === "string"
+                          ? s
+                          : s?.state_id || s?.id || sName;
                       return (
                         <option key={sId} value={sId}>
                           {sName}
@@ -669,10 +752,14 @@ export default function ResourcesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Category *</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Category *
+                  </label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
                     className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27] cursor-pointer"
                   >
                     {CATEGORIES.map((c) => (
@@ -692,7 +779,9 @@ export default function ResourcesPage() {
                 <input
                   type="url"
                   value={formData.resource_url}
-                  onChange={(e) => setFormData({ ...formData, resource_url: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, resource_url: e.target.value })
+                  }
                   placeholder="https://www.dnr.state.gov/regulations/..."
                   className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
                 />
@@ -706,7 +795,9 @@ export default function ResourcesPage() {
                 <textarea
                   rows={3}
                   value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, content: e.target.value })
+                  }
                   placeholder="Summary of this resource or regulation guidelines..."
                   className="w-full p-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
                 />
@@ -715,11 +806,17 @@ export default function ResourcesPage() {
               {/* Category Icon & Resource File Uploads */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Category Icon</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Category Icon
+                  </label>
                   <div className="flex items-center gap-2.5">
                     {categoryIconPreview && (
                       <div className="w-9 h-9 rounded-lg border border-gray-200 overflow-hidden p-1 flex-shrink-0 bg-gray-50">
-                        <img src={categoryIconPreview} alt="Preview" className="w-full h-full object-contain" />
+                        <img
+                          src={categoryIconPreview}
+                          alt="Preview"
+                          className="w-full h-full object-contain"
+                        />
                       </div>
                     )}
                     <input
@@ -728,7 +825,8 @@ export default function ResourcesPage() {
                       onChange={(e) => {
                         const file = e.target.files?.[0] || null;
                         setCategoryIconFile(file);
-                        if (file) setCategoryIconPreview(URL.createObjectURL(file));
+                        if (file)
+                          setCategoryIconPreview(URL.createObjectURL(file));
                       }}
                       className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer w-full"
                     />
@@ -754,53 +852,84 @@ export default function ResourcesPage() {
               {/* Conditional Season Dates Fields */}
               {formData.category === "Season Dates" && (
                 <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 space-y-3 text-xs">
-                  <span className="font-bold text-amber-900 block">Season Dates Configuration</span>
+                  <span className="font-bold text-amber-900 block">
+                    Season Dates Configuration
+                  </span>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">Activity</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                        Activity
+                      </label>
                       <input
                         type="text"
                         value={formData.activity}
-                        onChange={(e) => setFormData({ ...formData, activity: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, activity: e.target.value })
+                        }
                         placeholder="Hunting / Fishing"
                         className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">Species</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                        Species
+                      </label>
                       <input
                         type="text"
                         value={formData.species}
-                        onChange={(e) => setFormData({ ...formData, species: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, species: e.target.value })
+                        }
                         placeholder="White-tailed Deer"
                         className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">Season Name</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                        Season Name
+                      </label>
                       <input
                         type="text"
                         value={formData.season_name}
-                        onChange={(e) => setFormData({ ...formData, season_name: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            season_name: e.target.value,
+                          })
+                        }
                         placeholder="Archery Season"
                         className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">Start Date</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                        Start Date
+                      </label>
                       <input
                         type="date"
                         value={formData.season_start}
-                        onChange={(e) => setFormData({ ...formData, season_start: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            season_start: e.target.value,
+                          })
+                        }
                         className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">End Date</label>
+                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                        End Date
+                      </label>
                       <input
                         type="date"
                         value={formData.season_end}
-                        onChange={(e) => setFormData({ ...formData, season_end: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            season_end: e.target.value,
+                          })
+                        }
                         className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs bg-white"
                       />
                     </div>
@@ -814,10 +943,15 @@ export default function ResourcesPage() {
                   type="checkbox"
                   id="pub-check"
                   checked={formData.is_published}
-                  onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, is_published: e.target.checked })
+                  }
                   className="w-4 h-4 rounded text-[#0E3E27] focus:ring-[#0E3E27] accent-[#0E3E27] cursor-pointer"
                 />
-                <label htmlFor="pub-check" className="text-xs font-semibold text-gray-700 cursor-pointer">
+                <label
+                  htmlFor="pub-check"
+                  className="text-xs font-semibold text-gray-700 cursor-pointer"
+                >
                   Publish Resource Immediately (visible to users)
                 </label>
               </div>
@@ -842,7 +976,9 @@ export default function ResourcesPage() {
                       <span>Saving Resource...</span>
                     </>
                   ) : (
-                    <span>{isEditing ? "Save Changes" : "Create Resource"}</span>
+                    <span>
+                      {isEditing ? "Save Changes" : "Create Resource"}
+                    </span>
                   )}
                 </button>
               </div>
@@ -873,7 +1009,9 @@ export default function ResourcesPage() {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-gray-900">{selectedResource.title}</h3>
+                  <h3 className="text-base font-bold text-gray-900">
+                    {selectedResource.title}
+                  </h3>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 mt-0.5 uppercase">
                     {selectedResource.resource_type || "Guide"}
                   </span>
@@ -901,11 +1039,17 @@ export default function ResourcesPage() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400 block font-medium">Category</span>
-                  <span className="font-semibold text-gray-800">{selectedResource.category || "General"}</span>
+                  <span className="text-gray-400 block font-medium">
+                    Category
+                  </span>
+                  <span className="font-semibold text-gray-800">
+                    {selectedResource.category || "General"}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-gray-400 block font-medium">Status</span>
+                  <span className="text-gray-400 block font-medium">
+                    Status
+                  </span>
                   <span className="font-semibold text-emerald-700">
                     {selectedResource.is_published ? "Published" : "Draft"}
                   </span>
@@ -915,7 +1059,9 @@ export default function ResourcesPage() {
               {/* Web Link */}
               {selectedResource.resource_url && (
                 <div>
-                  <span className="text-gray-400 block font-medium mb-1">Official Web URL</span>
+                  <span className="text-gray-400 block font-medium mb-1">
+                    Official Web URL
+                  </span>
                   <a
                     href={selectedResource.resource_url}
                     target="_blank"
@@ -931,7 +1077,9 @@ export default function ResourcesPage() {
               {/* Description / Content */}
               {selectedResource.content && (
                 <div>
-                  <span className="text-gray-400 block font-medium mb-1">Content / Description</span>
+                  <span className="text-gray-400 block font-medium mb-1">
+                    Content / Description
+                  </span>
                   <p className="p-3 bg-gray-50 rounded-xl text-gray-700 leading-relaxed">
                     {selectedResource.content}
                   </p>
@@ -941,14 +1089,20 @@ export default function ResourcesPage() {
               {/* Seasonal Data */}
               {selectedResource.seasonalData && (
                 <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 space-y-1.5">
-                  <span className="font-bold text-amber-900 block">Season Dates Information</span>
+                  <span className="font-bold text-amber-900 block">
+                    Season Dates Information
+                  </span>
                   <p className="text-gray-700">
-                    <strong>Activity:</strong> {selectedResource.seasonalData.activity || "—"} |{" "}
-                    <strong>Species:</strong> {selectedResource.seasonalData.species || "—"}
+                    <strong>Activity:</strong>{" "}
+                    {selectedResource.seasonalData.activity || "—"} |{" "}
+                    <strong>Species:</strong>{" "}
+                    {selectedResource.seasonalData.species || "—"}
                   </p>
                   <p className="text-gray-700">
-                    <strong>Season:</strong> {selectedResource.seasonalData.season_name || "—"} (
-                    {selectedResource.seasonalData.season_start} to {selectedResource.seasonalData.season_end})
+                    <strong>Season:</strong>{" "}
+                    {selectedResource.seasonalData.season_name || "—"} (
+                    {selectedResource.seasonalData.season_start} to{" "}
+                    {selectedResource.seasonalData.season_end})
                   </p>
                 </div>
               )}
@@ -1004,14 +1158,21 @@ export default function ResourcesPage() {
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900">Delete Resource</h3>
-                <p className="text-xs text-gray-500">This action cannot be undone.</p>
+                <h3 className="text-base font-bold text-gray-900">
+                  Delete Resource
+                </h3>
+                <p className="text-xs text-gray-500">
+                  This action cannot be undone.
+                </p>
               </div>
             </div>
 
             <p className="text-xs text-gray-600 leading-relaxed mb-6">
               Are you sure you want to permanently delete the resource{" "}
-              <strong className="text-gray-900">"{resourceToDelete.title}"</strong>?
+              <strong className="text-gray-900">
+                "{resourceToDelete.title}"
+              </strong>
+              ?
             </p>
 
             <div className="flex items-center justify-end gap-3">

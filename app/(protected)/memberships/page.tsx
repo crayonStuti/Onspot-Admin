@@ -131,7 +131,13 @@ export default function MembershipsPage() {
       duration_days: String(plan.duration_days ?? ""),
     });
     setImageFile(null);
-    setImagePreview(plan.image ? (plan.image.startsWith("http") ? plan.image : `${API_URL}${plan.image}`) : null);
+    setImagePreview(
+      plan.image
+        ? plan.image.startsWith("http")
+          ? plan.image
+          : `${API_URL}${plan.image}`
+        : null,
+    );
 
     let parsedFeatures = {
       front_end_pages: true,
@@ -149,7 +155,10 @@ export default function MembershipsPage() {
 
     if (plan.feature) {
       try {
-        const parsed = typeof plan.feature === "string" ? JSON.parse(plan.feature) : plan.feature;
+        const parsed =
+          typeof plan.feature === "string"
+            ? JSON.parse(plan.feature)
+            : plan.feature;
         parsedFeatures = { ...parsedFeatures, ...parsed };
       } catch (e) {
         console.warn("Failed to parse plan features:", e);
@@ -232,7 +241,9 @@ export default function MembershipsPage() {
   const parsePlanFeatures = (featureData: any): Record<string, any> => {
     if (!featureData) return {};
     try {
-      return typeof featureData === "string" ? JSON.parse(featureData) : featureData;
+      return typeof featureData === "string"
+        ? JSON.parse(featureData)
+        : featureData;
     } catch {
       return {};
     }
@@ -244,7 +255,9 @@ export default function MembershipsPage() {
       <section className="bg-white rounded-[14px] p-6 sm:p-7 shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] border border-[#ececec]">
         {/* Card Header */}
         <div className="flex items-center justify-between gap-4 mb-6">
-          <h2 className="text-[22px] font-bold text-[#1f1f1f] tracking-tight">Membership Plans</h2>
+          <h2 className="text-[22px] font-bold text-[#1f1f1f] tracking-tight">
+            Membership Plans
+          </h2>
         </div>
 
         {/* Plans Table */}
@@ -252,11 +265,21 @@ export default function MembershipsPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[#ececec]">
-                <th className="py-3.5 px-3 text-black font-medium text-[13.5px]">Plan Name</th>
-                <th className="py-3.5 px-3 text-black font-medium text-[13.5px]">Price</th>
-                <th className="py-3.5 px-3 text-black font-medium text-[13.5px]">Featured Included</th>
-                <th className="py-3.5 px-3 text-black font-medium text-[13.5px]">Subscriber</th>
-                <th className="py-3.5 px-3 text-right text-black font-medium text-[13.5px]">Actions</th>
+                <th className="py-3.5 px-3 text-black font-medium text-[13.5px]">
+                  Plan Name
+                </th>
+                <th className="py-3.5 px-3 text-black font-medium text-[13.5px]">
+                  Price
+                </th>
+                <th className="py-3.5 px-3 text-black font-medium text-[13.5px]">
+                  Featured Included
+                </th>
+                <th className="py-3.5 px-3 text-black font-medium text-[13.5px]">
+                  Subscriber
+                </th>
+                <th className="py-3.5 px-3 text-right text-black font-medium text-[13.5px]">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f1ed] text-[13.5px]">
@@ -265,7 +288,9 @@ export default function MembershipsPage() {
                   <td colSpan={5} className="py-16 text-center text-[#7D848D]">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Loader2 className="w-6 h-6 animate-spin text-[#1f3d2a]" />
-                      <span className="text-[13px] font-medium text-[#7D848D]">Loading membership plans...</span>
+                      <span className="text-[13px] font-medium text-[#7D848D]">
+                        Loading membership plans...
+                      </span>
                     </div>
                   </td>
                 </tr>
@@ -274,7 +299,9 @@ export default function MembershipsPage() {
                   <td colSpan={5} className="py-16 text-center text-[#7D848D]">
                     <div className="flex flex-col items-center justify-center gap-1.5">
                       <AlertCircle className="w-8 h-8 text-gray-300" />
-                      <p className="text-[13.5px] font-semibold text-[#1f1f1f]">No membership plans found</p>
+                      <p className="text-[13.5px] font-semibold text-[#1f1f1f]">
+                        No membership plans found
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -285,7 +312,10 @@ export default function MembershipsPage() {
                   const priceNum = Number(plan.price_usd || 0);
 
                   return (
-                    <tr key={plan.id} className="hover:bg-[#fbfbf8] transition-colors">
+                    <tr
+                      key={plan.id}
+                      className="hover:bg-[#fbfbf8] transition-colors"
+                    >
                       {/* Plan Name */}
                       <td className="py-5 px-3 align-top">
                         <div className="flex items-start gap-3.5">
@@ -293,27 +323,39 @@ export default function MembershipsPage() {
                           <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
                             {plan.image ? (
                               <img
-                                src={plan.image.startsWith("http") ? plan.image : `${API_URL}${plan.image}`}
+                                src={
+                                  plan.image.startsWith("http")
+                                    ? plan.image
+                                    : `${API_URL}${plan.image}`
+                                }
                                 alt={plan.name}
                                 className="w-7 h-7 object-contain"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = "none";
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
                                 }}
                               />
                             ) : (
-                              <img src="/images/member_leaf.png" alt="" className="w-7 h-7 object-contain" />
+                              <img
+                                src="/images/member_leaf.png"
+                                alt=""
+                                className="w-7 h-7 object-contain"
+                              />
                             )}
                           </div>
                           <div>
                             <div className="flex items-center gap-2.5 mb-1">
-                              <span className="text-[16px] font-semibold text-[#1f1f1f]">{plan.name}</span>
+                              <span className="text-[16px] font-semibold text-[#1f1f1f]">
+                                {plan.name}
+                              </span>
                               <span className="inline-flex items-center gap-1.5 text-[13px] text-[#34A853] font-medium">
                                 <span className="w-[7px] h-[7px] rounded-full bg-[#2f9e44]" />
                                 Active
                               </span>
                             </div>
                             <div className="text-[13px] text-[#888] font-normal max-w-xs">
-                              {plan.description || "Best for individuals getting started"}
+                              {plan.description ||
+                                "Best for individuals getting started"}
                             </div>
                           </div>
                         </div>
@@ -325,7 +367,11 @@ export default function MembershipsPage() {
                           {priceNum === 0 ? "$0" : `$${priceNum.toFixed(2)}`}
                         </div>
                         <div className="text-[13px] text-[#888]">
-                          {plan.duration_days ? (priceNum === 0 ? "Forever" : `${plan.duration_days} Days`) : "Forever"}
+                          {plan.duration_days
+                            ? priceNum === 0
+                              ? "Forever"
+                              : `${plan.duration_days} Days`
+                            : "Forever"}
                         </div>
                       </td>
 
@@ -333,25 +379,43 @@ export default function MembershipsPage() {
                       <td className="py-5 px-3 align-top">
                         {featureEntries.length > 0 ? (
                           <div className="flex flex-col gap-2 max-w-sm">
-                            {featureEntries.slice(0, 4).map(([key, val], idx) => (
-                              <div key={idx} className="flex items-center gap-2 text-[11px] text-[#888]">
-                                <span className="text-[#4a6b3f] flex-shrink-0">
-                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5">
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                </span>
-                                <span className="capitalize">
-                                  {key.replace(/_/g, " ")}
-                                  {typeof val !== "boolean" && `: ${String(val)}`}
-                                </span>
-                              </div>
-                            ))}
+                            {featureEntries
+                              .slice(0, 4)
+                              .map(([key, val], idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex items-center gap-2 text-[11px] text-[#888]"
+                                >
+                                  <span className="text-[#4a6b3f] flex-shrink-0">
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2.5"
+                                      className="w-3.5 h-3.5"
+                                    >
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                  </span>
+                                  <span className="capitalize">
+                                    {key.replace(/_/g, " ")}
+                                    {typeof val !== "boolean" &&
+                                      `: ${String(val)}`}
+                                  </span>
+                                </div>
+                              ))}
                           </div>
                         ) : (
                           <div className="flex flex-col gap-2 text-[11px] text-[#888]">
                             <div className="flex items-center gap-2">
                               <span className="text-[#4a6b3f]">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5">
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  className="w-3.5 h-3.5"
+                                >
                                   <polyline points="20 6 9 17 4 12" />
                                 </svg>
                               </span>
@@ -359,7 +423,13 @@ export default function MembershipsPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-[#4a6b3f]">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-3.5 h-3.5">
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  className="w-3.5 h-3.5"
+                                >
                                   <polyline points="20 6 9 17 4 12" />
                                 </svg>
                               </span>
@@ -372,9 +442,13 @@ export default function MembershipsPage() {
                       {/* Subscriber */}
                       <td className="py-5 px-3 align-top">
                         <div className="text-[18px] font-normal text-[#1f1f1f] mb-1">
-                          {plan.totalUsers !== undefined ? Number(plan.totalUsers).toLocaleString() : "0"}
+                          {plan.totalUsers !== undefined
+                            ? Number(plan.totalUsers).toLocaleString()
+                            : "0"}
                         </div>
-                        <div className="text-[13px] text-[#888]">Users Enrolled</div>
+                        <div className="text-[13px] text-[#888]">
+                          Users Enrolled
+                        </div>
                       </td>
 
                       {/* Actions */}
@@ -390,13 +464,6 @@ export default function MembershipsPage() {
                           </button>
 
                           {/* Edit */}
-                          <button
-                            onClick={() => handleOpenEdit(plan)}
-                            title="Edit Plan"
-                            className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
 
                           {/* Delete */}
                           <button
@@ -436,8 +503,12 @@ export default function MembershipsPage() {
                   <CreditCard className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">{selectedPlan.name}</h3>
-                  <p className="text-xs text-gray-500">Tier Details & Configured Features</p>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {selectedPlan.name}
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Tier Details & Configured Features
+                  </p>
                 </div>
               </div>
               <button
@@ -464,25 +535,37 @@ export default function MembershipsPage() {
                 <div>
                   <span className="text-gray-400 block font-medium">Price</span>
                   <span className="font-bold text-sm text-[#0E3E27]">
-                    {Number(selectedPlan.price_usd || 0) === 0 ? "Free" : `$${selectedPlan.price_usd}`}
+                    {Number(selectedPlan.price_usd || 0) === 0
+                      ? "Free"
+                      : `$${selectedPlan.price_usd}`}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400 block font-medium">Duration</span>
+                  <span className="text-gray-400 block font-medium">
+                    Duration
+                  </span>
                   <span className="font-bold text-sm text-gray-800">
-                    {selectedPlan.duration_days ? `${selectedPlan.duration_days} Days` : "Forever"}
+                    {selectedPlan.duration_days
+                      ? `${selectedPlan.duration_days} Days`
+                      : "Forever"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400 block font-medium">Total Users</span>
+                  <span className="text-gray-400 block font-medium">
+                    Total Users
+                  </span>
                   <span className="font-bold text-sm text-indigo-700">
                     {selectedPlan.totalUsers || 0}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400 block font-medium">Created On</span>
+                  <span className="text-gray-400 block font-medium">
+                    Created On
+                  </span>
                   <span className="font-bold text-xs text-gray-700">
-                    {selectedPlan.created_at ? new Date(selectedPlan.created_at).toLocaleDateString() : "—"}
+                    {selectedPlan.created_at
+                      ? new Date(selectedPlan.created_at).toLocaleDateString()
+                      : "—"}
                   </span>
                 </div>
               </div>
@@ -498,7 +581,9 @@ export default function MembershipsPage() {
 
                   if (entries.length === 0) {
                     return (
-                      <p className="text-xs text-gray-400 italic">No custom features set for this tier.</p>
+                      <p className="text-xs text-gray-400 italic">
+                        No custom features set for this tier.
+                      </p>
                     );
                   }
 
@@ -517,11 +602,15 @@ export default function MembershipsPage() {
                               val === true
                                 ? "bg-emerald-100 text-emerald-800"
                                 : val === false
-                                ? "bg-red-100 text-red-700"
-                                : "bg-blue-50 text-blue-700"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-blue-50 text-blue-700"
                             }`}
                           >
-                            {typeof val === "boolean" ? (val ? "YES" : "NO") : String(val)}
+                            {typeof val === "boolean"
+                              ? val
+                                ? "YES"
+                                : "NO"
+                              : String(val)}
                           </span>
                         </div>
                       ))}
@@ -559,8 +648,12 @@ export default function MembershipsPage() {
           <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div>
-                <h3 className="text-base font-bold text-gray-900">Edit Membership Plan</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Update pricing, description, and features</p>
+                <h3 className="text-base font-bold text-gray-900">
+                  Edit Membership Plan
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Update pricing, description, and features
+                </p>
               </div>
               <button
                 onClick={() => setEditModal(false)}
@@ -573,23 +666,31 @@ export default function MembershipsPage() {
             <form onSubmit={handleSaveEdit} className="py-4 space-y-4">
               {/* Plan Name */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Plan Name *</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Plan Name *
+                </label>
                 <input
                   type="text"
                   required
                   value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, name: e.target.value })
+                  }
                   className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Description</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Description
+                </label>
                 <textarea
                   rows={2}
                   value={editForm.description}
-                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, description: e.target.value })
+                  }
                   className="w-full p-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
                 />
               </div>
@@ -597,24 +698,35 @@ export default function MembershipsPage() {
               {/* Price & Duration */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Price (USD) *</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Price (USD) *
+                  </label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     required
                     value={editForm.price_usd}
-                    onChange={(e) => setEditForm({ ...editForm, price_usd: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, price_usd: e.target.value })
+                    }
                     className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Duration (Days)</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Duration (Days)
+                  </label>
                   <input
                     type="number"
                     min="1"
                     value={editForm.duration_days}
-                    onChange={(e) => setEditForm({ ...editForm, duration_days: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        duration_days: e.target.value,
+                      })
+                    }
                     placeholder="30"
                     className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
                   />
@@ -623,11 +735,17 @@ export default function MembershipsPage() {
 
               {/* Image Upload */}
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Plan Icon / Image</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Plan Icon / Image
+                </label>
                 <div className="flex items-center gap-3">
                   {imagePreview && (
                     <div className="w-12 h-12 rounded-xl border border-gray-200 overflow-hidden p-1 flex-shrink-0 bg-gray-50">
-                      <img src={imagePreview} alt="Preview" className="w-full h-full object-contain" />
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-full object-contain"
+                      />
                     </div>
                   )}
                   <input
@@ -650,20 +768,35 @@ export default function MembershipsPage() {
                 </label>
                 <div className="space-y-2 max-h-48 overflow-y-auto p-3 bg-gray-50/70 rounded-xl border border-gray-200 text-xs">
                   {Object.entries(editFeatures).map(([k, val]) => (
-                    <div key={k} className="flex items-center justify-between py-1">
-                      <span className="capitalize font-medium text-gray-700">{k.replace(/_/g, " ")}</span>
+                    <div
+                      key={k}
+                      className="flex items-center justify-between py-1"
+                    >
+                      <span className="capitalize font-medium text-gray-700">
+                        {k.replace(/_/g, " ")}
+                      </span>
                       {typeof val === "boolean" ? (
                         <input
                           type="checkbox"
                           checked={val}
-                          onChange={(e) => setEditFeatures({ ...editFeatures, [k]: e.target.checked })}
+                          onChange={(e) =>
+                            setEditFeatures({
+                              ...editFeatures,
+                              [k]: e.target.checked,
+                            })
+                          }
                           className="w-4 h-4 rounded text-[#0E3E27] focus:ring-[#0E3E27] accent-[#0E3E27] cursor-pointer"
                         />
                       ) : (
                         <input
                           type="text"
                           value={String(val)}
-                          onChange={(e) => setEditFeatures({ ...editFeatures, [k]: e.target.value })}
+                          onChange={(e) =>
+                            setEditFeatures({
+                              ...editFeatures,
+                              [k]: e.target.value,
+                            })
+                          }
                           className="h-7 w-28 px-2 rounded-lg border border-gray-200 text-xs text-gray-800 bg-white"
                         />
                       )}
@@ -710,15 +843,20 @@ export default function MembershipsPage() {
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900">Delete Membership Plan</h3>
-                <p className="text-xs text-gray-500">This action cannot be undone.</p>
+                <h3 className="text-base font-bold text-gray-900">
+                  Delete Membership Plan
+                </h3>
+                <p className="text-xs text-gray-500">
+                  This action cannot be undone.
+                </p>
               </div>
             </div>
 
             <p className="text-xs text-gray-600 leading-relaxed mb-6">
               Are you sure you want to permanently delete the{" "}
-              <strong className="text-gray-900">"{planToDelete.name}"</strong> membership tier? Users
-              currently assigned to this plan might lose associated privileges.
+              <strong className="text-gray-900">"{planToDelete.name}"</strong>{" "}
+              membership tier? Users currently assigned to this plan might lose
+              associated privileges.
             </p>
 
             <div className="flex items-center justify-end gap-3">

@@ -25,6 +25,7 @@ import {
   updateState,
   deleteState,
   StateItem,
+  API_URL,
 } from "@/lib/api";
 
 export default function StatesPage() {
@@ -57,6 +58,20 @@ export default function StatesPage() {
   const [stateToDelete, setStateToDelete] = useState<StateItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Helper to resolve flag image url with backend base url
+  const getFlagUrl = (url?: string | null) => {
+    if (!url) return "";
+    if (
+      url.startsWith("http://") ||
+      url.startsWith("https://") ||
+      url.startsWith("blob:") ||
+      url.startsWith("data:")
+    ) {
+      return url;
+    }
+    return `${API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
   // Fetch States List
   const fetchStatesList = useCallback(async () => {
     setLoading(true);
@@ -69,16 +84,28 @@ export default function StatesPage() {
           list = res.data;
           if (res.pagination) {
             setTotalPages(res.pagination.totalPages || 1);
-            setTotalItems(res.pagination.totalItems || res.pagination.totaldata || res.data.length);
+            setTotalItems(
+              res.pagination.totalItems ||
+                res.pagination.totaldata ||
+                res.data.length,
+            );
           } else {
-            setTotalPages(res.totalPages || Math.ceil((res.total || res.data.length) / limit) || 1);
+            setTotalPages(
+              res.totalPages ||
+                Math.ceil((res.total || res.data.length) / limit) ||
+                1,
+            );
             setTotalItems(res.total || res.data.length);
           }
         } else if (Array.isArray(res.data.states)) {
           list = res.data.states;
           if (res.data.pagination) {
             setTotalPages(res.data.pagination.totalPages || 1);
-            setTotalItems(res.data.pagination.totalItems || res.data.pagination.totaldata || res.data.states.length);
+            setTotalItems(
+              res.data.pagination.totalItems ||
+                res.data.pagination.totaldata ||
+                res.data.states.length,
+            );
           }
         }
       } else if (Array.isArray(res)) {
@@ -98,7 +125,7 @@ export default function StatesPage() {
           (s) =>
             s.state_name?.toLowerCase().includes(q) ||
             s.state_code?.toLowerCase().includes(q) ||
-            s.state_description?.toLowerCase().includes(q)
+            s.state_description?.toLowerCase().includes(q),
         );
       }
 
@@ -141,7 +168,7 @@ export default function StatesPage() {
       state_description: state.state_description || "",
     });
     setFlagFile(null);
-    setFlagPreview(state.state_flag_image || null);
+    setFlagPreview(state.state_flag_image ? getFlagUrl(state.state_flag_image) : null);
     setFormModalOpen(true);
   };
 
@@ -279,17 +306,29 @@ export default function StatesPage() {
 
       {/* ===================== TABLE CARD ===================== */}
       <section className="bg-white rounded-[14px] p-5 pb-3 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)]">
-        <h3 className="text-[17px] font-bold text-[#1f1f1f] mb-3">States Management</h3>
+        <h3 className="text-[17px] font-bold text-[#1f1f1f] mb-3">
+          States Management
+        </h3>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-[13px]">
             <thead>
               <tr className="border-b border-[#ececec]">
-                <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px] w-14">#</th>
-                <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">State Name</th>
-                <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">Code</th>
-                <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">Description</th>
-                <th className="py-3.5 px-3 text-right font-semibold text-[#111111] text-[13px]">Actions</th>
+                <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px] w-14">
+                  #
+                </th>
+                <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
+                  State Name
+                </th>
+                <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
+                  Code
+                </th>
+                <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
+                  Description
+                </th>
+                <th className="py-3.5 px-3 text-right font-semibold text-[#111111] text-[13px]">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f1ed] text-[13px]">
@@ -298,7 +337,9 @@ export default function StatesPage() {
                   <td colSpan={5} className="py-16 text-center text-[#7D848D]">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Loader2 className="w-6 h-6 animate-spin text-[#2d4a23]" />
-                      <span className="text-[13px] font-medium text-[#7D848D]">Loading states...</span>
+                      <span className="text-[13px] font-medium text-[#7D848D]">
+                        Loading states...
+                      </span>
                     </div>
                   </td>
                 </tr>
@@ -307,8 +348,12 @@ export default function StatesPage() {
                   <td colSpan={5} className="py-16 text-center text-[#7D848D]">
                     <div className="flex flex-col items-center justify-center gap-1.5">
                       <AlertCircle className="w-8 h-8 text-gray-300" />
-                      <p className="text-[13px] font-semibold text-gray-700">No states found.</p>
-                      <p className="text-xs text-gray-400">Click &quot;Add State&quot; to create a new state entry.</p>
+                      <p className="text-[13px] font-semibold text-gray-700">
+                        No states found.
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Click &quot;Add State&quot; to create a new state entry.
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -316,7 +361,10 @@ export default function StatesPage() {
                 states.map((state, idx) => {
                   const itemIndex = (page - 1) * limit + idx + 1;
                   return (
-                    <tr key={state.state_id || idx} className="hover:bg-[#fbfbf8] transition-colors">
+                    <tr
+                      key={state.state_id || idx}
+                      className="hover:bg-[#fbfbf8] transition-colors"
+                    >
                       {/* Index */}
                       <td className="py-3.5 px-3 text-[#7D848D] align-middle font-mono text-xs">
                         {itemIndex}
@@ -327,7 +375,7 @@ export default function StatesPage() {
                         <div className="flex items-center gap-2.5">
                           {state.state_flag_image ? (
                             <img
-                              src={state.state_flag_image}
+                              src={getFlagUrl(state.state_flag_image)}
                               alt=""
                               className="w-7 h-5 rounded-[3px] object-cover border border-gray-200"
                             />
@@ -351,7 +399,11 @@ export default function StatesPage() {
 
                       {/* Description */}
                       <td className="py-3.5 px-3 text-[#7D848D] align-middle max-w-xs truncate">
-                        {state.state_description || <span className="italic text-gray-300">No description</span>}
+                        {state.state_description || (
+                          <span className="italic text-gray-300">
+                            No description
+                          </span>
+                        )}
                       </td>
 
                       {/* Actions */}
@@ -367,13 +419,13 @@ export default function StatesPage() {
                           </button>
 
                           {/* Edit */}
-                          <button
+                          {/* <button
                             onClick={() => handleOpenEdit(state)}
                             title="Edit"
                             className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
-                          </button>
+                          </button> */}
 
                           {/* Delete */}
                           <button
@@ -423,7 +475,10 @@ export default function StatesPage() {
           {paginationItems.map((item, idx) => {
             if (item === "…") {
               return (
-                <span key={idx} className="min-w-[28px] h-7 flex items-center justify-center text-[#888]">
+                <span
+                  key={idx}
+                  className="min-w-[28px] h-7 flex items-center justify-center text-[#888]"
+                >
                   …
                 </span>
               );
@@ -463,7 +518,7 @@ export default function StatesPage() {
               <div className="flex items-center gap-2.5">
                 {selectedState.state_flag_image ? (
                   <img
-                    src={selectedState.state_flag_image}
+                    src={getFlagUrl(selectedState.state_flag_image)}
                     alt=""
                     className="w-10 h-7 rounded-[4px] object-cover border border-gray-200"
                   />
@@ -473,7 +528,9 @@ export default function StatesPage() {
                   </div>
                 )}
                 <div>
-                  <h3 className="text-base font-bold text-gray-900">{selectedState.state_name}</h3>
+                  <h3 className="text-base font-bold text-gray-900">
+                    {selectedState.state_name}
+                  </h3>
                   <span className="text-xs font-mono font-bold text-[#4a6b3f]">
                     Code: {selectedState.state_code}
                   </span>
@@ -493,13 +550,16 @@ export default function StatesPage() {
                   Description
                 </span>
                 <p className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-700 leading-relaxed">
-                  {selectedState.state_description || "No description provided for this state."}
+                  {selectedState.state_description ||
+                    "No description provided for this state."}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50/70 rounded-xl border border-gray-100">
                 <div>
-                  <span className="text-[11px] text-gray-400 block">Created At</span>
+                  <span className="text-[11px] text-gray-400 block">
+                    Created At
+                  </span>
                   <span className="font-semibold text-gray-800">
                     {selectedState.created_at
                       ? new Date(selectedState.created_at).toLocaleDateString()
@@ -507,7 +567,9 @@ export default function StatesPage() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-[11px] text-gray-400 block">Updated At</span>
+                  <span className="text-[11px] text-gray-400 block">
+                    Updated At
+                  </span>
                   <span className="font-semibold text-gray-800">
                     {selectedState.updated_at
                       ? new Date(selectedState.updated_at).toLocaleDateString()
@@ -560,7 +622,9 @@ export default function StatesPage() {
                     type="text"
                     required
                     value={formData.state_name}
-                    onChange={(e) => setFormData({ ...formData, state_name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, state_name: e.target.value })
+                    }
                     placeholder="e.g. Texas"
                     className="w-full h-10 px-3.5 border border-[#e4e4df] bg-white rounded-lg text-sm text-[#333] focus:outline-none focus:border-[#2d4a23]"
                   />
@@ -574,7 +638,12 @@ export default function StatesPage() {
                     required
                     maxLength={5}
                     value={formData.state_code}
-                    onChange={(e) => setFormData({ ...formData, state_code: e.target.value.toUpperCase() })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        state_code: e.target.value.toUpperCase(),
+                      })
+                    }
                     placeholder="e.g. TX"
                     className="w-full h-10 px-3.5 border border-[#e4e4df] bg-white rounded-lg text-sm font-mono uppercase text-[#333] focus:outline-none focus:border-[#2d4a23]"
                   />
@@ -588,7 +657,12 @@ export default function StatesPage() {
                 <textarea
                   rows={3}
                   value={formData.state_description}
-                  onChange={(e) => setFormData({ ...formData, state_description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      state_description: e.target.value,
+                    })
+                  }
                   placeholder="General information and regulations summary..."
                   className="w-full p-3 border border-[#e4e4df] bg-white rounded-lg text-sm text-[#333] focus:outline-none focus:border-[#2d4a23]"
                 />
@@ -637,7 +711,9 @@ export default function StatesPage() {
                   disabled={submitting}
                   className="px-5 py-2 rounded-lg bg-[#4a6b3f] hover:bg-[#3c5733] text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 transition-colors cursor-pointer"
                 >
-                  {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {submitting && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
                   <span>{editingState ? "Save Changes" : "Create State"}</span>
                 </button>
               </div>
@@ -653,9 +729,15 @@ export default function StatesPage() {
             <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-3">
               <Trash2 className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-gray-900 mb-1">Delete State</h3>
+            <h3 className="text-base font-bold text-gray-900 mb-1">
+              Delete State
+            </h3>
             <p className="text-xs text-gray-500 mb-5">
-              Are you sure you want to delete <span className="font-semibold text-gray-800">{stateToDelete.state_name}</span> ({stateToDelete.state_code})? This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-gray-800">
+                {stateToDelete.state_name}
+              </span>{" "}
+              ({stateToDelete.state_code})? This action cannot be undone.
             </p>
             <div className="flex items-center justify-center gap-2.5">
               <button
