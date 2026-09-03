@@ -566,13 +566,13 @@ export default function ResourcesPage() {
                           </button>
 
                           {/* Edit */}
-                          {/* <button
+                          <button
                             onClick={() => handleOpenEdit(item)}
                             title="Edit"
                             className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
                           >
                             <Edit2 className="w-4 h-4" />
-                          </button> */}
+                          </button>
 
                           {/* Delete */}
                           <button
@@ -1134,7 +1134,7 @@ export default function ResourcesPage() {
               >
                 Close
               </button>
-              {/* <button
+              <button
                 onClick={() => {
                   setViewModal(false);
                   handleOpenEdit(selectedResource);
@@ -1143,7 +1143,7 @@ export default function ResourcesPage() {
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 Edit Resource
-              </button> */}
+              </button>
             </div>
           </div>
         </div>

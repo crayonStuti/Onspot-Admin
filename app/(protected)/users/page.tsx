@@ -6,27 +6,29 @@ import {
   Eye,
   Edit2,
   Trash2,
-  MoreVertical,
   Download,
-  Loader2,
   AlertCircle,
   ChevronLeft,
   ChevronRight,
   X,
   MapPin,
   FileBadge,
+  Plus,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   getUsers,
   deleteUser,
   getUserById,
-  updateUserProfile,
+  getStates,
   getUserLicenses,
   getUserBookmarks,
   getUserMapPins,
   UserItem,
 } from "@/lib/api";
+import { AddUserModal, StateItem } from "./components/AddUserModal";
+import { EditUserModal } from "./components/EditUserModal";
 
 export default function UsersPage() {
   // State for Users List
@@ -43,27 +45,22 @@ export default function UsersPage() {
   // Selection State
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
+  // States List cache
+  const [states, setStates] = useState<StateItem[]>([]);
+  const [loadingStates, setLoadingStates] = useState(false);
+
   // View User Details Modal
   const [viewUserModal, setViewUserModal] = useState(false);
-  const [selectedUserDetails, setSelectedUserDetails] = useState<any | null>(
-    null,
-  );
+  const [selectedUserDetails, setSelectedUserDetails] = useState<any | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [userLicenses, setUserLicenses] = useState<any[]>([]);
   const [userBookmarks, setUserBookmarks] = useState<any[]>([]);
   const [userMapPins, setUserMapPins] = useState<any[]>([]);
 
-  // Edit User Modal
+  // Add & Edit Modals State
+  const [addUserModal, setAddUserModal] = useState(false);
   const [editUserModal, setEditUserModal] = useState(false);
   const [userToEdit, setUserToEdit] = useState<UserItem | null>(null);
-  const [editForm, setEditForm] = useState({
-    first_name: "",
-    last_name: "",
-    phone: "",
-    role: "user",
-    status: "active",
-  });
-  const [editSaving, setEditSaving] = useState(false);
 
   // Delete Confirmation Dialog
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -95,6 +92,21 @@ export default function UsersPage() {
       setLoading(false);
     }
   }, [page, limit, searchQuery]);
+
+  // Fetch States list
+  const fetchStatesList = useCallback(async () => {
+    if (states.length > 0) return;
+    setLoadingStates(true);
+    try {
+      const res = await getStates(1, 999);
+      const data = res?.data || res || [];
+      setStates(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch states:", err);
+    } finally {
+      setLoadingStates(false);
+    }
+  }, [states.length]);
 
   // Debounced search trigger
   useEffect(() => {
@@ -175,39 +187,17 @@ export default function UsersPage() {
     }
   };
 
-  // Open Edit User Modal
-  const handleEditUser = (user: UserItem) => {
-    setUserToEdit(user);
-    setEditForm({
-      first_name:
-        user.first_name && user.first_name !== "null" ? user.first_name : "",
-      last_name:
-        user.last_name && user.last_name !== "null" ? user.last_name : "",
-      phone: user.profile?.phone || user.phone || "",
-      role: user.role || "user",
-      status: user.status || "active",
-    });
-    setEditUserModal(true);
+  // Open Add User Modal
+  const handleOpenAddUser = () => {
+    fetchStatesList();
+    setAddUserModal(true);
   };
 
-  // Save Edited User
-  const handleSaveEditUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userToEdit) return;
-
-    setEditSaving(true);
-    try {
-      await updateUserProfile(userToEdit.id, editForm);
-      toast.success("User profile updated successfully");
-      setEditUserModal(false);
-      setUserToEdit(null);
-      fetchUsersList();
-    } catch (err: any) {
-      console.error("Update user error:", err);
-      toast.error(err?.message || "Failed to update user profile");
-    } finally {
-      setEditSaving(false);
-    }
+  // Open Edit User Modal
+  const handleOpenEditUser = (user: UserItem) => {
+    fetchStatesList();
+    setUserToEdit(user);
+    setEditUserModal(true);
   };
 
   // Delete User Prompt
@@ -332,13 +322,23 @@ export default function UsersPage() {
           <div className="flex items-center justify-between gap-3 pb-3 mb-2 border-b border-[#ececec]">
             <h3 className="font-semibold text-[#1f1f1f] text-[15px]">Users</h3>
 
-            <button
-              onClick={handleExportCSV}
-              className="h-[32px] px-3 rounded-[6px] border border-[#e4e4df] bg-white hover:bg-[#f7f7f4] text-[12.5px] font-normal text-[#444] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-[#666]" />
-              <span>Export</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportCSV}
+                className="h-[32px] px-3 rounded-[6px] border border-[#e4e4df] bg-white hover:bg-[#f7f7f4] text-[12.5px] font-normal text-[#444] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-[#666]" />
+                <span>Export</span>
+              </button>
+
+              <button
+                onClick={handleOpenAddUser}
+                className="h-[32px] px-3 rounded-[6px] bg-[#2d4a23] hover:bg-[#233a1b] text-[12.5px] font-medium text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5 text-white" />
+                <span>Add User</span>
+              </button>
+            </div>
           </div>
 
           {/* Table Content */}
@@ -349,19 +349,19 @@ export default function UsersPage() {
                   <th className="py-3 px-2 w-10 text-center">
                     <input
                       type="checkbox"
-                      onChange={handleSelectAll}
                       checked={
                         users.length > 0 &&
                         selectedUserIds.length === users.length
                       }
+                      onChange={handleSelectAll}
                       className="w-4 h-4 rounded-[4px] border-[#7D848D] accent-[#2d4a23] cursor-pointer"
                     />
                   </th>
                   <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
-                    Name
+                    User
                   </th>
                   <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
-                    Email
+                    Email Address
                   </th>
                   <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
                     Membership
@@ -377,26 +377,41 @@ export default function UsersPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#f1f1ed] text-[13px]">
+              <tbody className="divide-y divide-[#ececec]">
                 {loading ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="py-16 text-center text-[#7D848D]"
-                    >
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <Loader2 className="w-6 h-6 animate-spin text-[#2d4a23]" />
-                        <span className="text-[13px] font-medium text-[#7D848D]">
-                          Loading users...
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="py-3.5 px-2 text-center">
+                        <div className="w-4 h-4 bg-gray-200 rounded mx-auto" />
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-[30px] h-[30px] bg-gray-200 rounded-full" />
+                          <div className="h-4 w-28 bg-gray-200 rounded" />
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <div className="h-4 w-36 bg-gray-200 rounded" />
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <div className="h-5 w-16 bg-gray-200 rounded-md" />
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <div className="h-4 w-20 bg-gray-200 rounded" />
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <div className="h-4 w-16 bg-gray-200 rounded" />
+                      </td>
+                      <td className="py-3.5 px-3 text-right">
+                        <div className="h-7 w-20 bg-gray-200 rounded ml-auto" />
+                      </td>
+                    </tr>
+                  ))
                 ) : users.length === 0 ? (
                   <tr>
                     <td
                       colSpan={7}
-                      className="py-16 text-center text-[#7D848D]"
+                      className="py-12 text-center text-[#7D848D]"
                     >
                       <div className="flex flex-col items-center justify-center gap-1.5">
                         <AlertCircle className="w-8 h-8 text-gray-300" />
@@ -426,7 +441,7 @@ export default function UsersPage() {
                     const isBasic = membershipStr
                       .toLowerCase()
                       .includes("basic");
-                    const isActive = user.status !== "inactive";
+                    const isActive = user.status !== "inactive" && user.status !== "suspended";
                     const joinDate = user.created_at
                       ? new Date(user.created_at).toLocaleDateString("en-GB", {
                           day: "2-digit",
@@ -482,7 +497,7 @@ export default function UsersPage() {
                           {user.email}
                         </td>
 
-                        {/* Membership Pill (HTML pill, pill.basic, pill.free) */}
+                        {/* Membership Pill */}
                         <td className="py-3 px-3 align-middle">
                           <span
                             className={`inline-block px-3 py-0.5 rounded-[6px] text-[11.5px] font-normal border ${
@@ -502,7 +517,7 @@ export default function UsersPage() {
                           {joinDate}
                         </td>
 
-                        {/* Status (HTML status.active, status.inactive) */}
+                        {/* Status */}
                         <td className="py-3 px-3 align-middle">
                           <span
                             className={`inline-flex items-center gap-1.5 text-[12px] font-normal ${
@@ -514,11 +529,11 @@ export default function UsersPage() {
                                 isActive ? "bg-[#2f9e44]" : "bg-[#e03131]"
                               }`}
                             />
-                            {isActive ? "Active" : "Inactive"}
+                            {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : "Active"}
                           </span>
                         </td>
 
-                        {/* Actions (HTML act-btn) */}
+                        {/* Actions */}
                         <td className="py-3 px-3 text-right align-middle whitespace-nowrap">
                           <div className="inline-flex items-center gap-1.5 justify-end">
                             {/* View */}
@@ -531,13 +546,13 @@ export default function UsersPage() {
                             </button>
 
                             {/* Edit */}
-                            {/* <button
-                              onClick={() => handleEditUser(user)}
+                            <button
+                              onClick={() => handleOpenEditUser(user)}
                               title="Edit"
                               className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
                             >
                               <Edit2 className="w-4 h-4" />
-                            </button> */}
+                            </button>
 
                             {/* Delete */}
                             {user.role?.toLowerCase() !== "admin" && (
@@ -549,15 +564,6 @@ export default function UsersPage() {
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             )}
-
-                            {/* More */}
-                            {/* <button
-                              onClick={() => handleViewUser(user)}
-                              title="More"
-                              className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </button> */}
                           </div>
                         </td>
                       </tr>
@@ -568,218 +574,128 @@ export default function UsersPage() {
             </table>
           </div>
 
-          {/* Table Footer & Numbered Pagination */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 pb-1 text-[12.5px] text-[#888] border-t border-[#f1f1ed] mt-2">
+          {/* Footer / Pagination Controls */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 mt-2 border-t border-[#ececec] text-[12.5px] text-[#7D848D]">
             <div>
-              Showing 1 to {users.length} of {totalUsers} users
+              Showing {users.length > 0 ? (page - 1) * limit + 1 : 0} to{" "}
+              {Math.min(page * limit, totalUsers)} of {totalUsers} users
             </div>
 
-            <div className="flex items-center gap-1">
-              {/* Previous */}
+            <div className="flex items-center gap-1.5">
               <button
-                disabled={page <= 1 || loading}
+                disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="min-w-[28px] h-7 px-2 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[12.5px] hover:bg-[#f7f7f4] disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
+                className="w-8 h-8 rounded-[6px] border border-[#e4e4df] bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#f7f7f4] flex items-center justify-center transition-colors cursor-pointer"
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
+                <ChevronLeft className="w-4 h-4 text-[#444]" />
               </button>
 
-              {/* Numbered Page Buttons */}
-              {paginationItems.map((item, idx) => {
-                if (item === "…") {
-                  return (
-                    <span
-                      key={idx}
-                      className="min-w-[28px] h-7 flex items-center justify-center text-[#888]"
-                    >
-                      …
-                    </span>
-                  );
-                }
-                const isCurr = item === page;
-                return (
+              {paginationItems.map((item, idx) =>
+                typeof item === "number" ? (
                   <button
                     key={idx}
-                    onClick={() => setPage(Number(item))}
-                    className={`min-w-[28px] h-7 px-2 border rounded-[6px] text-[12.5px] transition-all flex items-center justify-center cursor-pointer ${
-                      isCurr
-                        ? "bg-[#f5efdc] text-[#1f1f1f] border-[#e6dfc6] font-semibold"
-                        : "bg-white text-[#4a4a4a] border-[#e4e4df] hover:bg-[#f7f7f4]"
+                    onClick={() => setPage(item)}
+                    className={`w-8 h-8 rounded-[6px] font-medium text-xs flex items-center justify-center transition-colors cursor-pointer ${
+                      page === item
+                        ? "bg-[#2d4a23] text-white"
+                        : "border border-[#e4e4df] bg-white text-[#444] hover:bg-[#f7f7f4]"
                     }`}
                   >
                     {item}
                   </button>
-                );
-              })}
+                ) : (
+                  <span key={idx} className="px-1 text-gray-400">
+                    {item}
+                  </span>
+                ),
+              )}
 
-              {/* Next */}
               <button
-                disabled={page >= totalPages || loading}
-                onClick={() => setPage((p) => p + 1)}
-                className="min-w-[28px] h-7 px-2 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[12.5px] hover:bg-[#f7f7f4] disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="w-8 h-8 rounded-[6px] border border-[#e4e4df] bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#f7f7f4] flex items-center justify-center transition-colors cursor-pointer"
               >
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-4 h-4 text-[#444]" />
               </button>
             </div>
           </div>
         </section>
 
-        {/* MAP SECTION (4 cols on XL, 1:1 HTML) */}
-        <div className="xl:col-span-4 h-[560px] rounded-[14px] overflow-hidden border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] bg-white">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d44196.236392315026!2d-93.81033787191589!3d46.185289524094266!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b157a8f77c8e1f%3A0xfbe655e10ff018bc!2sVineland%2C%20MN%2056359%2C%20USA!5e0!3m2!1sen!2sin!4v1781021191340!5m2!1sen!2sin"
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="User Map Location View"
-          />
-        </div>
+        {/* ===================== SIDEBAR SUMMARY (1:1 HTML) ===================== */}
+        <section className="xl:col-span-4 bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] flex flex-col gap-4">
+          <div className="pb-3 border-b border-[#ececec]">
+            <h3 className="font-semibold text-[#1f1f1f] text-[15px]">
+              Overview Summary
+            </h3>
+            <p className="text-xs text-[#7D848D] mt-0.5">
+              Quick breakdown of accounts
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3.5 rounded-xl bg-[#fbfbf8] border border-[#ececec]">
+              <span className="text-xs text-[#7D848D] block font-medium">
+                Total Users
+              </span>
+              <span className="text-xl font-bold text-[#111] mt-1 block">
+                {totalUsers}
+              </span>
+            </div>
+            <div className="p-3.5 rounded-xl bg-[#fbfbf8] border border-[#ececec]">
+              <span className="text-xs text-[#7D848D] block font-medium">
+                Selected
+              </span>
+              <span className="text-xl font-bold text-[#2d4a23] mt-1 block">
+                {selectedUserIds.length}
+              </span>
+            </div>
+          </div>
+        </section>
       </section>
 
-      {/* ===================== EDIT USER MODAL ===================== */}
-      {editUserModal && userToEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-              <div>
-                <h3 className="text-base font-bold text-gray-900">Edit User</h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {userToEdit.email}
-                </p>
-              </div>
-              <button
-                onClick={() => setEditUserModal(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {/* ===================== ADD USER MODAL ===================== */}
+      <AddUserModal
+        isOpen={addUserModal}
+        onClose={() => setAddUserModal(false)}
+        onSuccess={fetchUsersList}
+        states={states}
+        loadingStates={loadingStates}
+      />
 
-            <form onSubmit={handleSaveEditUser} className="py-4 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.first_name}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, first_name: e.target.value })
-                    }
-                    className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#2d4a23]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.last_name}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, last_name: e.target.value })
-                    }
-                    className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#2d4a23]"
-                  />
-                </div>
-              </div>
+      {/* ===================== EDIT USER PROFILE MODAL ===================== */}
+      <EditUserModal
+        isOpen={editUserModal}
+        userToEdit={userToEdit}
+        onClose={() => {
+          setEditUserModal(false);
+          setUserToEdit(null);
+        }}
+        onSuccess={fetchUsersList}
+        states={states}
+        loadingStates={loadingStates}
+      />
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Phone
-                </label>
-                <input
-                  type="text"
-                  value={editForm.phone}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, phone: e.target.value })
-                  }
-                  placeholder="+1 (555) 000-0000"
-                  className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#2d4a23]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Role
-                  </label>
-                  <select
-                    value={editForm.role}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, role: e.target.value })
-                    }
-                    className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#2d4a23]"
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    value={editForm.status}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, status: e.target.value })
-                    }
-                    className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#2d4a23]"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setEditUserModal(false)}
-                  className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={editSaving}
-                  className="px-5 py-2 rounded-xl bg-[#2d4a23] hover:bg-[#203619] text-white text-xs font-semibold shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  {editSaving ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <span>Save Changes</span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ===================== USER DETAILS MODAL ===================== */}
+      {/* ===================== VIEW USER DETAILS DRAWER / MODAL ===================== */}
       {viewUserModal && selectedUserDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6 space-y-5">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#2d4a23]/10 text-[#2d4a23] font-extrabold flex items-center justify-center text-lg">
-                  {selectedUserDetails.first_name &&
-                  selectedUserDetails.first_name !== "null"
-                    ? String(selectedUserDetails.first_name).charAt(0)
-                    : selectedUserDetails.email?.charAt(0).toUpperCase()}
+                <div className="w-12 h-12 rounded-full bg-emerald-50 text-[#2d4a23] font-bold text-lg flex items-center justify-center flex-shrink-0 border border-emerald-100 overflow-hidden">
+                  {selectedUserDetails.profile?.profile_picture ? (
+                    <img
+                      src={selectedUserDetails.profile.profile_picture}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    getUserDisplayName(selectedUserDetails).charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">
+                  <h3 className="text-base font-bold text-gray-900">
                     {getUserDisplayName(selectedUserDetails)}
-                  </h2>
+                  </h3>
                   <p className="text-xs text-gray-500">
                     {selectedUserDetails.email}
                   </p>
@@ -793,14 +709,13 @@ export default function UsersPage() {
               </button>
             </div>
 
-            {/* Profile Content */}
-            <div className="py-5 space-y-6">
-              {/* Overview Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-gray-50/70 border border-gray-100 text-xs">
+            {/* Profile Grid */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs bg-gray-50/70 p-4 rounded-xl border border-gray-100">
                 <div>
                   <span className="text-gray-400 block font-medium">Role</span>
                   <span className="font-semibold text-gray-800 capitalize">
-                    {String(selectedUserDetails?.user?.role || "user")}
+                    {String(selectedUserDetails?.role || selectedUserDetails?.user?.role || "user")}
                   </span>
                 </div>
                 <div>

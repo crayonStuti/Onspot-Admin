@@ -168,7 +168,9 @@ export default function StatesPage() {
       state_description: state.state_description || "",
     });
     setFlagFile(null);
-    setFlagPreview(state.state_flag_image ? getFlagUrl(state.state_flag_image) : null);
+    setFlagPreview(
+      state.state_flag_image ? getFlagUrl(state.state_flag_image) : null,
+    );
     setFormModalOpen(true);
   };
 
@@ -194,7 +196,7 @@ export default function StatesPage() {
       toast.error("State name is required");
       return;
     }
-    if (!formData.state_code.trim()) {
+    if (!editingState && !formData.state_code.trim()) {
       toast.error("State code is required");
       return;
     }
@@ -203,7 +205,9 @@ export default function StatesPage() {
     try {
       const payload = new FormData();
       payload.append("state_name", formData.state_name.trim());
-      payload.append("state_code", formData.state_code.trim().toUpperCase());
+      if (!editingState && formData.state_code.trim()) {
+        payload.append("state_code", formData.state_code.trim().toUpperCase());
+      }
       if (formData.state_description) {
         payload.append("state_description", formData.state_description.trim());
       }
@@ -419,13 +423,13 @@ export default function StatesPage() {
                           </button>
 
                           {/* Edit */}
-                          {/* <button
+                          <button
                             onClick={() => handleOpenEdit(state)}
                             title="Edit"
                             className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
-                          </button> */}
+                          </button>
 
                           {/* Delete */}
                           <button
@@ -631,11 +635,12 @@ export default function StatesPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    State Code <span className="text-red-500">*</span>
+                    State Code {!editingState && <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="text"
-                    required
+                    required={!editingState}
+                    disabled={!!editingState}
                     maxLength={5}
                     value={formData.state_code}
                     onChange={(e) =>
@@ -645,7 +650,11 @@ export default function StatesPage() {
                       })
                     }
                     placeholder="e.g. TX"
-                    className="w-full h-10 px-3.5 border border-[#e4e4df] bg-white rounded-lg text-sm font-mono uppercase text-[#333] focus:outline-none focus:border-[#2d4a23]"
+                    className={`w-full h-10 px-3.5 border border-[#e4e4df] rounded-lg text-sm font-mono uppercase focus:outline-none focus:border-[#2d4a23] ${
+                      editingState
+                        ? "bg-gray-100 cursor-not-allowed text-gray-500 opacity-80"
+                        : "bg-white text-[#333]"
+                    }`}
                   />
                 </div>
               </div>

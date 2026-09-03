@@ -132,7 +132,10 @@ export default function MembershipsPage() {
       name: plan.name || "",
       description: plan.description || "",
       price_usd: String(plan.price_usd ?? ""),
-      duration_days: String(plan.duration_days ?? ""),
+      duration_days:
+        plan.duration_days !== null && plan.duration_days !== undefined
+          ? String(plan.duration_days)
+          : "",
     });
     setImageFile(null);
     setImagePreview(
@@ -193,7 +196,7 @@ export default function MembershipsPage() {
       payload.append("name", editForm.name.trim());
       payload.append("description", editForm.description || "");
       payload.append("price_usd", editForm.price_usd);
-      payload.append("duration_days", editForm.duration_days || "30");
+      payload.append("duration_days", editForm.duration_days);
 
       Object.entries(editFeatures).forEach(([key, value]) => {
         payload.append(`feature[${key}]`, String(value));
@@ -468,6 +471,13 @@ export default function MembershipsPage() {
                           </button>
 
                           {/* Edit */}
+                          <button
+                            onClick={() => handleOpenEdit(plan)}
+                            title="Edit Plan"
+                            className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
 
                           {/* Delete */}
                           <button
@@ -631,7 +641,7 @@ export default function MembershipsPage() {
               >
                 Close
               </button>
-              {/* <button
+              <button
                 onClick={() => {
                   setViewModal(false);
                   handleOpenEdit(selectedPlan);
@@ -640,7 +650,7 @@ export default function MembershipsPage() {
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 Edit Plan
-              </button> */}
+              </button>
             </div>
           </div>
         </div>

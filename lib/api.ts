@@ -505,6 +505,9 @@ export async function createState(data: any): Promise<any> {
 
 export async function updateState(stateId: string, data: any): Promise<any> {
   const isFormData = data instanceof FormData;
+  if (!isFormData && data && typeof data === "object") {
+    delete data.state_code;
+  }
   return await fetchApi(`/states/${stateId}`, {
     method: "PUT",
     body: isFormData ? data : JSON.stringify(data),

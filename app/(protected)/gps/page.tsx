@@ -20,12 +20,7 @@ import {
   Lock,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  getMapPins,
-  getMapPinById,
-  getStates,
-  MapPinItem,
-} from "@/lib/api";
+import { getMapPins, getMapPinById, getStates, MapPinItem } from "@/lib/api";
 
 export default function GPSActivityPage() {
   // Map Pins state
@@ -67,7 +62,13 @@ export default function GPSActivityPage() {
   const fetchPinsList = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getMapPins(page, limit, searchQuery, selectedState, selectedVisibility);
+      const res = await getMapPins(
+        page,
+        limit,
+        searchQuery,
+        selectedState,
+        selectedVisibility,
+      );
 
       if (res && res.data) {
         if (Array.isArray(res.data)) {
@@ -86,7 +87,9 @@ export default function GPSActivityPage() {
           setMapPins(res.data.pins);
           if (res.data.pagination) {
             setTotalPages(res.data.pagination.totalPages || 1);
-            setTotalItems(res.data.pagination.totaldata || res.data.pins.length);
+            setTotalItems(
+              res.data.pagination.totaldata || res.data.pins.length,
+            );
           }
         }
       } else if (Array.isArray(res)) {
@@ -139,26 +142,47 @@ export default function GPSActivityPage() {
       return;
     }
 
-    const headers = ["ID", "User", "Latitude", "Longitude", "State", "Tag Type", "Visibility", "Date"];
+    const headers = [
+      "ID",
+      "User",
+      "Latitude",
+      "Longitude",
+      "State",
+      "Tag Type",
+      "Visibility",
+      "Date",
+    ];
     const rows = mapPins.map((p) => [
       p.id,
-      typeof p.user === "object" && p.user !== null ? (p.user.email || p.user.display_name || "N/A") : String(p.user || "N/A"),
+      typeof p.user === "object" && p.user !== null
+        ? p.user.email || p.user.display_name || "N/A"
+        : String(p.user || "N/A"),
       String(p.latitude || ""),
       String(p.longitude || ""),
-      typeof p.state === "object" && p.state !== null ? (p.state.state_name || p.state.state_code || "N/A") : String(p.state || p.state_name || "N/A"),
-      typeof p.tag_type === "object" && p.tag_type !== null ? (p.tag_type.name || "General") : String(p.tag_type || p.type || "General"),
+      typeof p.state === "object" && p.state !== null
+        ? p.state.state_name || p.state.state_code || "N/A"
+        : String(p.state || p.state_name || "N/A"),
+      typeof p.tag_type === "object" && p.tag_type !== null
+        ? p.tag_type.name || "General"
+        : String(p.tag_type || p.type || "General"),
       String(p.visibility || "Public"),
       p.created_at ? new Date(p.created_at).toLocaleDateString() : "",
     ]);
 
     const csvContent =
       "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.map((val) => `"${val}"`).join(","))].join("\n");
+      [
+        headers.join(","),
+        ...rows.map((e) => e.map((val) => `"${val}"`).join(",")),
+      ].join("\n");
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `onspot_gps_activity_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute(
+      "download",
+      `onspot_gps_activity_${new Date().toISOString().slice(0, 10)}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -206,7 +230,10 @@ export default function GPSActivityPage() {
           >
             <option value="">All States</option>
             {statesList.map((s, idx) => {
-              const sName = typeof s === "string" ? s : s?.state_name || s?.name || `State ${idx + 1}`;
+              const sName =
+                typeof s === "string"
+                  ? s
+                  : s?.state_name || s?.name || `State ${idx + 1}`;
               return (
                 <option key={idx} value={sName}>
                   {sName}
@@ -257,47 +284,79 @@ export default function GPSActivityPage() {
         {/* LEFT COLUMN: RECENT GPS ACTIVITY TABLE (8 cols on XL) */}
         <div className="xl:col-span-8 flex flex-col space-y-4">
           <section className="bg-white rounded-[14px] p-5 pb-3 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)]">
-            <h3 className="text-[17px] font-bold text-[#1f1f1f] mb-3">Recent GPS/ Tagging Activity</h3>
+            <h3 className="text-[17px] font-bold text-[#1f1f1f] mb-3">
+              Recent GPS/ Tagging Activity
+            </h3>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-[13px]">
                 <thead>
                   <tr className="border-b border-[#ececec]">
-                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">User Name</th>
-                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">Tagged Location</th>
-                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">State</th>
-                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">Tag Type</th>
-                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">Date</th>
-                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">Shared Public?</th>
-                    <th className="py-3.5 px-3 text-right font-semibold text-[#111111] text-[13px]">Actions</th>
+                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
+                      User Name
+                    </th>
+                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
+                      Tagged Location
+                    </th>
+                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
+                      State
+                    </th>
+                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
+                      Tag Type
+                    </th>
+                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
+                      Date
+                    </th>
+                    <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
+                      Shared Public?
+                    </th>
+                    <th className="py-3.5 px-3 text-right font-semibold text-[#111111] text-[13px]">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f1f1ed] text-[13px]">
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="py-16 text-center text-[#7D848D]">
+                      <td
+                        colSpan={7}
+                        className="py-16 text-center text-[#7D848D]"
+                      >
                         <div className="flex flex-col items-center justify-center gap-2">
                           <Loader2 className="w-6 h-6 animate-spin text-[#2d4a23]" />
-                          <span className="text-[13px] font-medium text-[#7D848D]">Loading GPS activity...</span>
+                          <span className="text-[13px] font-medium text-[#7D848D]">
+                            Loading GPS activity...
+                          </span>
                         </div>
                       </td>
                     </tr>
                   ) : mapPins.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-16 text-center text-[#7D848D]">
+                      <td
+                        colSpan={7}
+                        className="py-16 text-center text-[#7D848D]"
+                      >
                         <div className="flex flex-col items-center justify-center gap-1.5">
                           <AlertCircle className="w-8 h-8 text-gray-300" />
-                          <p className="text-[13px] font-semibold text-gray-700">No activity matches your filters.</p>
+                          <p className="text-[13px] font-semibold text-gray-700">
+                            No activity matches your filters.
+                          </p>
                         </div>
                       </td>
                     </tr>
                   ) : (
                     mapPins.map((pin, index) => {
-                      const userEmail = typeof pin.user === "object" && pin.user !== null
-                        ? (pin.user.email || pin.user.display_name || "Anonymous User")
-                        : typeof pin.user === "string" ? pin.user : "Anonymous User";
+                      const userEmail =
+                        typeof pin.user === "object" && pin.user !== null
+                          ? pin.user.email ||
+                            pin.user.display_name ||
+                            "Anonymous User"
+                          : typeof pin.user === "string"
+                            ? pin.user
+                            : "Anonymous User";
                       const userInitial = userEmail.charAt(0).toUpperCase();
-                      const isPublic = String(pin.visibility || "").toLowerCase() === "public";
+                      const isPublic =
+                        String(pin.visibility || "").toLowerCase() === "public";
                       const dateStr = pin.created_at
                         ? new Date(pin.created_at).toLocaleDateString("en-GB", {
                             day: "2-digit",
@@ -305,31 +364,58 @@ export default function GPSActivityPage() {
                             year: "numeric",
                           })
                         : "—";
-                      const latStr = typeof pin.latitude === "number" ? pin.latitude.toFixed(4) : String(pin.latitude || "");
-                      const lngStr = typeof pin.longitude === "number" ? pin.longitude.toFixed(4) : String(pin.longitude || "");
-                      const locTitle = String(pin.location_name || pin.title || pin.loc || "Tagged Location");
-                      
-                      const stateDisplay = typeof pin.state === "object" && pin.state !== null
-                        ? (pin.state.state_name || pin.state.state_code || "—")
-                        : typeof pin.state_name === "string"
-                        ? pin.state_name
-                        : (typeof pin.state === "string" ? pin.state : "—");
+                      const latStr =
+                        typeof pin.latitude === "number"
+                          ? pin.latitude.toFixed(4)
+                          : String(pin.latitude || "");
+                      const lngStr =
+                        typeof pin.longitude === "number"
+                          ? pin.longitude.toFixed(4)
+                          : String(pin.longitude || "");
+                      const locTitle = String(
+                        pin.location_name ||
+                          pin.title ||
+                          pin.loc ||
+                          "Tagged Location",
+                      );
 
-                      const tagTypeDisplay = typeof pin.tag_type === "object" && pin.tag_type !== null
-                        ? (pin.tag_type.name || "General")
-                        : typeof pin.type === "object" && pin.type !== null
-                        ? (pin.type.name || "General")
-                        : (typeof pin.tag_type === "string" ? pin.tag_type : typeof pin.type === "string" ? pin.type : (Array.isArray(pin.tags) && pin.tags[0]?.name ? pin.tags[0].name : "General"));
+                      const stateDisplay =
+                        typeof pin.state === "object" && pin.state !== null
+                          ? pin.state.state_name || pin.state.state_code || "—"
+                          : typeof pin.state_name === "string"
+                            ? pin.state_name
+                            : typeof pin.state === "string"
+                              ? pin.state
+                              : "—";
+
+                      const tagTypeDisplay =
+                        typeof pin.tag_type === "object" &&
+                        pin.tag_type !== null
+                          ? pin.tag_type.name || "General"
+                          : typeof pin.type === "object" && pin.type !== null
+                            ? pin.type.name || "General"
+                            : typeof pin.tag_type === "string"
+                              ? pin.tag_type
+                              : typeof pin.type === "string"
+                                ? pin.type
+                                : Array.isArray(pin.tags) && pin.tags[0]?.name
+                                  ? pin.tags[0].name
+                                  : "General";
 
                       return (
-                        <tr key={pin.id || index} className="hover:bg-[#fbfbf8] transition-colors">
+                        <tr
+                          key={pin.id || index}
+                          className="hover:bg-[#fbfbf8] transition-colors"
+                        >
                           {/* User Name */}
                           <td className="py-3.5 px-3 align-middle">
                             <div className="flex items-center gap-2.5 text-[#111111] font-medium">
                               <div className="w-[30px] h-[30px] rounded-full bg-[#f1f1ed] text-[#4a4a4a] font-semibold flex items-center justify-center text-xs flex-shrink-0">
                                 {userInitial}
                               </div>
-                              <span className="truncate max-w-[130px]">{userEmail}</span>
+                              <span className="truncate max-w-[130px]">
+                                {userEmail}
+                              </span>
                             </div>
                           </td>
 
@@ -384,7 +470,7 @@ export default function GPSActivityPage() {
                               </button>
 
                               {/* Share */}
-                              <button
+                              {/* <button
                                 onClick={() => {
                                   toast.info(`Sharing pin: ${locTitle}`);
                                 }}
@@ -392,7 +478,7 @@ export default function GPSActivityPage() {
                                 className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
                               >
                                 <Share2 className="w-3.5 h-3.5" />
-                              </button>
+                              </button> */}
 
                               {/* More */}
                               <button
@@ -416,7 +502,8 @@ export default function GPSActivityPage() {
           {/* Table Footer & Numbered Pagination */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-[12.5px] text-[#888]">
             <div>
-              Showing 1 to {mapPins.length} of {totalItems || mapPins.length} pins
+              Showing 1 to {mapPins.length} of {totalItems || mapPins.length}{" "}
+              pins
             </div>
 
             <div className="flex items-center gap-1">
@@ -433,7 +520,10 @@ export default function GPSActivityPage() {
               {paginationItems.map((item, idx) => {
                 if (item === "…") {
                   return (
-                    <span key={idx} className="min-w-[28px] h-7 flex items-center justify-center text-[#888]">
+                    <span
+                      key={idx}
+                      className="min-w-[28px] h-7 flex items-center justify-center text-[#888]"
+                    >
                       …
                     </span>
                   );
@@ -493,7 +583,10 @@ export default function GPSActivityPage() {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-gray-900">
-                    {selectedPin.location_name || selectedPin.title || selectedPin.loc || "Map Pin Details"}
+                    {selectedPin.location_name ||
+                      selectedPin.title ||
+                      selectedPin.loc ||
+                      "Map Pin Details"}
                   </h3>
                   <p className="text-xs text-gray-500">
                     Created by {selectedPin.user?.email || "User"}
@@ -512,7 +605,9 @@ export default function GPSActivityPage() {
             {detailsLoading ? (
               <div className="py-12 flex flex-col items-center justify-center gap-2">
                 <Loader2 className="w-6 h-6 animate-spin text-[#0E3E27]" />
-                <span className="text-xs text-gray-500 font-medium">Loading pin details...</span>
+                <span className="text-xs text-gray-500 font-medium">
+                  Loading pin details...
+                </span>
               </div>
             ) : (
               <div className="py-5 space-y-5 text-xs">
@@ -540,7 +635,8 @@ export default function GPSActivityPage() {
                 <div className="grid grid-cols-2 gap-3 p-3.5 bg-gray-50/70 rounded-xl border border-gray-100">
                   <div>
                     <span className="text-[11px] font-medium text-gray-400 block mb-1 flex items-center gap-1">
-                      {String(selectedPin.visibility).toLowerCase() === "public" ? (
+                      {String(selectedPin.visibility).toLowerCase() ===
+                      "public" ? (
                         <Globe className="w-3.5 h-3.5 text-emerald-600" />
                       ) : (
                         <Lock className="w-3.5 h-3.5 text-gray-500" />
@@ -549,7 +645,8 @@ export default function GPSActivityPage() {
                     </span>
                     <span
                       className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${
-                        String(selectedPin.visibility).toLowerCase() === "public"
+                        String(selectedPin.visibility).toLowerCase() ===
+                        "public"
                           ? "bg-emerald-100 text-emerald-800"
                           : "bg-gray-200 text-gray-700"
                       }`}
@@ -576,31 +673,40 @@ export default function GPSActivityPage() {
                     <AlignLeft className="w-3.5 h-3.5" /> Description
                   </span>
                   <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-gray-700 leading-relaxed min-h-[60px]">
-                    {selectedPin.description || <span className="text-gray-400 italic">No description provided for this GPS tag.</span>}
+                    {selectedPin.description || (
+                      <span className="text-gray-400 italic">
+                        No description provided for this GPS tag.
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 {/* Tags */}
-                {selectedPin.tags && Array.isArray(selectedPin.tags) && selectedPin.tags.length > 0 && (
-                  <div>
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5 flex items-center gap-1">
-                      <Tag className="w-3.5 h-3.5" /> Assigned Tags
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedPin.tags.map((tag: any, tIdx: number) => {
-                        const tagName = typeof tag === "object" && tag !== null ? (tag.name || tag.title || `Tag ${tIdx + 1}`) : String(tag);
-                        return (
-                          <span
-                            key={tag.id || tIdx}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[#0E3E27] font-semibold text-[11px] border border-emerald-100"
-                          >
-                            {tagName}
-                          </span>
-                        );
-                      })}
+                {selectedPin.tags &&
+                  Array.isArray(selectedPin.tags) &&
+                  selectedPin.tags.length > 0 && (
+                    <div>
+                      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+                        <Tag className="w-3.5 h-3.5" /> Assigned Tags
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedPin.tags.map((tag: any, tIdx: number) => {
+                          const tagName =
+                            typeof tag === "object" && tag !== null
+                              ? tag.name || tag.title || `Tag ${tIdx + 1}`
+                              : String(tag);
+                          return (
+                            <span
+                              key={tag.id || tIdx}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[#0E3E27] font-semibold text-[11px] border border-emerald-100"
+                            >
+                              {tagName}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             )}
 
