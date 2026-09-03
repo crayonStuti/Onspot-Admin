@@ -1,4 +1,4 @@
-export const API_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://onspot-api-frontend-61nmav-f95e2f-194-163-134-149.traefik.me";
+export const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export class ApiError extends Error {
   statusCode: number;

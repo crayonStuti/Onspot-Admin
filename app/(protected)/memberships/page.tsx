@@ -113,7 +113,11 @@ export default function MembershipsPage() {
     try {
       const res = await getMembershipById(plan.id);
       const data = res.membership || res.data || res;
-      setSelectedPlan(data);
+      setSelectedPlan({
+        ...plan,
+        ...data,
+        totalUsers: plan.totalUsers ?? (plan as any)?.total_users ?? 0,
+      });
     } catch (err: any) {
       console.warn("Error fetching membership details:", err);
     } finally {

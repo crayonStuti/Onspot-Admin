@@ -540,13 +540,15 @@ export default function UsersPage() {
                             </button> */}
 
                             {/* Delete */}
-                            <button
-                              onClick={() => handleDeletePrompt(user)}
-                              title="Delete"
-                              className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-red-600 hover:border-red-200 inline-flex items-center justify-center transition-colors cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {user.role?.toLowerCase() !== "admin" && (
+                              <button
+                                onClick={() => handleDeletePrompt(user)}
+                                title="Delete"
+                                className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-red-600 hover:border-red-200 inline-flex items-center justify-center transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
 
                             {/* More */}
                             {/* <button
@@ -798,7 +800,7 @@ export default function UsersPage() {
                 <div>
                   <span className="text-gray-400 block font-medium">Role</span>
                   <span className="font-semibold text-gray-800 capitalize">
-                    {String(selectedUserDetails.role || "user")}
+                    {String(selectedUserDetails?.user?.role || "user")}
                   </span>
                 </div>
                 <div>

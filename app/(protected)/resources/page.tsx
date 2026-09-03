@@ -1134,7 +1134,7 @@ export default function ResourcesPage() {
               >
                 Close
               </button>
-              <button
+              {/* <button
                 onClick={() => {
                   setViewModal(false);
                   handleOpenEdit(selectedResource);
@@ -1143,7 +1143,7 @@ export default function ResourcesPage() {
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 Edit Resource
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
