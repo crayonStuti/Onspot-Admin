@@ -57,7 +57,8 @@ export function AddUserModal({
     e.preventDefault();
     const errors: Record<string, string> = {};
 
-    if (!addForm.first_name.trim()) errors.first_name = "First name is required";
+    if (!addForm.first_name.trim())
+      errors.first_name = "First name is required";
     if (!addForm.last_name.trim()) errors.last_name = "Last name is required";
     if (!addForm.email.trim() || !/\S+@\S+\.\S+/.test(addForm.email)) {
       errors.email = "Valid email address is required";
@@ -75,7 +76,8 @@ export function AddUserModal({
       } else if (!/[0-9]/.test(addForm.password)) {
         errors.password = "Password must contain at least one number";
       } else if (!/[^A-Za-z0-9]/.test(addForm.password)) {
-        errors.password = "Password must contain at least one special character";
+        errors.password =
+          "Password must contain at least one special character";
       }
     }
 
@@ -104,7 +106,8 @@ export function AddUserModal({
         payload.state_id = addForm.state_id;
       }
 
-      await registerUser(payload);
+      const res = await registerUser(payload);
+      console.log(res);
       toast.success("User created successfully");
       onSuccess();
       onClose();
@@ -125,8 +128,12 @@ export function AddUserModal({
               <UserPlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900">Add New User</h3>
-              <p className="text-xs text-gray-500">Create a new user account in the system</p>
+              <h3 className="text-base font-bold text-gray-900">
+                Add New User
+              </h3>
+              <p className="text-xs text-gray-500">
+                Create a new user account in the system
+              </p>
             </div>
           </div>
           <button
@@ -150,12 +157,21 @@ export function AddUserModal({
                 <input
                   type="text"
                   value={addForm.first_name}
-                  onChange={(e) => setAddForm((prev) => ({ ...prev, first_name: e.target.value }))}
+                  onChange={(e) =>
+                    setAddForm((prev) => ({
+                      ...prev,
+                      first_name: e.target.value,
+                    }))
+                  }
                   placeholder="First Name"
-                  className={`w-full h-10 pl-9 pr-3 rounded-lg border ${addErrors.first_name ? 'border-red-500' : 'border-gray-200'} text-xs focus:outline-none focus:border-[#2d4a23]`}
+                  className={`w-full h-10 pl-9 pr-3 rounded-lg border ${addErrors.first_name ? "border-red-500" : "border-gray-200"} text-xs focus:outline-none focus:border-[#2d4a23]`}
                 />
               </div>
-              {addErrors.first_name && <p className="text-[11px] text-red-500">{addErrors.first_name}</p>}
+              {addErrors.first_name && (
+                <p className="text-[11px] text-red-500">
+                  {addErrors.first_name}
+                </p>
+              )}
             </div>
 
             {/* Last Name */}
@@ -168,12 +184,21 @@ export function AddUserModal({
                 <input
                   type="text"
                   value={addForm.last_name}
-                  onChange={(e) => setAddForm((prev) => ({ ...prev, last_name: e.target.value }))}
+                  onChange={(e) =>
+                    setAddForm((prev) => ({
+                      ...prev,
+                      last_name: e.target.value,
+                    }))
+                  }
                   placeholder="Last Name"
-                  className={`w-full h-10 pl-9 pr-3 rounded-lg border ${addErrors.last_name ? 'border-red-500' : 'border-gray-200'} text-xs focus:outline-none focus:border-[#2d4a23]`}
+                  className={`w-full h-10 pl-9 pr-3 rounded-lg border ${addErrors.last_name ? "border-red-500" : "border-gray-200"} text-xs focus:outline-none focus:border-[#2d4a23]`}
                 />
               </div>
-              {addErrors.last_name && <p className="text-[11px] text-red-500">{addErrors.last_name}</p>}
+              {addErrors.last_name && (
+                <p className="text-[11px] text-red-500">
+                  {addErrors.last_name}
+                </p>
+              )}
             </div>
 
             {/* Email */}
@@ -186,12 +211,16 @@ export function AddUserModal({
                 <input
                   type="email"
                   value={addForm.email}
-                  onChange={(e) => setAddForm((prev) => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) =>
+                    setAddForm((prev) => ({ ...prev, email: e.target.value }))
+                  }
                   placeholder="user@example.com"
-                  className={`w-full h-10 pl-9 pr-3 rounded-lg border ${addErrors.email ? 'border-red-500' : 'border-gray-200'} text-xs focus:outline-none focus:border-[#2d4a23]`}
+                  className={`w-full h-10 pl-9 pr-3 rounded-lg border ${addErrors.email ? "border-red-500" : "border-gray-200"} text-xs focus:outline-none focus:border-[#2d4a23]`}
                 />
               </div>
-              {addErrors.email && <p className="text-[11px] text-red-500">{addErrors.email}</p>}
+              {addErrors.email && (
+                <p className="text-[11px] text-red-500">{addErrors.email}</p>
+              )}
             </div>
 
             {/* Password */}
@@ -204,22 +233,33 @@ export function AddUserModal({
                 <input
                   type={passwordVisible ? "text" : "password"}
                   value={addForm.password}
-                  onChange={(e) => setAddForm((prev) => ({ ...prev, password: e.target.value }))}
+                  onChange={(e) =>
+                    setAddForm((prev) => ({
+                      ...prev,
+                      password: e.target.value,
+                    }))
+                  }
                   placeholder="••••••••"
-                  className={`w-full h-10 pl-9 pr-9 rounded-lg border ${addErrors.password ? 'border-red-500' : 'border-gray-200'} text-xs focus:outline-none focus:border-[#2d4a23]`}
+                  className={`w-full h-10 pl-9 pr-9 rounded-lg border ${addErrors.password ? "border-red-500" : "border-gray-200"} text-xs focus:outline-none focus:border-[#2d4a23]`}
                 />
                 <button
                   type="button"
                   onClick={() => setPasswordVisible(!passwordVisible)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {passwordVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {passwordVisible ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
               {addErrors.password ? (
                 <p className="text-[11px] text-red-500">{addErrors.password}</p>
               ) : (
-                <p className="text-[10px] text-gray-400">Must include uppercase, lowercase, number & special char.</p>
+                <p className="text-[10px] text-gray-400">
+                  Must include uppercase, lowercase, number & special char.
+                </p>
               )}
             </div>
 
@@ -232,7 +272,9 @@ export function AddUserModal({
                 <Shield className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <select
                   value={addForm.role}
-                  onChange={(e) => setAddForm((prev) => ({ ...prev, role: e.target.value }))}
+                  onChange={(e) =>
+                    setAddForm((prev) => ({ ...prev, role: e.target.value }))
+                  }
                   className="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:border-[#2d4a23]"
                 >
                   <option value="user">User</option>
@@ -251,7 +293,9 @@ export function AddUserModal({
                 <User className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <select
                   value={addForm.status}
-                  onChange={(e) => setAddForm((prev) => ({ ...prev, status: e.target.value }))}
+                  onChange={(e) =>
+                    setAddForm((prev) => ({ ...prev, status: e.target.value }))
+                  }
                   className="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:border-[#2d4a23]"
                 >
                   <option value="active">Active</option>
@@ -263,17 +307,27 @@ export function AddUserModal({
             {/* State */}
             <div className="space-y-1 md:col-span-2">
               <label className="font-semibold text-gray-700">
-                State {addForm.role === 'admin' && <span className="text-red-500">* (Required for Admin)</span>}
+                State{" "}
+                {addForm.role === "admin" && (
+                  <span className="text-red-500">* (Required for Admin)</span>
+                )}
               </label>
               <div className="relative">
                 <MapPin className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <select
                   value={addForm.state_id}
-                  onChange={(e) => setAddForm((prev) => ({ ...prev, state_id: e.target.value }))}
+                  onChange={(e) =>
+                    setAddForm((prev) => ({
+                      ...prev,
+                      state_id: e.target.value,
+                    }))
+                  }
                   disabled={loadingStates}
-                  className={`w-full h-10 pl-9 pr-3 rounded-lg border ${addErrors.state_id ? 'border-red-500' : 'border-gray-200'} text-xs bg-white focus:outline-none focus:border-[#2d4a23]`}
+                  className={`w-full h-10 pl-9 pr-3 rounded-lg border ${addErrors.state_id ? "border-red-500" : "border-gray-200"} text-xs bg-white focus:outline-none focus:border-[#2d4a23]`}
                 >
-                  <option value="">{loadingStates ? "Loading states..." : "Select state"}</option>
+                  <option value="">
+                    {loadingStates ? "Loading states..." : "Select state"}
+                  </option>
                   {states.map((s) => (
                     <option key={s.state_id || s.id} value={s.state_id || s.id}>
                       {s.state_name}
@@ -281,7 +335,9 @@ export function AddUserModal({
                   ))}
                 </select>
               </div>
-              {addErrors.state_id && <p className="text-[11px] text-red-500">{addErrors.state_id}</p>}
+              {addErrors.state_id && (
+                <p className="text-[11px] text-red-500">{addErrors.state_id}</p>
+              )}
             </div>
           </div>
 

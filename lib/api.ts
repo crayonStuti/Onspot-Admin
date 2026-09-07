@@ -207,6 +207,9 @@ export async function fetchApi<T = any>(
   if (!isAuthEndpoint && typeof window !== "undefined" && !isSessionValid()) {
     clearAuthSession();
     window.dispatchEvent(new CustomEvent("onSpot:unauthorized", { detail: { reason: "session_expired" } }));
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
     throw new ApiError("Session expired. Please log in again.", 401);
   }
 
@@ -260,6 +263,9 @@ export async function fetchApi<T = any>(
         clearAuthSession();
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("onSpot:unauthorized", { detail: { reason: "refresh_failed" } }));
+          if (window.location.pathname !== "/login") {
+            window.location.href = "/login";
+          }
         }
       }
     }
@@ -280,6 +286,9 @@ export async function fetchApi<T = any>(
     if (response.status === 401 && typeof window !== "undefined") {
       clearAuthSession();
       window.dispatchEvent(new CustomEvent("onSpot:unauthorized", { detail: { reason: "unauthorized" } }));
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
 
     throw new ApiError(message, response.status, errorName, errorBody);

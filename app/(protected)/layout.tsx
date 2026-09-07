@@ -1,42 +1,50 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Sidebar from "@/components/admin/Sidebar";
 import Header from "@/components/admin/Header";
 import { isSessionValid, clearAuthSession, touchActivity } from "@/lib/api";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
+  const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
 
-  // Validate session and set up inactivity/unauthorized listeners
+  const handleForceLogout = (message = "Session expired. Please log in again.") => {
+    setIsAuthorized(false);
+    clearAuthSession();
+    toast.error(message);
+    if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+  };
+
   useEffect(() => {
-    // 1. Initial validation
+    // 1. Initial synchronous check
     if (!isSessionValid()) {
-      clearAuthSession();
-      toast.error("Session expired. Please log in again.");
-      router.replace("/login");
+      handleForceLogout("Session expired. Please log in again.");
       return;
     }
+
+    setIsAuthorized(true);
+    setCheckingAuth(false);
 
     // 2. Listen to 401 unauthorized / session expiration events
     const handleUnauthorized = (e: any) => {
       const reason = e?.detail?.reason;
-      clearAuthSession();
       if (reason === "session_expired") {
-        toast.error("Session expired due to inactivity. Please log in again.");
+        handleForceLogout("Session expired due to inactivity. Please log in again.");
       } else if (reason === "refresh_failed") {
-        toast.error("Session expired. Please log in again.");
+        handleForceLogout("Session expired. Please log in again.");
       } else {
-        toast.error("Authentication required. Please log in.");
+        handleForceLogout("Authentication required. Please log in.");
       }
-      router.replace("/login");
     };
 
     window.addEventListener("onSpot:unauthorized", handleUnauthorized);
@@ -45,7 +53,6 @@ export default function ProtectedLayout({
     let lastTouched = Date.now();
     const handleUserActivity = () => {
       const now = Date.now();
-      // Throttle touches to once every 60 seconds
       if (now - lastTouched > 60 * 1000) {
         lastTouched = now;
         touchActivity();
@@ -56,14 +63,12 @@ export default function ProtectedLayout({
     window.addEventListener("keydown", handleUserActivity, { passive: true });
     window.addEventListener("touchstart", handleUserActivity, { passive: true });
 
-    // Periodic check every 5 minutes
+    // Periodic check every 2 minutes
     const interval = setInterval(() => {
       if (!isSessionValid()) {
-        clearAuthSession();
-        toast.error("Session expired. Please log in again.");
-        router.replace("/login");
+        handleForceLogout("Session expired. Please log in again.");
       }
-    }, 5 * 60 * 1000);
+    }, 2 * 60 * 1000);
 
     return () => {
       window.removeEventListener("onSpot:unauthorized", handleUnauthorized);
@@ -72,7 +77,15 @@ export default function ProtectedLayout({
       window.removeEventListener("touchstart", handleUserActivity);
       clearInterval(interval);
     };
-  }, [router]);
+  }, []);
+
+  if (checkingAuth || !isAuthorized) {
+    return (
+      <div className="min-h-screen bg-[#F9F9F9] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#2d4a23] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F9F9F9] flex text-[#2c2c2c]">

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import Image from "next/image";
 import {
   Search,
   Eye,
@@ -26,6 +27,7 @@ import {
   getUserBookmarks,
   getUserMapPins,
   UserItem,
+  API_URL,
 } from "@/lib/api";
 import { AddUserModal, StateItem } from "./components/AddUserModal";
 import { EditUserModal } from "./components/EditUserModal";
@@ -118,17 +120,24 @@ export default function UsersPage() {
 
   // Clean Name Helper (removes "null" strings)
   const getUserDisplayName = (user: UserItem) => {
-    const fn =
-      user.first_name && user.first_name !== "null" ? user.first_name : "";
-    const ln =
-      user.last_name && user.last_name !== "null" ? user.last_name : "";
-    if (fn || ln) {
-      return `${fn} ${ln}`.trim();
+    const fn = user.first_name && user.first_name !== "null" ? user.first_name : "";
+    const ln = user.last_name && user.last_name !== "null" ? user.last_name : "";
+    const name = `${fn} ${ln}`.trim();
+    return name || user.display_name || user.email?.split("@")[0] || "User";
+  };
+
+  // Helper to resolve profile image url with backend base url
+  const getProfileImageUrl = (url?: string | null) => {
+    if (!url) return "";
+    if (
+      url.startsWith("http://") ||
+      url.startsWith("https://") ||
+      url.startsWith("blob:") ||
+      url.startsWith("data:")
+    ) {
+      return url;
     }
-    if (user.display_name && user.display_name !== "null") {
-      return user.display_name;
-    }
-    return user.email ? user.email.split("@")[0] : "User";
+    return `${API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -470,17 +479,15 @@ export default function UsersPage() {
                         {/* Name & Avatar */}
                         <td className="py-3 px-3 align-middle text-[#111111] font-medium">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-[30px] h-[30px] rounded-full bg-[#f1f1ed] text-[#4a4a4a] font-semibold flex items-center justify-center text-xs flex-shrink-0 overflow-hidden">
+                            <div className="w-[30px] h-[30px] rounded-full bg-[#f1f1ed] text-[#4a4a4a] font-semibold flex items-center justify-center text-xs flex-shrink-0 overflow-hidden relative">
                               {user.profile?.profile_picture ? (
-                                <img
-                                  src={user.profile.profile_picture}
+                                <Image
+                                  src={getProfileImageUrl(user.profile.profile_picture)}
                                   alt={fullName}
+                                  width={30}
+                                  height={30}
                                   className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    (
-                                      e.target as HTMLImageElement
-                                    ).style.display = "none";
-                                  }}
+                                  unoptimized
                                 />
                               ) : (
                                 fullName.charAt(0).toUpperCase()
@@ -681,12 +688,15 @@ export default function UsersPage() {
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6 space-y-5">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-emerald-50 text-[#2d4a23] font-bold text-lg flex items-center justify-center flex-shrink-0 border border-emerald-100 overflow-hidden">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 text-[#2d4a23] font-bold text-lg flex items-center justify-center flex-shrink-0 border border-emerald-100 overflow-hidden relative">
                   {selectedUserDetails.profile?.profile_picture ? (
-                    <img
-                      src={selectedUserDetails.profile.profile_picture}
+                    <Image
+                      src={getProfileImageUrl(selectedUserDetails.profile.profile_picture)}
                       alt="Avatar"
+                      width={48}
+                      height={48}
                       className="w-full h-full object-cover"
+                      unoptimized
                     />
                   ) : (
                     getUserDisplayName(selectedUserDetails).charAt(0).toUpperCase()

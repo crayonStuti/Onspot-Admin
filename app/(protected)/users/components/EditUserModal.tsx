@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { X, Edit2, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { getUserById, updateUserProfile, UserItem } from "@/lib/api";
+import { getUserById, updateUserProfile, UserItem, API_URL } from "@/lib/api";
 import { StateItem } from "./AddUserModal";
 
 interface PreferenceRow {
@@ -104,7 +105,10 @@ export function EditUserModal({
           setPreferenceRows(initialRows.length > 0 ? initialRows : [{ key: "", value: "" }]);
 
           if (profile.profile_picture) {
-            setPreviewUrl(profile.profile_picture);
+            const resolvedUrl = profile.profile_picture.startsWith("http") || profile.profile_picture.startsWith("blob:") || profile.profile_picture.startsWith("data:")
+              ? profile.profile_picture
+              : `${API_URL}${profile.profile_picture.startsWith("/") ? "" : "/"}${profile.profile_picture}`;
+            setPreviewUrl(resolvedUrl);
           }
         }
       } catch (err: any) {
@@ -216,9 +220,16 @@ export function EditUserModal({
             <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3">
               <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Profile Picture</h4>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gray-200 border border-gray-300 overflow-hidden flex items-center justify-center text-gray-500 font-bold text-lg">
+                <div className="w-16 h-16 rounded-full bg-gray-200 border border-gray-300 overflow-hidden flex items-center justify-center text-gray-500 font-bold text-lg relative">
                   {previewUrl ? (
-                    <img src={previewUrl} alt="Profile preview" className="w-full h-full object-cover" />
+                    <Image
+                      src={previewUrl}
+                      alt="Profile preview"
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
                   ) : (
                     <span>{editForm.first_name.charAt(0) || "U"}</span>
                   )}
