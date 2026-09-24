@@ -457,6 +457,14 @@ export async function getMembershipById(membershipId: string): Promise<any> {
   return await fetchApi(`/membership/${membershipId}`);
 }
 
+export async function createMembership(data: any): Promise<any> {
+  const isFormData = data instanceof FormData;
+  return await fetchApi("/memberships", {
+    method: "POST",
+    body: isFormData ? data : JSON.stringify(data),
+  });
+}
+
 export async function updateMembership(membershipId: string, data: any): Promise<any> {
   const isFormData = data instanceof FormData;
   return await fetchApi(`/memberships/${membershipId}`, {

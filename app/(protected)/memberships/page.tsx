@@ -10,28 +10,20 @@ import {
   AlertCircle,
   X,
   CreditCard,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   getMemberships,
   getMembershipById,
-  updateMembership,
   deleteMembership,
   API_URL,
 } from "@/lib/api";
-
-interface MembershipItem {
-  id: string;
-  name: string;
-  description?: string;
-  feature?: any;
-  price_usd?: string | number;
-  duration_days?: number;
-  totalUsers?: string | number;
-  created_at?: string;
-  updated_at?: string;
-  image?: string;
-}
+import MembershipFormModal, {
+  MembershipItem,
+  isBooleanFeature,
+  toBooleanFeature,
+} from "@/components/memberships/MembershipFormModal";
 
 export default function MembershipsPage() {
   const [memberships, setMemberships] = useState<MembershipItem[]>([]);
@@ -42,31 +34,9 @@ export default function MembershipsPage() {
   const [selectedPlan, setSelectedPlan] = useState<MembershipItem | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
 
-  // Edit Plan Modal State
-  const [editModal, setEditModal] = useState(false);
+  // Add / Edit Plan Modal State
+  const [formModalOpen, setFormModalOpen] = useState(false);
   const [planToEdit, setPlanToEdit] = useState<MembershipItem | null>(null);
-  const [editSaving, setEditSaving] = useState(false);
-  const [editForm, setEditForm] = useState({
-    name: "",
-    description: "",
-    price_usd: "",
-    duration_days: "",
-  });
-  const [editFeatures, setEditFeatures] = useState<Record<string, any>>({
-    front_end_pages: true,
-    license_wallet: "3",
-    gps_mapping_basic: true,
-    extended_mapping_friends: "3",
-    dnr_library_access: true,
-    post_tagging: "unlimited",
-    social_media_channels: "unlimited",
-    kids_included: 1,
-    ads_displayed: "optional",
-    license_expiry_alerts: true,
-    location_setting: "optional",
-  });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Delete Confirmation State
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -125,98 +95,16 @@ export default function MembershipsPage() {
     }
   };
 
-  // Open Edit Plan Modal
-  const handleOpenEdit = async (plan: MembershipItem) => {
-    setPlanToEdit(plan);
-    setEditForm({
-      name: plan.name || "",
-      description: plan.description || "",
-      price_usd: String(plan.price_usd ?? ""),
-      duration_days:
-        plan.duration_days !== null && plan.duration_days !== undefined
-          ? String(plan.duration_days)
-          : "",
-    });
-    setImageFile(null);
-    setImagePreview(
-      plan.image
-        ? plan.image.startsWith("http")
-          ? plan.image
-          : `${API_URL}${plan.image}`
-        : null,
-    );
-
-    let parsedFeatures = {
-      front_end_pages: true,
-      license_wallet: "3",
-      gps_mapping_basic: true,
-      extended_mapping_friends: "3",
-      dnr_library_access: true,
-      post_tagging: "unlimited",
-      social_media_channels: "unlimited",
-      kids_included: 1,
-      ads_displayed: "optional",
-      license_expiry_alerts: true,
-      location_setting: "optional",
-    };
-
-    if (plan.feature) {
-      try {
-        const parsed =
-          typeof plan.feature === "string"
-            ? JSON.parse(plan.feature)
-            : plan.feature;
-        parsedFeatures = { ...parsedFeatures, ...parsed };
-      } catch (e) {
-        console.warn("Failed to parse plan features:", e);
-      }
-    }
-
-    setEditFeatures(parsedFeatures);
-    setEditModal(true);
+  // Open Create Plan Modal
+  const handleOpenCreate = () => {
+    setPlanToEdit(null);
+    setFormModalOpen(true);
   };
 
-  // Save Edit Plan
-  const handleSaveEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!planToEdit) return;
-
-    if (!editForm.name.trim()) {
-      toast.error("Plan Name is required");
-      return;
-    }
-    if (editForm.price_usd === "" || editForm.price_usd === null) {
-      toast.error("Price is required");
-      return;
-    }
-
-    setEditSaving(true);
-    try {
-      const payload = new FormData();
-      payload.append("name", editForm.name.trim());
-      payload.append("description", editForm.description || "");
-      payload.append("price_usd", editForm.price_usd);
-      payload.append("duration_days", editForm.duration_days);
-
-      Object.entries(editFeatures).forEach(([key, value]) => {
-        payload.append(`feature[${key}]`, String(value));
-      });
-
-      if (imageFile) {
-        payload.append("image", imageFile);
-      }
-
-      await updateMembership(planToEdit.id, payload);
-      toast.success("Membership plan updated successfully");
-      setEditModal(false);
-      setPlanToEdit(null);
-      fetchMembershipsList();
-    } catch (err: any) {
-      console.error("Update membership error:", err);
-      toast.error(err?.message || "Failed to update membership plan");
-    } finally {
-      setEditSaving(false);
-    }
+  // Open Edit Plan Modal
+  const handleOpenEdit = (plan: MembershipItem) => {
+    setPlanToEdit(plan);
+    setFormModalOpen(true);
   };
 
   // Delete Plan Prompt
@@ -258,13 +146,24 @@ export default function MembershipsPage() {
 
   return (
     <div className="space-y-6">
-      {/* ===================== MEMBERSHIP PLANS CARD (1:1 HTML) ===================== */}
       <section className="bg-white rounded-[14px] p-6 sm:p-7 shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] border border-[#ececec]">
         {/* Card Header */}
         <div className="flex items-center justify-between gap-4 mb-6">
-          <h2 className="text-[22px] font-bold text-[#1f1f1f] tracking-tight">
-            Membership Plans
-          </h2>
+          <div>
+            <h2 className="text-[22px] font-bold text-[#1f1f1f] tracking-tight">
+              Membership Plans
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Manage subscriptions, pricing tiers, feature toggles, and user limits
+            </p>
+          </div>
+          <button
+            onClick={handleOpenCreate}
+            className="h-[38px] px-4 rounded-[8px] bg-[#0E3E27] hover:bg-[#092c1b] text-white text-[13px] font-medium transition-colors flex items-center gap-2 cursor-pointer shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Membership Plan</span>
+          </button>
         </div>
 
         {/* Plans Table */}
@@ -388,29 +287,39 @@ export default function MembershipsPage() {
                           <div className="flex flex-col gap-2 max-w-sm">
                             {featureEntries
                               .slice(0, 4)
-                              .map(([key, val], idx) => (
-                                <div
-                                  key={idx}
-                                  className="flex items-center gap-2 text-[11px] text-[#888]"
-                                >
-                                  <span className="text-[#4a6b3f] flex-shrink-0">
-                                    <svg
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2.5"
-                                      className="w-3.5 h-3.5"
+                              .map(([key, val], idx) => {
+                                const isBool = isBooleanFeature(val);
+                                const boolVal = toBooleanFeature(val);
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center gap-2 text-[11px] text-[#888]"
+                                  >
+                                    <span
+                                      className={`flex-shrink-0 ${
+                                        isBool && !boolVal
+                                          ? "text-gray-300"
+                                          : "text-[#4a6b3f]"
+                                      }`}
                                     >
-                                      <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                  </span>
-                                  <span className="capitalize">
-                                    {key.replace(/_/g, " ")}
-                                    {typeof val !== "boolean" &&
-                                      `: ${String(val)}`}
-                                  </span>
-                                </div>
-                              ))}
+                                      <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                        className="w-3.5 h-3.5"
+                                      >
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
+                                    </span>
+                                    <span className="capitalize">
+                                      {key.replace(/_/g, " ")}
+                                      {!isBool && `: ${String(val)}`}
+                                      {isBool && !boolVal && " (Disabled)"}
+                                    </span>
+                                  </div>
+                                );
+                              })}
                           </div>
                         ) : (
                           <div className="flex flex-col gap-2 text-[11px] text-[#888]">
@@ -584,6 +493,78 @@ export default function MembershipsPage() {
                 </div>
               </div>
 
+              {/* Quotas & Privileges Grid */}
+              <div>
+                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2.5">
+                  Quotas & Privileges
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <span className="text-gray-400 block font-medium text-[11px]">
+                      Licenses Limit
+                    </span>
+                    <span className="font-bold text-xs text-gray-800">
+                      {selectedPlan.is_licenses_unlimited === true ||
+                      selectedPlan.is_licenses_unlimited === "true"
+                        ? "Unlimited"
+                        : `${selectedPlan.licenses_limit ?? "1"} licenses`}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <span className="text-gray-400 block font-medium text-[11px]">
+                      Friends Limit
+                    </span>
+                    <span className="font-bold text-xs text-gray-800">
+                      {selectedPlan.is_friends_unlimited === true ||
+                      selectedPlan.is_friends_unlimited === "true"
+                        ? "Unlimited"
+                        : `${selectedPlan.friends_limit ?? "6"} friends`}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <span className="text-gray-400 block font-medium text-[11px]">
+                      Gallery Limit
+                    </span>
+                    <span className="font-bold text-xs text-gray-800">
+                      {selectedPlan.gallery_limit ?? "20"} photos
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <span className="text-gray-400 block font-medium text-[11px]">
+                      License Reminders
+                    </span>
+                    <span className="font-bold text-xs text-gray-800">
+                      {selectedPlan.license_reminders === true ||
+                      selectedPlan.license_reminders === "true"
+                        ? "Enabled"
+                        : "Disabled"}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <span className="text-gray-400 block font-medium text-[11px]">
+                      Sponsorship Free
+                    </span>
+                    <span className="font-bold text-xs text-gray-800">
+                      {selectedPlan.is_sponsorship_free === true ||
+                      selectedPlan.is_sponsorship_free === "true"
+                        ? "Yes"
+                        : "No"}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <span className="text-gray-400 block font-medium text-[11px]">
+                      Map Activity
+                    </span>
+                    <span className="font-bold text-xs text-gray-800">
+                      {selectedPlan.map_activity === true ||
+                      selectedPlan.map_activity === "true"
+                        ? "Enabled"
+                        : "Disabled"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Features List */}
               <div>
                 <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
@@ -603,31 +584,31 @@ export default function MembershipsPage() {
 
                   return (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {entries.map(([key, val], idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 text-xs"
-                        >
-                          <span className="font-medium text-gray-700 capitalize">
-                            {key.replace(/_/g, " ")}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                              val === true
-                                ? "bg-emerald-100 text-emerald-800"
-                                : val === false
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-blue-50 text-blue-700"
-                            }`}
+                      {entries.map(([key, val], idx) => {
+                        const isBool = isBooleanFeature(val);
+                        const boolVal = toBooleanFeature(val);
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 text-xs"
                           >
-                            {typeof val === "boolean"
-                              ? val
-                                ? "YES"
-                                : "NO"
-                              : String(val)}
-                          </span>
-                        </div>
-                      ))}
+                            <span className="font-medium text-gray-700 capitalize">
+                              {key.replace(/_/g, " ")}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                                isBool
+                                  ? boolVal
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : "bg-red-100 text-red-700"
+                                  : "bg-blue-50 text-blue-700"
+                              }`}
+                            >
+                              {isBool ? (boolVal ? "YES" : "NO") : String(val)}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 })()}
@@ -656,197 +637,16 @@ export default function MembershipsPage() {
         </div>
       )}
 
-      {/* ===================== EDIT PLAN MODAL ===================== */}
-      {editModal && planToEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-              <div>
-                <h3 className="text-base font-bold text-gray-900">
-                  Edit Membership Plan
-                </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Update pricing, description, and features
-                </p>
-              </div>
-              <button
-                onClick={() => setEditModal(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveEdit} className="py-4 space-y-4">
-              {/* Plan Name */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Plan Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editForm.name}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, name: e.target.value })
-                  }
-                  className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  rows={2}
-                  value={editForm.description}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, description: e.target.value })
-                  }
-                  className="w-full p-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
-                />
-              </div>
-
-              {/* Price & Duration */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Price (USD) *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={editForm.price_usd}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, price_usd: e.target.value })
-                    }
-                    className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Duration (Days)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={editForm.duration_days}
-                    onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        duration_days: e.target.value,
-                      })
-                    }
-                    placeholder="30"
-                    className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
-                  />
-                </div>
-              </div>
-
-              {/* Image Upload */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Plan Icon / Image
-                </label>
-                <div className="flex items-center gap-3">
-                  {imagePreview && (
-                    <div className="w-12 h-12 rounded-xl border border-gray-200 overflow-hidden p-1 flex-shrink-0 bg-gray-50">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] || null;
-                      setImageFile(file);
-                      if (file) setImagePreview(URL.createObjectURL(file));
-                    }}
-                    className="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              {/* Features Editor */}
-              <div className="pt-2">
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                  Plan Feature Toggles
-                </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto p-3 bg-gray-50/70 rounded-xl border border-gray-200 text-xs">
-                  {Object.entries(editFeatures).map(([k, val]) => (
-                    <div
-                      key={k}
-                      className="flex items-center justify-between py-1"
-                    >
-                      <span className="capitalize font-medium text-gray-700">
-                        {k.replace(/_/g, " ")}
-                      </span>
-                      {typeof val === "boolean" ? (
-                        <input
-                          type="checkbox"
-                          checked={val}
-                          onChange={(e) =>
-                            setEditFeatures({
-                              ...editFeatures,
-                              [k]: e.target.checked,
-                            })
-                          }
-                          className="w-4 h-4 rounded text-[#0E3E27] focus:ring-[#0E3E27] accent-[#0E3E27] cursor-pointer"
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={String(val)}
-                          onChange={(e) =>
-                            setEditFeatures({
-                              ...editFeatures,
-                              [k]: e.target.value,
-                            })
-                          }
-                          className="h-7 w-28 px-2 rounded-lg border border-gray-200 text-xs text-gray-800 bg-white"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setEditModal(false)}
-                  className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={editSaving}
-                  className="px-5 py-2 rounded-xl bg-[#0E3E27] hover:bg-[#092c1b] text-white text-xs font-semibold shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  {editSaving ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Saving Plan...</span>
-                    </>
-                  ) : (
-                    <span>Save Changes</span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* ===================== CREATE / EDIT MEMBERSHIP MODAL ===================== */}
+      <MembershipFormModal
+        isOpen={formModalOpen}
+        onClose={() => {
+          setFormModalOpen(false);
+          setPlanToEdit(null);
+        }}
+        onSuccess={fetchMembershipsList}
+        initialData={planToEdit}
+      />
 
       {/* ===================== DELETE CONFIRMATION DIALOG ===================== */}
       {deleteConfirmOpen && planToDelete && (
