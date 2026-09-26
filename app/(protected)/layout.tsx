@@ -54,16 +54,21 @@ export default function ProtectedLayout({
 
     window.addEventListener("click", handleUserActivity, { passive: true });
     window.addEventListener("keydown", handleUserActivity, { passive: true });
-    window.addEventListener("touchstart", handleUserActivity, { passive: true });
+    window.addEventListener("touchstart", handleUserActivity, {
+      passive: true,
+    });
 
     // Periodic check every 5 minutes
-    const interval = setInterval(() => {
-      if (!isSessionValid()) {
-        clearAuthSession();
-        toast.error("Session expired. Please log in again.");
-        router.replace("/login");
-      }
-    }, 5 * 60 * 1000);
+    const interval = setInterval(
+      () => {
+        if (!isSessionValid()) {
+          clearAuthSession();
+          toast.error("Session expired. Please log in again.");
+          router.replace("/login");
+        }
+      },
+      5 * 60 * 1000,
+    );
 
     return () => {
       window.removeEventListener("onSpot:unauthorized", handleUnauthorized);
@@ -81,7 +86,7 @@ export default function ProtectedLayout({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 lg:pl-[240px]">
-        <main className="flex-1 p-5 sm:p-7 max-w-[1600px] w-full mx-auto">
+        <main className="flex-1 max-w-[1600px] w-full mx-auto">
           <Header onMenuClick={() => setSidebarOpen(true)} />
           {children}
         </main>
@@ -89,4 +94,3 @@ export default function ProtectedLayout({
     </div>
   );
 }
-

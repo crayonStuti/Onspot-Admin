@@ -40,7 +40,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await loginWithCredentials({ email: email.trim(), password });
+      const response = await loginWithCredentials({
+        email: email.trim(),
+        password,
+      });
 
       // Verify admin permissions if role is defined
       if (
@@ -90,7 +93,6 @@ export default function LoginPage() {
         />
       </div>
 
-      {/* Login Card (1:1 HTML) */}
       <div className="bg-white rounded-[16px] p-[34px_30px] border border-[#ececec] shadow-[0_20px_50px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.04)]">
         <h1 className="text-[22px] font-extrabold text-[#0E3E27] mb-1 text-center">
           Admin Login

@@ -9,8 +9,6 @@ import {
   MoreVertical,
   Loader2,
   AlertCircle,
-  ChevronLeft,
-  ChevronRight,
   X,
   MapPin as MapPinIcon,
   Calendar,
@@ -20,6 +18,7 @@ import {
   Lock,
 } from "lucide-react";
 import { toast } from "sonner";
+import Pagination from "@/components/admin/Pagination";
 import { getMapPins, getMapPinById, getStates, MapPinItem } from "@/lib/api";
 
 export default function GPSActivityPage() {
@@ -189,34 +188,8 @@ export default function GPSActivityPage() {
     toast.success("GPS pins exported successfully.");
   };
 
-  // Numbered pagination items matching HTML `< 1 2 ... 15 >`
-  const paginationItems = useMemo(() => {
-    const pages: (number | string)[] = [];
-    const max = totalPages || 1;
-
-    if (max <= 5) {
-      for (let i = 1; i <= max; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (page > 3) pages.push("…");
-      const start = Math.max(2, page - 1);
-      const end = Math.min(max - 1, page + 1);
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-      if (page < max - 2) pages.push("…");
-      pages.push(max);
-    }
-    return pages;
-  }, [page, totalPages]);
-
   return (
     <div className="space-y-6">
-      {/* =========================================================================
-          COMMENTED OUT STATIC STAT CARDS (Total Pins, Most Tagged State, etc.)
-          ========================================================================= */}
-
-      {/* ===================== FILTER & ACTION ROW ===================== */}
       <section className="bg-white rounded-[14px] p-4 sm:p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3 flex-1">
           {/* State Filter */}
@@ -226,7 +199,7 @@ export default function GPSActivityPage() {
               setSelectedState(e.target.value);
               setPage(1);
             }}
-            className="h-[38px] w-40 px-3.5 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[13px] focus:outline-none focus:border-[#2d4a23] cursor-pointer"
+            className="h-[38px] w-44 px-3.5 pr-9 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[13px] focus:outline-none focus:border-[#2d4a23] cursor-pointer"
           >
             <option value="">All States</option>
             {statesList.map((s, idx) => {
@@ -249,7 +222,7 @@ export default function GPSActivityPage() {
               setSelectedVisibility(e.target.value);
               setPage(1);
             }}
-            className="h-[38px] w-40 px-3.5 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[13px] focus:outline-none focus:border-[#2d4a23] cursor-pointer"
+            className="h-[38px] w-44 px-3.5 pr-9 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[13px] focus:outline-none focus:border-[#2d4a23] cursor-pointer"
           >
             <option value="">Shared: All</option>
             <option value="public">Shared: Public</option>
@@ -279,7 +252,6 @@ export default function GPSActivityPage() {
         </button>
       </section>
 
-      {/* ===================== DIVISION GRID: TABLE (LEFT) + LIVE MAP (RIGHT) ===================== */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: RECENT GPS ACTIVITY TABLE (8 cols on XL) */}
         <div className="xl:col-span-8 flex flex-col space-y-4">
@@ -499,64 +471,18 @@ export default function GPSActivityPage() {
             </div>
           </section>
 
-          {/* Table Footer & Numbered Pagination */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-[12.5px] text-[#888]">
-            <div>
-              Showing 1 to {mapPins.length} of {totalItems || mapPins.length}{" "}
-              pins
-            </div>
-
-            <div className="flex items-center gap-1">
-              {/* Previous */}
-              <button
-                disabled={page <= 1 || loading}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="min-w-[28px] h-7 px-2 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[12.5px] hover:bg-[#f7f7f4] disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-
-              {/* Numbered Page Buttons */}
-              {paginationItems.map((item, idx) => {
-                if (item === "…") {
-                  return (
-                    <span
-                      key={idx}
-                      className="min-w-[28px] h-7 flex items-center justify-center text-[#888]"
-                    >
-                      …
-                    </span>
-                  );
-                }
-                const isCurr = item === page;
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => setPage(Number(item))}
-                    className={`min-w-[28px] h-7 px-2 border rounded-[6px] text-[12.5px] transition-all flex items-center justify-center cursor-pointer ${
-                      isCurr
-                        ? "bg-[#f5efdc] text-[#1f1f1f] border-[#e6dfc6] font-semibold"
-                        : "bg-white text-[#4a4a4a] border-[#e4e4df] hover:bg-[#f7f7f4]"
-                    }`}
-                  >
-                    {item}
-                  </button>
-                );
-              })}
-
-              {/* Next */}
-              <button
-                disabled={page >= totalPages || loading}
-                onClick={() => setPage((p) => p + 1)}
-                className="min-w-[28px] h-7 px-2 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[12.5px] hover:bg-[#f7f7f4] disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalItems || mapPins.length}
+            pageSize={limit}
+            itemCountOnPage={mapPins.length}
+            itemLabel="pins"
+            onPageChange={(newPage) => setPage(newPage)}
+            loading={loading}
+          />
         </div>
 
-        {/* RIGHT COLUMN: LIVE MAP PANEL (4 cols on XL) */}
         <div className="xl:col-span-4 h-[560px] rounded-[14px] overflow-hidden border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] bg-white">
           <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d44196.236392315026!2d-93.81033787191589!3d46.185289524094266!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b157a8f77c8e1f%3A0xfbe655e10ff018bc!2sVineland%2C%20MN%2056359%2C%20USA!5e0!3m2!1sen!2sin!4v1781021191340!5m2!1sen!2sin"
@@ -571,7 +497,6 @@ export default function GPSActivityPage() {
         </div>
       </div>
 
-      {/* ===================== VIEW MAP PIN DETAILS MODAL ===================== */}
       {viewModalOpen && selectedPin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6">

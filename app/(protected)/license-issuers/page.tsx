@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Search,
   Plus,
@@ -9,18 +9,21 @@ import {
   MoreVertical,
   Loader2,
   AlertCircle,
-  ChevronLeft,
-  ChevronRight,
   X,
   Building2,
   Calendar,
+  Globe,
+  MapPin,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import Pagination from "@/components/admin/Pagination";
 import {
   getLicenseIssuers,
   createLicenseIssuer,
   updateLicenseIssuer,
   deleteLicenseIssuer,
+  getStates,
   LicenseIssuerItem,
 } from "@/lib/api";
 
@@ -28,6 +31,7 @@ export default function LicenseIssuersPage() {
   const [issuers, setIssuers] = useState<LicenseIssuerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStateId, setFilterStateId] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -39,7 +43,12 @@ export default function LicenseIssuersPage() {
     null,
   );
   const [organisation, setOrganisation] = useState("");
+  const [stateId, setStateId] = useState("");
+  const [agencyWebsite, setAgencyWebsite] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // States List State
+  const [statesList, setStatesList] = useState<any[]>([]);
 
   // Delete Confirmation Modal State
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -47,11 +56,44 @@ export default function LicenseIssuersPage() {
     useState<LicenseIssuerItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Load States for Dropdown
+  useEffect(() => {
+    async function loadStates() {
+      try {
+        const res = await getStates(1, 100);
+        const list = res.data?.states || res.data || res.states || res || [];
+        setStatesList(Array.isArray(list) ? list : []);
+      } catch (err) {
+        console.warn("Could not load states for license issuers:", err);
+      }
+    }
+    loadStates();
+  }, []);
+
+  // Helper to resolve state display name
+  const getStateName = (issuer: LicenseIssuerItem) => {
+    if (issuer.state?.state_name) return issuer.state.state_name;
+    if (issuer.state_name) return issuer.state_name;
+    if (issuer.state?.name) return issuer.state.name;
+    if (issuer.state_id) {
+      const found = statesList.find(
+        (s) => String(s.state_id || s.id) === String(issuer.state_id),
+      );
+      if (found) return found.state_name || found.name;
+    }
+    return "—";
+  };
+
   // Fetch License Issuers
   const fetchIssuersList = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getLicenseIssuers(page, limit, searchQuery);
+      const res = await getLicenseIssuers(
+        page,
+        limit,
+        searchQuery,
+        filterStateId,
+      );
       console.log(res);
 
       if (res && res.data) {
@@ -99,7 +141,7 @@ export default function LicenseIssuersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, searchQuery]);
+  }, [page, limit, searchQuery, filterStateId]);
 
   // Debounced Search
   useEffect(() => {
@@ -113,6 +155,8 @@ export default function LicenseIssuersPage() {
   const handleOpenCreate = () => {
     setEditingIssuer(null);
     setOrganisation("");
+    setStateId("");
+    setAgencyWebsite("");
     setDialogOpen(true);
   };
 
@@ -120,6 +164,8 @@ export default function LicenseIssuersPage() {
   const handleOpenEdit = (issuer: LicenseIssuerItem) => {
     setEditingIssuer(issuer);
     setOrganisation(issuer.organisation || "");
+    setStateId(issuer.state_id ? String(issuer.state_id) : "");
+    setAgencyWebsite(issuer.agency_website || "");
     setDialogOpen(true);
   };
 
@@ -133,18 +179,28 @@ export default function LicenseIssuersPage() {
 
     setSubmitting(true);
     try {
+      const payload: any = {
+        organisation: organisation.trim(),
+      };
+      if (stateId) {
+        payload.state_id = stateId;
+      }
+      if (agencyWebsite.trim()) {
+        payload.agency_website = agencyWebsite.trim();
+      }
+
       if (editingIssuer) {
-        await updateLicenseIssuer(editingIssuer.id, {
-          organisation: organisation.trim(),
-        });
+        await updateLicenseIssuer(editingIssuer.id, payload);
         toast.success("License issuer updated successfully");
       } else {
-        await createLicenseIssuer({ organisation: organisation.trim() });
+        await createLicenseIssuer(payload);
         toast.success("License issuer created successfully");
       }
       setDialogOpen(false);
       setEditingIssuer(null);
       setOrganisation("");
+      setStateId("");
+      setAgencyWebsite("");
       fetchIssuersList();
     } catch (err: any) {
       console.error("Save license issuer error:", err);
@@ -178,57 +234,61 @@ export default function LicenseIssuersPage() {
     }
   };
 
-  // Numbered pagination items matching HTML `< 1 2 ... 15 >`
-  const paginationItems = useMemo(() => {
-    const pages: (number | string)[] = [];
-    const max = totalPages || 1;
-
-    if (max <= 5) {
-      for (let i = 1; i <= max; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (page > 3) pages.push("…");
-      const start = Math.max(2, page - 1);
-      const end = Math.min(max - 1, page + 1);
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-      if (page < max - 2) pages.push("…");
-      pages.push(max);
-    }
-    return pages;
-  }, [page, totalPages]);
-
   return (
     <div className="space-y-6">
-      {/* ===================== FILTER & ACTION ROW ===================== */}
       <section className="bg-white rounded-[14px] p-4 sm:p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] flex flex-wrap items-center justify-between gap-3">
-        {/* Search Input */}
-        <div className="relative w-full sm:max-w-xs">
-          <input
-            type="text"
-            value={searchQuery}
+        <div className="flex flex-wrap items-center gap-3 flex-1">
+          {/* Search Input */}
+          <div className="relative w-full sm:max-w-xs">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Search license issuers..."
+              className="w-full h-[38px] pl-3.5 pr-9 border border-[#e4e4df] bg-white rounded-[6px] text-[#444] text-[13px] placeholder-gray-400 focus:outline-none focus:border-[#2d4a23]"
+            />
+            <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {/* State Filter Dropdown */}
+          <select
+            value={filterStateId}
             onChange={(e) => {
-              setSearchQuery(e.target.value);
+              setFilterStateId(e.target.value);
               setPage(1);
             }}
-            placeholder="Search license issuers..."
-            className="w-full h-[38px] pl-3.5 pr-9 border border-[#e4e4df] bg-white rounded-[6px] text-[#444] text-[13px] placeholder-gray-400 focus:outline-none focus:border-[#2d4a23]"
-          />
-          <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            className="h-[38px] w-44 px-3.5 pr-9 border border-[#e4e4df] bg-white rounded-[6px] text-[#444] text-[13px] focus:outline-none focus:border-[#2d4a23] cursor-pointer"
+          >
+            <option value="">All States</option>
+            {statesList.map((s, idx) => {
+              const sName =
+                typeof s === "string"
+                  ? s
+                  : s?.state_name || s?.name || `State ${idx + 1}`;
+              const sId =
+                typeof s === "string" ? s : s?.state_id || s?.id || sName;
+              return (
+                <option key={sId} value={sId}>
+                  {sName}
+                </option>
+              );
+            })}
+          </select>
         </div>
 
         {/* Add New Issuer Button */}
         <button
           onClick={handleOpenCreate}
-          className="h-[38px] px-4 rounded-[6px] bg-[#4a6b3f] hover:bg-[#3c5733] text-white text-[13px] font-medium transition-colors flex items-center gap-2 cursor-pointer shadow-xs"
+          className="h-[38px] px-4 rounded-[6px] bg-[#4a6b3f] hover:bg-[#3c5733] text-white text-[13px] font-medium transition-colors flex items-center gap-2 cursor-pointer shadow-xs whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
           <span>Add License Issuer</span>
         </button>
       </section>
 
-      {/* ===================== TABLE CARD ===================== */}
       <section className="bg-white rounded-[14px] p-5 pb-3 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)]">
         <h3 className="text-[17px] font-bold text-[#1f1f1f] mb-3">
           License Issuers
@@ -244,12 +304,12 @@ export default function LicenseIssuersPage() {
                 <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
                   Organisation Name
                 </th>
-                {/* <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
-                  Created Date
+                <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
+                  State
                 </th>
                 <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
-                  Updated Date
-                </th> */}
+                  Agency Website
+                </th>
                 <th className="py-3.5 px-3 text-right font-semibold text-[#111111] text-[13px]">
                   Actions
                 </th>
@@ -321,15 +381,41 @@ export default function LicenseIssuersPage() {
                         </div>
                       </td>
 
-                      {/* Created Date */}
-                      {/* <td className="py-3.5 px-3 text-[#7D848D] align-middle whitespace-nowrap">
-                        {createdDate}
-                      </td> */}
+                      {/* State */}
+                      <td className="py-3.5 px-3 align-middle text-[#4a4a4a] text-[13px]">
+                        <div className="inline-flex items-center gap-1.5 text-xs text-[#555] bg-[#f4f4ee] px-2.5 py-1 rounded-[6px]">
+                          <MapPin className="w-3.5 h-3.5 text-[#2d4a23]" />
+                          <span>{getStateName(issuer)}</span>
+                        </div>
+                      </td>
 
-                      {/* Updated Date */}
-                      {/* <td className="py-3.5 px-3 text-[#7D848D] align-middle whitespace-nowrap">
-                        {updatedDate}
-                      </td> */}
+                      {/* Agency Website Link */}
+                      <td className="py-3.5 px-3 align-middle">
+                        {issuer.agency_website ? (
+                          <a
+                            href={
+                              issuer.agency_website.startsWith("http://") ||
+                              issuer.agency_website.startsWith("https://")
+                                ? issuer.agency_website
+                                : `https://${issuer.agency_website}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-[12.5px] text-[#2d4a23] hover:text-[#1b3015] hover:underline font-medium"
+                          >
+                            <Globe className="w-3.5 h-3.5 text-[#2d4a23] shrink-0" />
+                            <span className="max-w-[220px] truncate">
+                              {issuer.agency_website.replace(
+                                /^https?:\/\//i,
+                                "",
+                              )}
+                            </span>
+                            <ExternalLink className="w-3 h-3 opacity-70 shrink-0" />
+                          </a>
+                        ) : (
+                          <span className="text-[#999] text-xs">—</span>
+                        )}
+                      </td>
 
                       {/* Actions */}
                       <td className="py-3.5 px-3 text-right align-middle whitespace-nowrap">
@@ -371,61 +457,16 @@ export default function LicenseIssuersPage() {
         </div>
       </section>
 
-      {/* ===================== TABLE FOOTER & PAGINATION ===================== */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-[12.5px] text-[#888]">
-        <div>
-          Showing 1 to {issuers.length} of {totalItems || issuers.length}{" "}
-          issuers
-        </div>
-
-        <div className="flex items-center gap-1">
-          {/* Previous */}
-          <button
-            disabled={page <= 1 || loading}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="min-w-[28px] h-7 px-2 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[12.5px] hover:bg-[#f7f7f4] disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Numbered Page Buttons */}
-          {paginationItems.map((item, idx) => {
-            if (item === "…") {
-              return (
-                <span
-                  key={idx}
-                  className="min-w-[28px] h-7 flex items-center justify-center text-[#888]"
-                >
-                  …
-                </span>
-              );
-            }
-            const isCurr = item === page;
-            return (
-              <button
-                key={idx}
-                onClick={() => setPage(Number(item))}
-                className={`min-w-[28px] h-7 px-2 border rounded-[6px] text-[12.5px] transition-all flex items-center justify-center cursor-pointer ${
-                  isCurr
-                    ? "bg-[#f5efdc] text-[#1f1f1f] border-[#e6dfc6] font-semibold"
-                    : "bg-white text-[#4a4a4a] border-[#e4e4df] hover:bg-[#f7f7f4]"
-                }`}
-              >
-                {item}
-              </button>
-            );
-          })}
-
-          {/* Next */}
-          <button
-            disabled={page >= totalPages || loading}
-            onClick={() => setPage((p) => p + 1)}
-            className="min-w-[28px] h-7 px-2 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[12.5px] hover:bg-[#f7f7f4] disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
-          >
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={totalItems || issuers.length}
+        pageSize={limit}
+        itemCountOnPage={issuers.length}
+        itemLabel="issuers"
+        onPageChange={(newPage) => setPage(newPage)}
+        loading={loading}
+      />
 
       {/* ===================== ADD / EDIT MODAL ===================== */}
       {dialogOpen && (
@@ -461,6 +502,48 @@ export default function LicenseIssuersPage() {
                   placeholder="e.g. Texas Parks & Wildlife Department"
                   className="w-full h-10 px-3.5 border border-[#e4e4df] bg-white rounded-lg text-sm text-[#333] focus:outline-none focus:border-[#2d4a23]"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  State
+                </label>
+                <select
+                  value={stateId}
+                  onChange={(e) => setStateId(e.target.value)}
+                  className="w-full h-10 px-3.5 pr-9 border border-[#e4e4df] bg-white rounded-lg text-sm text-[#333] focus:outline-none focus:border-[#2d4a23] cursor-pointer"
+                >
+                  <option value="">Select State (Optional)</option>
+                  {statesList.map((s, idx) => {
+                    const sName =
+                      typeof s === "string"
+                        ? s
+                        : s?.state_name || s?.name || `State ${idx + 1}`;
+                    const sId =
+                      typeof s === "string" ? s : s?.state_id || s?.id || sName;
+                    return (
+                      <option key={sId} value={sId}>
+                        {sName}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                  Agency Website Link
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    value={agencyWebsite}
+                    onChange={(e) => setAgencyWebsite(e.target.value)}
+                    placeholder="https://tpwd.texas.gov/..."
+                    className="w-full h-10 pl-9 pr-3.5 border border-[#e4e4df] bg-white rounded-lg text-sm text-[#333] focus:outline-none focus:border-[#2d4a23]"
+                  />
+                  <Globe className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
               </div>
 
               <div className="pt-3 border-t border-gray-100 flex items-center justify-end gap-2.5">

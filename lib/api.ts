@@ -386,28 +386,71 @@ export interface UsersResponse {
   };
 }
 
+export interface UsersFilterParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  plan_level?: string;
+  state_name?: string;
+  joined_at?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  id?: string;
+}
+
 export async function getUsers(
-  page: number = 1,
+  pageOrParams: number | UsersFilterParams = 1,
   limit: number = 10,
   search: string = "",
   status: string = "",
   sortBy: string = "created_at",
   sortOrder: string = "DESC"
 ): Promise<UsersResponse> {
-  const params = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-    sortBy,
-    sortOrder,
-  });
-  if (search) params.append("search", search);
-  if (status && status !== "all") params.append("status", status);
+  const params = new URLSearchParams();
+
+  if (typeof pageOrParams === "object" && pageOrParams !== null) {
+    const {
+      page = 1,
+      limit: l = 10,
+      search: s = "",
+      status: st = "",
+      plan_level = "",
+      state_name = "",
+      joined_at = "",
+      sortBy: sb = "created_at",
+      sortOrder: so = "DESC",
+      id = "",
+    } = pageOrParams;
+
+    params.append("page", String(page));
+    params.append("limit", String(l));
+    if (sb) params.append("sortBy", sb);
+    if (so) params.append("sortOrder", so);
+    if (s && s.trim()) params.append("search", s.trim());
+    if (st && st !== "all") params.append("status", st);
+    if (plan_level && plan_level !== "all") params.append("plan_level", plan_level.toLowerCase());
+    if (state_name && state_name !== "all") params.append("state_name", state_name);
+    if (joined_at) params.append("joined_at", joined_at);
+    if (id) params.append("id", id);
+  } else {
+    params.append("page", String(pageOrParams));
+    params.append("limit", String(limit));
+    if (sortBy) params.append("sortBy", sortBy);
+    if (sortOrder) params.append("sortOrder", sortOrder);
+    if (search && search.trim()) params.append("search", search.trim());
+    if (status && status !== "all") params.append("status", status);
+  }
 
   return await fetchApi<UsersResponse>(`/auth/users?${params.toString()}`);
 }
 
 export async function getUserById(userId: string): Promise<any> {
-  return await fetchApi(`/user-profile/${userId}`);
+  try {
+    return await fetchApi(`/auth/users?id=${userId}`);
+  } catch {
+    return await fetchApi(`/user-profile/${userId}`);
+  }
 }
 
 export async function deleteUser(userId: string): Promise<any> {
@@ -533,29 +576,42 @@ export async function deleteState(stateId: string): Promise<any> {
 export interface LicenseIssuerItem {
   id: string;
   organisation: string;
+  state_id?: string | number | null;
+  agency_website?: string | null;
+  state?: any;
+  state_name?: string;
   created_at?: string;
   updated_at?: string;
+  [key: string]: any;
+}
+
+export interface LicenseIssuerInput {
+  organisation: string;
+  state_id?: string | number | null;
+  agency_website?: string | null;
   [key: string]: any;
 }
 
 export async function getLicenseIssuers(
   page: number = 1,
   limit: number = 10,
-  search: string = ""
+  search: string = "",
+  state_id?: string
 ): Promise<any> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  if (search) params.append("search", search);
+  if (search && search.trim()) params.append("search", search.trim());
+  if (state_id && state_id !== "all") params.append("state_id", state_id);
   return await fetchApi(`/license-issuers?${params.toString()}`);
 }
 
-export async function createLicenseIssuer(data: { organisation: string }): Promise<any> {
+export async function createLicenseIssuer(data: LicenseIssuerInput): Promise<any> {
   return await fetchApi("/license-issuers", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export async function updateLicenseIssuer(issuerId: string, data: { organisation: string }): Promise<any> {
+export async function updateLicenseIssuer(issuerId: string, data: LicenseIssuerInput): Promise<any> {
   return await fetchApi(`/license-issuers/${issuerId}`, {
     method: "PUT",
     body: JSON.stringify(data),
@@ -590,15 +646,91 @@ export interface ResourceItem {
   [key: string]: any;
 }
 
+export interface GetAdminResourcesParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  state_id?: string;
+  activity?: string;
+  category?: string;
+  type?: string;
+  types?: string;
+  is_published?: string | boolean;
+  last_updated?: string;
+  timeframe?: string;
+}
+
 export async function getAdminResources(
-  page: number = 1,
+  paramsOrPage: number | GetAdminResourcesParams = 1,
   limit: number = 10,
   search: string = "",
-  state_id: string = ""
+  state_id: string = "",
+  extraFilters?: {
+    activity?: string;
+    category?: string;
+    type?: string;
+    types?: string;
+    is_published?: string | boolean;
+    last_updated?: string;
+    timeframe?: string;
+  }
 ): Promise<any> {
-  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  if (search) params.append("search", search);
-  if (state_id && state_id !== "all") params.append("state_id", state_id);
+  let paramsObj: GetAdminResourcesParams = {};
+
+  if (typeof paramsOrPage === "object" && paramsOrPage !== null) {
+    paramsObj = { ...paramsOrPage };
+  } else {
+    paramsObj = {
+      page: paramsOrPage,
+      limit,
+      search,
+      state_id,
+      ...extraFilters,
+    };
+  }
+
+  const params = new URLSearchParams();
+  if (paramsObj.page) params.append("page", String(paramsObj.page));
+  if (paramsObj.limit) params.append("limit", String(paramsObj.limit));
+  if (paramsObj.search && paramsObj.search.trim()) {
+    params.append("search", paramsObj.search.trim());
+  }
+  if (paramsObj.state_id && paramsObj.state_id !== "all") {
+    params.append("state_id", paramsObj.state_id);
+  }
+  if (paramsObj.activity && paramsObj.activity !== "all") {
+    params.append("activity", paramsObj.activity);
+  }
+  if (paramsObj.category && paramsObj.category !== "all") {
+    params.append("category", paramsObj.category);
+  }
+  if (paramsObj.type && paramsObj.type !== "all") {
+    params.append("type", paramsObj.type);
+    params.append("types", paramsObj.type);
+  } else if (paramsObj.types && paramsObj.types !== "all") {
+    params.append("type", paramsObj.types);
+    params.append("types", paramsObj.types);
+  }
+  if (
+    paramsObj.is_published !== undefined &&
+    paramsObj.is_published !== null &&
+    paramsObj.is_published !== "" &&
+    paramsObj.is_published !== "all"
+  ) {
+    params.append("is_published", String(paramsObj.is_published));
+  }
+  if (paramsObj.last_updated && paramsObj.last_updated !== "all") {
+    params.append("last_updated", paramsObj.last_updated);
+  }
+  if (paramsObj.timeframe && paramsObj.timeframe !== "all") {
+    params.append("timeframe", paramsObj.timeframe);
+    if (!params.has("last_updated")) {
+      params.append("last_updated", paramsObj.timeframe);
+    }
+  } else if (paramsObj.last_updated && paramsObj.last_updated !== "all" && !params.has("timeframe")) {
+    params.append("timeframe", paramsObj.last_updated);
+  }
+
   return await fetchApi(`/resources/admin/all?${params.toString()}`);
 }
 

@@ -10,14 +10,13 @@ import {
   MoreVertical,
   Loader2,
   AlertCircle,
-  ChevronLeft,
-  ChevronRight,
   X,
   MapPin,
   Image as ImageIcon,
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+import Pagination from "@/components/admin/Pagination";
 import {
   getStates,
   getStateById,
@@ -258,27 +257,6 @@ export default function StatesPage() {
     }
   };
 
-  // Numbered pagination items matching HTML `< 1 2 ... 15 >`
-  const paginationItems = useMemo(() => {
-    const pages: (number | string)[] = [];
-    const max = totalPages || 1;
-
-    if (max <= 5) {
-      for (let i = 1; i <= max; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (page > 3) pages.push("…");
-      const start = Math.max(2, page - 1);
-      const end = Math.min(max - 1, page + 1);
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-      if (page < max - 2) pages.push("…");
-      pages.push(max);
-    }
-    return pages;
-  }, [page, totalPages]);
-
   return (
     <div className="space-y-6">
       {/* ===================== FILTER & ACTION ROW ===================== */}
@@ -459,60 +437,16 @@ export default function StatesPage() {
         </div>
       </section>
 
-      {/* ===================== TABLE FOOTER & PAGINATION ===================== */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-[12.5px] text-[#888]">
-        <div>
-          Showing 1 to {states.length} of {totalItems || states.length} states
-        </div>
-
-        <div className="flex items-center gap-1">
-          {/* Previous */}
-          <button
-            disabled={page <= 1 || loading}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="min-w-[28px] h-7 px-2 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[12.5px] hover:bg-[#f7f7f4] disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Numbered Page Buttons */}
-          {paginationItems.map((item, idx) => {
-            if (item === "…") {
-              return (
-                <span
-                  key={idx}
-                  className="min-w-[28px] h-7 flex items-center justify-center text-[#888]"
-                >
-                  …
-                </span>
-              );
-            }
-            const isCurr = item === page;
-            return (
-              <button
-                key={idx}
-                onClick={() => setPage(Number(item))}
-                className={`min-w-[28px] h-7 px-2 border rounded-[6px] text-[12.5px] transition-all flex items-center justify-center cursor-pointer ${
-                  isCurr
-                    ? "bg-[#f5efdc] text-[#1f1f1f] border-[#e6dfc6] font-semibold"
-                    : "bg-white text-[#4a4a4a] border-[#e4e4df] hover:bg-[#f7f7f4]"
-                }`}
-              >
-                {item}
-              </button>
-            );
-          })}
-
-          {/* Next */}
-          <button
-            disabled={page >= totalPages || loading}
-            onClick={() => setPage((p) => p + 1)}
-            className="min-w-[28px] h-7 px-2 border border-[#e4e4df] bg-white rounded-[6px] text-[#4a4a4a] text-[12.5px] hover:bg-[#f7f7f4] disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
-          >
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={totalItems || states.length}
+        pageSize={limit}
+        itemCountOnPage={states.length}
+        itemLabel="states"
+        onPageChange={(p) => setPage(p)}
+        loading={loading}
+      />
 
       {/* ===================== VIEW DETAILS MODAL ===================== */}
       {viewModalOpen && selectedState && (
@@ -635,7 +569,8 @@ export default function StatesPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    State Code {!editingState && <span className="text-red-500">*</span>}
+                    State Code{" "}
+                    {!editingState && <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="text"

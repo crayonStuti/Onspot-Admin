@@ -9,8 +9,6 @@ import {
   Trash2,
   Download,
   AlertCircle,
-  ChevronLeft,
-  ChevronRight,
   X,
   MapPin,
   FileBadge,
@@ -18,6 +16,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import Pagination from "@/components/admin/Pagination";
 import {
   getUsers,
   deleteUser,
@@ -41,8 +40,12 @@ export default function UsersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
 
-  // Search Query
+  // Search & Filter States
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterStateName, setFilterStateName] = useState("");
+  const [filterPlanLevel, setFilterPlanLevel] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterJoinedAt, setFilterJoinedAt] = useState("");
 
   // Selection State
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -53,7 +56,9 @@ export default function UsersPage() {
 
   // View User Details Modal
   const [viewUserModal, setViewUserModal] = useState(false);
-  const [selectedUserDetails, setSelectedUserDetails] = useState<any | null>(null);
+  const [selectedUserDetails, setSelectedUserDetails] = useState<any | null>(
+    null,
+  );
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [userLicenses, setUserLicenses] = useState<any[]>([]);
   const [userBookmarks, setUserBookmarks] = useState<any[]>([]);
@@ -73,7 +78,15 @@ export default function UsersPage() {
   const fetchUsersList = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getUsers(page, limit, searchQuery);
+      const res = await getUsers({
+        page,
+        limit,
+        search: searchQuery,
+        status: filterStatus,
+        plan_level: filterPlanLevel,
+        state_name: filterStateName,
+        joined_at: filterJoinedAt,
+      });
 
       if (res && res.data) {
         setUsers(res.data.users || []);
@@ -93,7 +106,15 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, searchQuery]);
+  }, [
+    page,
+    limit,
+    searchQuery,
+    filterStatus,
+    filterPlanLevel,
+    filterStateName,
+    filterJoinedAt,
+  ]);
 
   // Fetch States list
   const fetchStatesList = useCallback(async () => {
@@ -110,6 +131,21 @@ export default function UsersPage() {
     }
   }, [states.length]);
 
+  // Load states on initial mount for dropdowns
+  useEffect(() => {
+    fetchStatesList();
+  }, [fetchStatesList]);
+
+  // Reset Filters
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setFilterStateName("");
+    setFilterPlanLevel("");
+    setFilterStatus("");
+    setFilterJoinedAt("");
+    setPage(1);
+  };
+
   // Debounced search trigger
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -120,8 +156,10 @@ export default function UsersPage() {
 
   // Clean Name Helper (removes "null" strings)
   const getUserDisplayName = (user: UserItem) => {
-    const fn = user.first_name && user.first_name !== "null" ? user.first_name : "";
-    const ln = user.last_name && user.last_name !== "null" ? user.last_name : "";
+    const fn =
+      user.first_name && user.first_name !== "null" ? user.first_name : "";
+    const ln =
+      user.last_name && user.last_name !== "null" ? user.last_name : "";
     const name = `${fn} ${ln}`.trim();
     return name || user.display_name || user.email?.split("@")[0] || "User";
   };
@@ -173,9 +211,10 @@ export default function UsersPage() {
         ]);
 
       if (fullProfileRes.status === "fulfilled" && fullProfileRes.value) {
-        setSelectedUserDetails(
-          fullProfileRes.value.data || fullProfileRes.value,
-        );
+        const payload = fullProfileRes.value;
+        const fullUser =
+          payload.data?.user || payload.user || payload.data || payload;
+        setSelectedUserDetails(fullUser);
       }
       if (licensesRes.status === "fulfilled" && licensesRes.value) {
         const lic = licensesRes.value.data || licensesRes.value || [];
@@ -284,44 +323,133 @@ export default function UsersPage() {
     toast.success("Users exported successfully.");
   };
 
-  // Generate pagination items matching HTML
-  const paginationItems = useMemo(() => {
-    const pages: (number | string)[] = [];
-    const max = totalPages || 1;
-
-    if (max <= 5) {
-      for (let i = 1; i <= max; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (page > 3) pages.push("…");
-      const start = Math.max(2, page - 1);
-      const end = Math.min(max - 1, page + 1);
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-      if (page < max - 2) pages.push("…");
-      pages.push(max);
-    }
-    return pages;
-  }, [page, totalPages]);
-
   return (
     <div className="space-y-6">
-      {/* ===================== FILTER CARD (1:1 HTML) ===================== */}
-      <section className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)]">
-        <div className="flex flex-col gap-1.5 max-w-sm">
-          <label className="text-[12.5px] font-medium text-[#4a4a4a]">
-            Search User
-          </label>
-          <div className="relative">
+      {/* ===================== FILTER CARD ===================== */}
+      <section className="bg-white rounded-[14px] p-5 sm:p-6 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.6fr_1fr_1.1fr_1fr_1fr_auto] gap-4 items-end">
+          {/* Search User */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-[#2c2c2c]">
+              Search User
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Name or email"
+                className="w-full h-[42px] pl-3.5 pr-10 rounded-[10px] border border-[#e4e4df] bg-white text-[13px] text-[#2c2c2c] placeholder:text-[#bdbdbd] focus:outline-none focus:border-[#1f3d2a]"
+              />
+              <Search className="w-4 h-4 text-[#999] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* State */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-[#2c2c2c]">
+              State
+            </label>
+            <select
+              value={filterStateName}
+              onChange={(e) => {
+                setFilterStateName(e.target.value);
+                setPage(1);
+              }}
+              className="w-full h-[42px] px-3.5 pr-9 rounded-[10px] border border-[#e4e4df] bg-[#F9F9F9] text-[13px] text-[#2c2c2c] focus:outline-none focus:border-[#1f3d2a] cursor-pointer"
+            >
+              <option value="">All states</option>
+              {states.map((s, idx) => {
+                const sName =
+                  typeof s === "string"
+                    ? s
+                    : s?.state_name || (s as any)?.name || `State ${idx + 1}`;
+                return (
+                  <option key={sName + idx} value={sName}>
+                    {sName}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          {/* Membership Plan */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-[#2c2c2c]">
+              Membership Plan
+            </label>
+            <select
+              value={filterPlanLevel}
+              onChange={(e) => {
+                setFilterPlanLevel(e.target.value);
+                setPage(1);
+              }}
+              className="w-full h-[42px] px-3.5 pr-9 rounded-[10px] border border-[#e4e4df] bg-[#F9F9F9] text-[13px] text-[#2c2c2c] focus:outline-none focus:border-[#1f3d2a] cursor-pointer"
+            >
+              <option value="">All plans</option>
+              <option value="free">Free</option>
+              <option value="basic">Basic</option>
+              <option value="premium">Premium</option>
+            </select>
+          </div>
+
+          {/* Status */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-[#2c2c2c]">
+              Status
+            </label>
+            <select
+              value={filterStatus}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setPage(1);
+              }}
+              className="w-full h-[42px] px-3.5 pr-9 rounded-[10px] border border-[#e4e4df] bg-[#F9F9F9] text-[13px] text-[#2c2c2c] focus:outline-none focus:border-[#1f3d2a] cursor-pointer"
+            >
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+
+          {/* Join Date */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-[#2c2c2c]">
+              Join Date
+            </label>
             <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Name or email"
-              className="w-full h-[38px] pl-3.5 pr-9 rounded-[6px] border border-[#e4e4df] bg-white text-[13px] text-[#4a4a4a] placeholder-gray-400 focus:outline-none focus:border-[#2d4a23]"
+              type="date"
+              value={filterJoinedAt}
+              onChange={(e) => {
+                setFilterJoinedAt(e.target.value);
+                setPage(1);
+              }}
+              className="w-full h-[42px] px-3.5 rounded-[10px] border border-[#e4e4df] bg-[#F9F9F9] text-[13px] text-[#2c2c2c] focus:outline-none focus:border-[#1f3d2a] cursor-pointer"
             />
-            <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {/* Filter Actions */}
+          <div className="flex items-center gap-2.5 sm:col-span-2 lg:col-span-3 xl:col-span-1 justify-end">
+            <button
+              onClick={handleResetFilters}
+              type="button"
+              className="h-[42px] px-5 sm:px-6 rounded-[10px] border border-[#e4e4df] bg-white hover:bg-[#f7f7f2] text-[#4a4a4a] font-semibold text-[13.5px] transition-colors cursor-pointer"
+            >
+              Reset
+            </button>
+            <button
+              onClick={() => {
+                setPage(1);
+                fetchUsersList();
+              }}
+              type="button"
+              className="h-[42px] px-6 sm:px-7 rounded-[10px] bg-[#1f3d2a] hover:bg-[#295034] text-white font-semibold text-[13.5px] transition-colors cursor-pointer shadow-xs"
+            >
+              Filter
+            </button>
           </div>
         </div>
       </section>
@@ -450,7 +578,8 @@ export default function UsersPage() {
                     const isBasic = membershipStr
                       .toLowerCase()
                       .includes("basic");
-                    const isActive = user.status !== "inactive" && user.status !== "suspended";
+                    const isActive =
+                      user.status !== "inactive" && user.status !== "suspended";
                     const joinDate = user.created_at
                       ? new Date(user.created_at).toLocaleDateString("en-GB", {
                           day: "2-digit",
@@ -482,7 +611,9 @@ export default function UsersPage() {
                             <div className="w-[30px] h-[30px] rounded-full bg-[#f1f1ed] text-[#4a4a4a] font-semibold flex items-center justify-center text-xs flex-shrink-0 overflow-hidden relative">
                               {user.profile?.profile_picture ? (
                                 <Image
-                                  src={getProfileImageUrl(user.profile.profile_picture)}
+                                  src={getProfileImageUrl(
+                                    user.profile.profile_picture,
+                                  )}
                                   alt={fullName}
                                   width={30}
                                   height={30}
@@ -536,7 +667,10 @@ export default function UsersPage() {
                                 isActive ? "bg-[#2f9e44]" : "bg-[#e03131]"
                               }`}
                             />
-                            {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : "Active"}
+                            {user.status
+                              ? user.status.charAt(0).toUpperCase() +
+                                user.status.slice(1)
+                              : "Active"}
                           </span>
                         </td>
 
@@ -581,83 +715,64 @@ export default function UsersPage() {
             </table>
           </div>
 
-          {/* Footer / Pagination Controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 mt-2 border-t border-[#ececec] text-[12.5px] text-[#7D848D]">
-            <div>
-              Showing {users.length > 0 ? (page - 1) * limit + 1 : 0} to{" "}
-              {Math.min(page * limit, totalUsers)} of {totalUsers} users
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="w-8 h-8 rounded-[6px] border border-[#e4e4df] bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#f7f7f4] flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4 text-[#444]" />
-              </button>
-
-              {paginationItems.map((item, idx) =>
-                typeof item === "number" ? (
-                  <button
-                    key={idx}
-                    onClick={() => setPage(item)}
-                    className={`w-8 h-8 rounded-[6px] font-medium text-xs flex items-center justify-center transition-colors cursor-pointer ${
-                      page === item
-                        ? "bg-[#2d4a23] text-white"
-                        : "border border-[#e4e4df] bg-white text-[#444] hover:bg-[#f7f7f4]"
-                    }`}
-                  >
-                    {item}
-                  </button>
-                ) : (
-                  <span key={idx} className="px-1 text-gray-400">
-                    {item}
-                  </span>
-                ),
-              )}
-
-              <button
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="w-8 h-8 rounded-[6px] border border-[#e4e4df] bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#f7f7f4] flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4 text-[#444]" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalUsers}
+            pageSize={limit}
+            itemCountOnPage={users.length}
+            itemLabel="users"
+            onPageChange={(p) => setPage(p)}
+            loading={loading}
+            className="border-t border-[#ececec] pt-4 mt-2"
+          />
         </section>
 
-        {/* ===================== SIDEBAR SUMMARY (1:1 HTML) ===================== */}
-        <section className="xl:col-span-4 bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] flex flex-col gap-4">
-          <div className="pb-3 border-b border-[#ececec]">
-            <h3 className="font-semibold text-[#1f1f1f] text-[15px]">
-              Overview Summary
-            </h3>
-            <p className="text-xs text-[#7D848D] mt-0.5">
-              Quick breakdown of accounts
-            </p>
-          </div>
+        <div className="xl:col-span-4 flex flex-col gap-5">
+          <section className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] flex flex-col gap-4">
+            <div className="pb-3 border-b border-[#ececec]">
+              <h3 className="font-semibold text-[#1f1f1f] text-[15px]">
+                Overview Summary
+              </h3>
+              <p className="text-xs text-[#7D848D] mt-0.5">
+                Quick breakdown of accounts
+              </p>
+            </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3.5 rounded-xl bg-[#fbfbf8] border border-[#ececec]">
-              <span className="text-xs text-[#7D848D] block font-medium">
-                Total Users
-              </span>
-              <span className="text-xl font-bold text-[#111] mt-1 block">
-                {totalUsers}
-              </span>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3.5 rounded-xl bg-[#fbfbf8] border border-[#ececec]">
+                <span className="text-xs text-[#7D848D] block font-medium">
+                  Total Users
+                </span>
+                <span className="text-xl font-bold text-[#111] mt-1 block">
+                  {totalUsers}
+                </span>
+              </div>
+              <div className="p-3.5 rounded-xl bg-[#fbfbf8] border border-[#ececec]">
+                <span className="text-xs text-[#7D848D] block font-medium">
+                  Selected
+                </span>
+                <span className="text-xl font-bold text-[#2d4a23] mt-1 block">
+                  {selectedUserIds.length}
+                </span>
+              </div>
             </div>
-            <div className="p-3.5 rounded-xl bg-[#fbfbf8] border border-[#ececec]">
-              <span className="text-xs text-[#7D848D] block font-medium">
-                Selected
-              </span>
-              <span className="text-xl font-bold text-[#2d4a23] mt-1 block">
-                {selectedUserIds.length}
-              </span>
-            </div>
+          </section>
+
+          {/* Map Section matching HTML template */}
+          <div className="h-[460px] rounded-[14px] overflow-hidden border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] bg-white">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d44196.236392315026!2d-93.81033787191589!3d46.185289524094266!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b157a8f77c8e1f%3A0xfbe655e10ff018bc!2sVineland%2C%20MN%2056359%2C%20USA!5e0!3m2!1sen!2sin!4v1781021191340!5m2!1sen!2sin"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Users Live Map"
+            />
           </div>
-        </section>
+        </div>
       </section>
 
       {/* ===================== ADD USER MODAL ===================== */}
@@ -691,7 +806,9 @@ export default function UsersPage() {
                 <div className="w-12 h-12 rounded-full bg-emerald-50 text-[#2d4a23] font-bold text-lg flex items-center justify-center flex-shrink-0 border border-emerald-100 overflow-hidden relative">
                   {selectedUserDetails.profile?.profile_picture ? (
                     <Image
-                      src={getProfileImageUrl(selectedUserDetails.profile.profile_picture)}
+                      src={getProfileImageUrl(
+                        selectedUserDetails.profile.profile_picture,
+                      )}
                       alt="Avatar"
                       width={48}
                       height={48}
@@ -699,7 +816,9 @@ export default function UsersPage() {
                       unoptimized
                     />
                   ) : (
-                    getUserDisplayName(selectedUserDetails).charAt(0).toUpperCase()
+                    getUserDisplayName(selectedUserDetails)
+                      .charAt(0)
+                      .toUpperCase()
                   )}
                 </div>
                 <div>
@@ -725,7 +844,11 @@ export default function UsersPage() {
                 <div>
                   <span className="text-gray-400 block font-medium">Role</span>
                   <span className="font-semibold text-gray-800 capitalize">
-                    {String(selectedUserDetails?.role || selectedUserDetails?.user?.role || "user")}
+                    {String(
+                      selectedUserDetails?.role ||
+                        selectedUserDetails?.user?.role ||
+                        "user",
+                    )}
                   </span>
                 </div>
                 <div>
