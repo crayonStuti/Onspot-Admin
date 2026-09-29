@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S.P.O.T. Notification / Announcements</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body class="page-notifications">
+    <div class="app">
+      <!-- =================== SIDEBAR =================== -->
+      <aside class="sidebar">
+        <div class="logo">
+          <a href="dashboard.html"
+            ><img src="assets/images/on-spot-logo.png" alt="" srcset=""
+          /></a>
+        </div>
+        <nav class="nav">
+          <a href="dashboard.html">
+            <span class="ico">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <rect x="3" y="3" width="8" height="8" rx="1.5" />
+                <rect x="13" y="3" width="8" height="5" rx="1.5" />
+                <rect x="13" y="11" width="8" height="10" rx="1.5" />
+                <rect x="3" y="14" width="8" height="7" rx="1.5" />
+              </svg>
+            </span>
+            Dashboard
+          </a>
+          <a href="users.html">
+            <span class="ico">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="8" r="4.2" />
+                <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z" />
+              </svg>
+            </span>
+            Users
+          </a>
+          <a href="memberships.html">
+            <span class="ico">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"
+                />
+              </svg>
+            </span>
+            Memberships
+          </a>
+          <a href="licenses.html">
+            <span class="ico">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2H2V7zm0 4h20v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6zm3 3v2h5v-2H5z"
+                />
+              </svg>
+            </span>
+            Licenses
+          </a>
+          <a href="resources.html">
+            <span class="ico">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6zm7 1.5L18.5 9H14a1 1 0 0 1-1-1V3.5z"
+                />
+              </svg>
+            </span>
+            Resources
+          </a>
+          <a href="gps.html">
+            <span class="ico">
+              <img src="assets/images/gps.png" alt="" width="26" height="26" />
+            </span>
+            GPS Activity
+          </a>
+          <a href="ai.html">
+            <span class="ico">
+              <img
+                src="assets/images/ai-assistant.png"
+                alt=""
+                width="26"
+                height="26"
+              />
+            </span>
+            AI Assistant
+          </a>
+          <a href="revenue.html">
+            <span class="ico">
+              <img
+                src="assets/images/revenue.png"
+                alt=""
+                width="26"
+                height="26"
+              />
+            </span>
+            Revenue
+          </a>
+          <a href="reports.html">
+            <span class="ico">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <rect x="3" y="13" width="4.5" height="8" rx="1" />
+                <rect x="9.75" y="7" width="4.5" height="14" rx="1" />
+                <rect x="16.5" y="10" width="4.5" height="11" rx="1" />
+              </svg>
+            </span>
+            Reports
+          </a>
+          <a href="leaderboard.html">
+            <span class="ico">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="9" cy="8" r="3.6" />
+                <path d="M2 21c0-3.87 3.13-7 7-7s7 3.13 7 7H2z" />
+                <circle cx="17" cy="9" r="2.6" />
+                <path
+                  d="M14.5 14.7c.79-.45 1.7-.7 2.5-.7 2.76 0 5 2.24 5 5h-5.5c0-1.6-.78-3.07-2-4.3z"
+                />
+              </svg>
+            </span>
+            Leaderboard
+          </a>
+          <a href="community.html">
+            <span class="ico">
+              <img
+                src="assets/images/community.png"
+                alt=""
+                width="26"
+                height="26"
+              />
+            </span>
+            Community Posts
+          </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <a href="notifications.html" class="active">
+            <span class="ico">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M12 2a6 6 0 0 0-6 6c0 7-3 9-3 9h18s-3-2-3-9a6 6 0 0 0-6-6zm-2 19a2 2 0 0 0 4 0h-4z"
+                />
+              </svg>
+            </span>
+            Notifications
+          </a>
+          <a href="settings.html">
+            <span class="ico">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.03 7.03 0 0 0-1.69-.98l-.38-2.65A.488.488 0 0 0 14 2h-4a.488.488 0 0 0-.49.42l-.38 2.65c-.61.25-1.17.58-1.69.98l-2.49-1a.566.566 0 0 0-.18-.03c-.17 0-.34.09-.43.25l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46a.5.5 0 0 0 .61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.05.24.25.42.49.42h4c.24 0 .44-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.06.02.12.03.18.03.17 0 .34-.09.43-.25l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"
+                />
+              </svg>
+            </span>
+            Settings
+          </a>
+        </div>
+      </aside>
+
+      <!-- =================== MAIN =================== -->
+      <main class="main">
+        <!-- Topbar -->
+        <header class="topbar">
+          <h1>Notification / Announcements</h1>
+          <div class="search-top">
+            <input type="text" id="top-search" placeholder="Search" />
+            <span class="s-ico">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </span>
+          </div>
+          <div class="top-actions">
+            <a href="settings.html" class="icon-btn dot-only" title="Settings"
+              ><span>
+                <img src="assets/images/setting-icon.png" alt="" /> </span
+            ></a>
+            <a
+              href="notifications.html"
+              class="icon-btn num-only"
+              title="Notifications"
+              ><span>
+                <img src="assets/images/notification-icon.png" alt="" /> </span
+            ></a>
+            <div class="profile">
+              <img src="https://i.pravatar.cc/80?img=14" alt="" />
+              <div class="meta">
+                <div class="name">Leonardo Smith</div>
+                <div class="role">Admin</div>
+              </div>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#888"
+                stroke-width="2"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+          </div>
+        </header>
+
+        <!-- Create new notification -->
+        <div class="notif-bar">
+          <button class="btn-notif" id="create-notif">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+            Create new notification
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- =========== STAT CARDS =========== -->
+        <section class="stats-row">
+          <div class="stat-card">
+            <div class="head">
+              <span class="label">Total Sent</span>
+              <span class="icon-pill">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2 21l21-9L2 3v7l15 2-15 2z" />
+                </svg>
+              </span>
+            </div>
+            <div class="value">128</div>
+            <div class="sub">This Month</div>
+          </div>
+          <div class="stat-card">
+            <div class="head">
+              <span class="label">Total Reach</span>
+              <span class="icon-pill">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="9" cy="8" r="3.6" />
+                  <path d="M2 21c0-3.87 3.13-7 7-7s7 3.13 7 7H2z" />
+                  <circle cx="17" cy="9" r="2.6" />
+                  <path
+                    d="M14.5 14.7c.79-.45 1.7-.7 2.5-.7 2.76 0 5 2.24 5 5h-5.5c0-1.6-.78-3.07-2-4.3z"
+                  />
+                </svg>
+              </span>
+            </div>
+            <div class="value">24, 560</div>
+            <div class="sub">Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="head">
+              <span class="label">Avg Open Rate</span>
+              <span class="icon-pill">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v.4l-10 6-10-6V6zm0 2.8l10 6 10-6V18a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.8z"
+                  />
+                </svg>
+              </span>
+            </div>
+            <div class="value">48.6%</div>
+            <div class="sub">This Month</div>
+          </div>
+          <div class="stat-card">
+            <div class="head">
+              <span class="label">Avg Click Rate</span>
+              <span class="icon-pill">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 3v9.5l2.5-2 2 4.5 2-1-2-4.5h3z" />
+                  <path
+                    d="M9 3a6 6 0 1 0 4 10.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  />
+                </svg>
+              </span>
+            </div>
+            <div class="value">12.7%</div>
+            <div class="sub">This Month</div>
+          </div>
+        </section>
+
+        <!-- =========== FILTER ROW =========== -->
+        <section class="filter-row">
+          <select id="filter-audience">
+            <option value="">All Audiences</option>
+            <option>All Users</option>
+            <option>Premium Users</option>
+            <option>State: California</option>
+          </select>
+          <select id="filter-type">
+            <option value="">All Type</option>
+            <option>Push</option>
+            <option>Email</option>
+          </select>
+          <select id="filter-status">
+            <option value="">All Status</option>
+            <option>Sent</option>
+            <option>Draft</option>
+          </select>
+          <select id="filter-date">
+            <option value="">Date Range</option>
+            <option value="7">Last 7 Days</option>
+            <option value="30">Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+          </select>
+          <span class="spacer"></span>
+          <div class="search-field">
+            <input type="text" id="right-search" placeholder="Search" />
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </div>
+          <button class="reset-btn" id="reset-btn">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            Reset
+          </button>
+        </section>
+
+        <!-- =========== BODY GRID =========== -->
+        <div class="body-grid">
+          <!-- LEFT -->
+          <div>
+            <section class="card" style="margin-bottom: 0">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Notification Title</th>
+                    <th>Audiences</th>
+                    <th>Type</th>
+                    <th>Date Sent</th>
+                    <th>Open Rate</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="nt-tbody"></tbody>
+              </table>
+              <div
+                id="nt-empty"
+                style="
+                  display: none;
+                  text-align: center;
+                  padding: 32px 12px;
+                  color: #999;
+                  font-size: 13px;
+                "
+              >
+                No notifications match your filters.
+              </div>
+            </section>
+
+            <div class="table-footer">
+              <div id="nt-count">Showing 1 to 16 of 45000 users</div>
+              <div class="pagination" id="pagination"></div>
+            </div>
+
+            <section class="card" style="margin-bottom: 0">
+              <h3>Notification Performance overview</h3>
+              <div class="perf-grid">
+                <div class="perf-item">
+                  <div class="p-ic">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="p-body">
+                    <div class="p-top">Total Opened</div>
+                    <div class="p-val">11,466</div>
+                    <div class="p-sub">48.6% of total reach</div>
+                  </div>
+                </div>
+                <div class="perf-item">
+                  <div class="p-ic">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M7 2.5l12.2 11.7-5.6.5 3.05 6.2-2.7 1.3-3.05-6.2L7 20.3z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="p-body">
+                    <div class="p-top">Total Clicked</div>
+                    <div class="p-val">11,466</div>
+                    <div class="p-sub">48.6% of total reach</div>
+                  </div>
+                </div>
+                <div class="perf-item">
+                  <div class="p-ic">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="p-body">
+                    <div class="p-top">Total Unsubscribed</div>
+                    <div class="p-val">11,466</div>
+                    <div class="p-sub">48.6% of total reach</div>
+                  </div>
+                </div>
+                <div class="perf-item">
+                  <div class="p-ic">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 16h-2v-2h2v2zm0-4h-2V9h2v5z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="p-body">
+                    <div class="p-top">Bounced</div>
+                    <div class="p-val">11,466</div>
+                    <div class="p-sub">0.4% of total sent</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- RIGHT -->
+          <div>
+            <div class="card">
+              <h3>Send New Notifications</h3>
+              <div class="send-list">
+                <div class="send-item" data-send="push">
+                  <div class="s-ic">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M2 21l21-9L2 3v7l15 2-15 2z" />
+                    </svg>
+                  </div>
+                  <div class="s-body">
+                    <div class="s-title">Push Notification</div>
+                    <div class="s-sub">
+                      Send instant notifications to users on their devices
+                    </div>
+                  </div>
+                </div>
+                <div class="send-item" data-send="email">
+                  <div class="s-ic">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v.4l-10 6-10-6V6zm0 2.8l10 6 10-6V18a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.8z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="s-body">
+                    <div class="s-title">Email Notification</div>
+                    <div class="s-sub">Send email announcement to users.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Why Send Notifications</h3>
+              <div class="why-list">
+                <div class="why-item">
+                  <div class="w-title">Renewal Reminders</div>
+                  <div class="w-sub">
+                    Reduce cancellations and remind users to renew
+                  </div>
+                </div>
+                <div class="why-item">
+                  <div class="w-title">Updates</div>
+                  <div class="w-sub">
+                    Inform users about planform updates and maintenance.
+                  </div>
+                </div>
+                <div class="why-item">
+                  <div class="w-title">Promotions</div>
+                  <div class="w-sub">
+                    Increase engagement with special offers and discounts.
+                  </div>
+                </div>
+                <div class="why-item">
+                  <div class="w-title">Engagement</div>
+                  <div class="w-sub">
+                    Keep users informed and engaged with relevant news.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 0">
+              <h3>Best Practices</h3>
+              <div class="practice-list">
+                <div class="practice-item">
+                  <span class="check"
+                    ><svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3"
+                    >
+                      <polyline points="20 6 9 17 4 12" /></svg
+                  ></span>
+                  Keep messages short and clear
+                </div>
+                <div class="practice-item">
+                  <span class="check"
+                    ><svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3"
+                    >
+                      <polyline points="20 6 9 17 4 12" /></svg
+                  ></span>
+                  Use engaging titles
+                </div>
+                <div class="practice-item">
+                  <span class="check"
+                    ><svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3"
+                    >
+                      <polyline points="20 6 9 17 4 12" /></svg
+                  ></span>
+                  Send at the right time
+                </div>
+                <div class="practice-item">
+                  <span class="check"
+                    ><svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3"
+                    >
+                      <polyline points="20 6 9 17 4 12" /></svg
+                  ></span>
+                  Track performance and improve
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="assets/script.js"></script>
+  </body>
+</html>

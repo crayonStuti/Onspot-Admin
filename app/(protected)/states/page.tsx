@@ -75,7 +75,7 @@ export default function StatesPage() {
   const fetchStatesList = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getStates(page, limit);
+      const res = await getStates(page, limit, searchQuery);
       let list: StateItem[] = [];
 
       if (res && res.data) {
@@ -115,17 +115,6 @@ export default function StatesPage() {
         list = res.states;
         setTotalItems(res.states.length);
         setTotalPages(1);
-      }
-
-      // Local search filtering if backend does not search states
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        list = list.filter(
-          (s) =>
-            s.state_name?.toLowerCase().includes(q) ||
-            s.state_code?.toLowerCase().includes(q) ||
-            s.state_description?.toLowerCase().includes(q),
-        );
       }
 
       setStates(list);

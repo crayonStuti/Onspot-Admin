@@ -33,7 +33,9 @@ export function EditUserModal({
   const [editSaving, setEditSaving] = useState(false);
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [preferenceRows, setPreferenceRows] = useState<PreferenceRow[]>([{ key: "", value: "" }]);
+  const [preferenceRows, setPreferenceRows] = useState<PreferenceRow[]>([
+    { key: "", value: "" },
+  ]);
 
   const [editForm, setEditForm] = useState({
     first_name: "",
@@ -47,7 +49,6 @@ export function EditUserModal({
     zipcode: "",
     is_hunter: false,
     is_fisherman: false,
-    current_tier: "free",
     status: "active",
     social_channels: {
       instagram: "",
@@ -67,7 +68,8 @@ export function EditUserModal({
 
       try {
         const userRes = await getUserById(userToEdit.id);
-        const fullUser = userRes?.user || userRes?.data?.user || userRes?.data || userRes;
+        const fullUser =
+          userRes?.user || userRes?.data?.user || userRes?.data || userRes;
 
         if (fullUser) {
           const profile = fullUser.profile || {};
@@ -77,16 +79,18 @@ export function EditUserModal({
           setEditForm({
             first_name: fullUser.first_name || userToEdit.first_name || "",
             last_name: fullUser.last_name || userToEdit.last_name || "",
-            display_name: fullUser.display_name || userToEdit.display_name || "",
+            display_name:
+              fullUser.display_name || userToEdit.display_name || "",
             phone: profile.phone || userToEdit.phone || "",
             street_address: profile.street_address || "",
             street_address_2: profile.street_address_2 || "",
             city: profile.city || "",
             state: profile.state || "",
             zipcode: profile.zipcode || "",
-            is_hunter: profile.is_hunter === true || profile.is_hunter === "true",
-            is_fisherman: profile.is_fisherman === true || profile.is_fisherman === "true",
-            current_tier: profile.current_tier || "free",
+            is_hunter:
+              profile.is_hunter === true || profile.is_hunter === "true",
+            is_fisherman:
+              profile.is_fisherman === true || profile.is_fisherman === "true",
             status: fullUser.status || userToEdit.status || "active",
             social_channels: {
               instagram: social.instagram || "",
@@ -102,12 +106,17 @@ export function EditUserModal({
               .join(" ");
             return { key: formattedKey, value: String(v) };
           });
-          setPreferenceRows(initialRows.length > 0 ? initialRows : [{ key: "", value: "" }]);
+          setPreferenceRows(
+            initialRows.length > 0 ? initialRows : [{ key: "", value: "" }],
+          );
 
           if (profile.profile_picture) {
-            const resolvedUrl = profile.profile_picture.startsWith("http") || profile.profile_picture.startsWith("blob:") || profile.profile_picture.startsWith("data:")
-              ? profile.profile_picture
-              : `${API_URL}${profile.profile_picture.startsWith("/") ? "" : "/"}${profile.profile_picture}`;
+            const resolvedUrl =
+              profile.profile_picture.startsWith("http") ||
+              profile.profile_picture.startsWith("blob:") ||
+              profile.profile_picture.startsWith("data:")
+                ? profile.profile_picture
+                : `${API_URL}${profile.profile_picture.startsWith("/") ? "" : "/"}${profile.profile_picture}`;
             setPreviewUrl(resolvedUrl);
           }
         }
@@ -135,7 +144,8 @@ export function EditUserModal({
       submitData.append("last_name", editForm.last_name);
       submitData.append(
         "display_name",
-        editForm.display_name || `${editForm.first_name} ${editForm.last_name}`.trim(),
+        editForm.display_name ||
+          `${editForm.first_name} ${editForm.last_name}`.trim(),
       );
       submitData.append("phone", editForm.phone);
       submitData.append("street_address", editForm.street_address);
@@ -145,7 +155,6 @@ export function EditUserModal({
       submitData.append("zipcode", editForm.zipcode);
       submitData.append("is_hunter", String(editForm.is_hunter));
       submitData.append("is_fisherman", String(editForm.is_fisherman));
-      submitData.append("current_tier", editForm.current_tier);
       submitData.append("status", editForm.status);
       submitData.append(
         "social_channels[instagram]",
@@ -196,8 +205,12 @@ export function EditUserModal({
               <Edit2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900">Edit User Profile</h3>
-              <p className="text-xs text-gray-500">Update profile information for {userToEdit.email}</p>
+              <h3 className="text-base font-bold text-gray-900">
+                Edit User Profile
+              </h3>
+              <p className="text-xs text-gray-500">
+                Update profile information for {userToEdit.email}
+              </p>
             </div>
           </div>
           <button
@@ -212,13 +225,17 @@ export function EditUserModal({
         {editFetching ? (
           <div className="py-12 flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-8 h-8 text-[#2d4a23] animate-spin" />
-            <p className="text-xs text-gray-500">Loading user profile details...</p>
+            <p className="text-xs text-gray-500">
+              Loading user profile details...
+            </p>
           </div>
         ) : (
           <form onSubmit={handleSaveEditUser} className="space-y-6 text-xs">
             {/* Profile Picture Section */}
             <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3">
-              <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Profile Picture</h4>
+              <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">
+                Profile Picture
+              </h4>
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-gray-200 border border-gray-300 overflow-hidden flex items-center justify-center text-gray-500 font-bold text-lg relative">
                   {previewUrl ? (
@@ -250,41 +267,66 @@ export function EditUserModal({
                       }}
                     />
                   </label>
-                  <p className="text-[10px] text-gray-400">JPG, PNG or GIF. Max 2MB.</p>
+                  <p className="text-[10px] text-gray-400">
+                    JPG, PNG or GIF. Max 2MB.
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Contact & Address Section */}
             <div className="space-y-3">
-              <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Contact & Address</h4>
+              <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">
+                Contact & Address
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <label className="font-semibold text-gray-700">First Name</label>
+                  <label className="font-semibold text-gray-700">
+                    First Name
+                  </label>
                   <input
                     type="text"
                     value={editForm.first_name}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, first_name: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        first_name: e.target.value,
+                      }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#2d4a23]"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-gray-700">Last Name</label>
+                  <label className="font-semibold text-gray-700">
+                    Last Name
+                  </label>
                   <input
                     type="text"
                     value={editForm.last_name}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, last_name: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        last_name: e.target.value,
+                      }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#2d4a23]"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-gray-700">Display Name</label>
+                  <label className="font-semibold text-gray-700">
+                    Display Name
+                  </label>
                   <input
                     type="text"
                     value={editForm.display_name}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, display_name: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        display_name: e.target.value,
+                      }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#2d4a23]"
                   />
                 </div>
@@ -294,7 +336,12 @@ export function EditUserModal({
                   <input
                     type="text"
                     value={editForm.phone}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#2d4a23]"
                   />
                 </div>
@@ -303,44 +350,50 @@ export function EditUserModal({
                   <label className="font-semibold text-gray-700">Status</label>
                   <select
                     value={editForm.status}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        status: e.target.value,
+                      }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:border-[#2d4a23]"
                   >
                     <option value="active">Active</option>
                     <option value="suspended">Suspended</option>
                   </select>
                 </div>
-
-                <div className="space-y-1">
-                  <label className="font-semibold text-gray-700">Current Tier</label>
-                  <select
-                    value={editForm.current_tier}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, current_tier: e.target.value }))}
-                    className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:border-[#2d4a23]"
-                  >
-                    <option value="free">Free</option>
-                    <option value="basic">Basic</option>
-                    <option value="premium">Premium</option>
-                  </select>
-                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                 <div className="space-y-1">
-                  <label className="font-semibold text-gray-700">Street Address</label>
+                  <label className="font-semibold text-gray-700">
+                    Street Address
+                  </label>
                   <input
                     type="text"
                     value={editForm.street_address}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, street_address: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        street_address: e.target.value,
+                      }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#2d4a23]"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-semibold text-gray-700">Street Address 2</label>
+                  <label className="font-semibold text-gray-700">
+                    Street Address 2
+                  </label>
                   <input
                     type="text"
                     value={editForm.street_address_2}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, street_address_2: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        street_address_2: e.target.value,
+                      }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#2d4a23]"
                   />
                 </div>
@@ -352,7 +405,9 @@ export function EditUserModal({
                   <input
                     type="text"
                     value={editForm.city}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, city: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({ ...prev, city: e.target.value }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#2d4a23]"
                   />
                 </div>
@@ -360,11 +415,18 @@ export function EditUserModal({
                   <label className="font-semibold text-gray-700">State</label>
                   <select
                     value={editForm.state}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, state: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        state: e.target.value,
+                      }))
+                    }
                     disabled={loadingStates}
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs bg-white focus:outline-none focus:border-[#2d4a23]"
                   >
-                    <option value="">{loadingStates ? "Loading states..." : "Select state"}</option>
+                    <option value="">
+                      {loadingStates ? "Loading states..." : "Select state"}
+                    </option>
                     {states.map((s) => (
                       <option key={s.state_id || s.id} value={s.state_name}>
                         {s.state_name}
@@ -377,7 +439,12 @@ export function EditUserModal({
                   <input
                     type="text"
                     value={editForm.zipcode}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, zipcode: e.target.value }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        zipcode: e.target.value,
+                      }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#2d4a23]"
                   />
                 </div>
@@ -386,30 +453,50 @@ export function EditUserModal({
 
             {/* Interests & Status */}
             <div className="space-y-3">
-              <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Interests & Status</h4>
+              <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">
+                Interests & Status
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer">
                   <div>
-                    <span className="font-bold text-gray-800 block">Is Hunter</span>
-                    <span className="text-[11px] text-gray-400">User is interested in hunting</span>
+                    <span className="font-bold text-gray-800 block">
+                      Is Hunter
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      User is interested in hunting
+                    </span>
                   </div>
                   <input
                     type="checkbox"
                     checked={editForm.is_hunter}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, is_hunter: e.target.checked }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        is_hunter: e.target.checked,
+                      }))
+                    }
                     className="w-4 h-4 rounded border-gray-300 accent-[#2d4a23] cursor-pointer"
                   />
                 </label>
 
                 <label className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer">
                   <div>
-                    <span className="font-bold text-gray-800 block">Is Fisherman</span>
-                    <span className="text-[11px] text-gray-400">User is interested in fishing</span>
+                    <span className="font-bold text-gray-800 block">
+                      Is Fisherman
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      User is interested in fishing
+                    </span>
                   </div>
                   <input
                     type="checkbox"
                     checked={editForm.is_fisherman}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, is_fisherman: e.target.checked }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        is_fisherman: e.target.checked,
+                      }))
+                    }
                     className="w-4 h-4 rounded border-gray-300 accent-[#2d4a23] cursor-pointer"
                   />
                 </label>
@@ -418,32 +505,48 @@ export function EditUserModal({
 
             {/* Social Channels */}
             <div className="space-y-3">
-              <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Social Channels</h4>
+              <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">
+                Social Channels
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <label className="font-semibold text-gray-700">Instagram</label>
+                  <label className="font-semibold text-gray-700">
+                    Instagram
+                  </label>
                   <input
                     type="text"
                     placeholder="URL or handle"
                     value={editForm.social_channels.instagram}
-                    onChange={(e) => setEditForm((prev) => ({
-                      ...prev,
-                      social_channels: { ...prev.social_channels, instagram: e.target.value }
-                    }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        social_channels: {
+                          ...prev.social_channels,
+                          instagram: e.target.value,
+                        },
+                      }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#2d4a23]"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-semibold text-gray-700">Facebook</label>
+                  <label className="font-semibold text-gray-700">
+                    Facebook
+                  </label>
                   <input
                     type="text"
                     placeholder="URL or handle"
                     value={editForm.social_channels.facebook}
-                    onChange={(e) => setEditForm((prev) => ({
-                      ...prev,
-                      social_channels: { ...prev.social_channels, facebook: e.target.value }
-                    }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        social_channels: {
+                          ...prev.social_channels,
+                          facebook: e.target.value,
+                        },
+                      }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#2d4a23]"
                   />
                 </div>
@@ -454,10 +557,15 @@ export function EditUserModal({
                     type="text"
                     placeholder="@handle"
                     value={editForm.social_channels.twitter}
-                    onChange={(e) => setEditForm((prev) => ({
-                      ...prev,
-                      social_channels: { ...prev.social_channels, twitter: e.target.value }
-                    }))}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        social_channels: {
+                          ...prev.social_channels,
+                          twitter: e.target.value,
+                        },
+                      }))
+                    }
                     className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-[#2d4a23]"
                   />
                 </div>
@@ -467,10 +575,17 @@ export function EditUserModal({
             {/* Preferences */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Preferences</h4>
+                <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">
+                  Preferences
+                </h4>
                 <button
                   type="button"
-                  onClick={() => setPreferenceRows((prev) => [...prev, { key: "", value: "" }])}
+                  onClick={() =>
+                    setPreferenceRows((prev) => [
+                      ...prev,
+                      { key: "", value: "" },
+                    ])
+                  }
                   className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#2d4a23] text-xs font-semibold transition-colors cursor-pointer"
                 >
                   + Add Row
@@ -496,7 +611,11 @@ export function EditUserModal({
                             value={row.key}
                             onChange={(e) => {
                               const val = e.target.value;
-                              setPreferenceRows((prev) => prev.map((r, i) => i === idx ? { ...r, key: val } : r));
+                              setPreferenceRows((prev) =>
+                                prev.map((r, i) =>
+                                  i === idx ? { ...r, key: val } : r,
+                                ),
+                              );
                             }}
                             className="w-full h-8 px-2.5 rounded-md border border-gray-200 focus:outline-none focus:border-[#2d4a23]"
                           />
@@ -508,7 +627,11 @@ export function EditUserModal({
                             value={row.value}
                             onChange={(e) => {
                               const val = e.target.value;
-                              setPreferenceRows((prev) => prev.map((r, i) => i === idx ? { ...r, value: val } : r));
+                              setPreferenceRows((prev) =>
+                                prev.map((r, i) =>
+                                  i === idx ? { ...r, value: val } : r,
+                                ),
+                              );
                             }}
                             className="w-full h-8 px-2.5 rounded-md border border-gray-200 focus:outline-none focus:border-[#2d4a23]"
                           />
@@ -518,8 +641,12 @@ export function EditUserModal({
                             type="button"
                             onClick={() => {
                               setPreferenceRows((prev) => {
-                                const filtered = prev.filter((_, i) => i !== idx);
-                                return filtered.length > 0 ? filtered : [{ key: "", value: "" }];
+                                const filtered = prev.filter(
+                                  (_, i) => i !== idx,
+                                );
+                                return filtered.length > 0
+                                  ? filtered
+                                  : [{ key: "", value: "" }];
                               });
                             }}
                             className="p-1 text-gray-400 hover:text-red-600 rounded cursor-pointer"

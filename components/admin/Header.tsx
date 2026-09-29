@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, Search, ChevronDown } from "lucide-react";
 
 interface HeaderProps {
@@ -10,7 +11,53 @@ interface HeaderProps {
   title?: string;
 }
 
-export default function Header({ onMenuClick, title = "Users Management" }: HeaderProps) {
+const ROUTE_TITLES: Record<string, string> = {
+  "/dashboard": "Dashboard Overview",
+  "/users": "Users Management",
+  "/resources": "Resources Management",
+  "/memberships": "Membership Management",
+  "/licenses": "License Wallet Management",
+  "/license-issuers": "License Issuers Management",
+  "/states": "States Management",
+  "/gps": "GPS / Tagging Activity",
+  "/ai": "AI Assistant Monitoring",
+  "/revenue": "Revenue & Monetization",
+  "/reports": "Reports & Moderation",
+  "/leaderboard": "Leaderboard",
+  "/community": "Social Media / Community Posts",
+  "/sponsors": "Sponsors Management",
+  "/pending-sponsors": "Pending Sponsors",
+  "/notifications": "Notification / Announcements",
+  "/settings": "Admin Settings",
+};
+
+function getDynamicTitle(pathname: string): string {
+  if (!pathname || pathname === "/") return "Dashboard Overview";
+
+  for (const [route, pageTitle] of Object.entries(ROUTE_TITLES)) {
+    if (pathname === route || pathname.startsWith(`${route}/`)) {
+      return pageTitle;
+    }
+  }
+
+  const segment = pathname.split("/").filter(Boolean)[0] || "";
+  if (!segment) return "Dashboard Overview";
+
+  return (
+    segment
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ") + " Management"
+  );
+}
+
+export default function Header({
+  onMenuClick,
+  title: customTitle,
+}: HeaderProps) {
+  const pathname = usePathname();
+  const title = customTitle || getDynamicTitle(pathname);
+
   const [userEmail, setUserEmail] = useState<string>("Leonardo Smith");
   const [userRole, setUserRole] = useState<string>("Admin");
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
@@ -20,10 +67,13 @@ export default function Header({ onMenuClick, title = "Users Management" }: Head
       const stored = localStorage.getItem("user");
       if (stored) {
         const parsed = JSON.parse(stored);
-        const name = parsed.first_name || parsed.display_name || parsed.email || "Admin";
+        const name =
+          parsed.first_name || parsed.display_name || parsed.email || "Admin";
         setUserEmail(name);
         setUserRole(parsed.role || "Admin");
-        setUserPhoto(parsed.photoURL || parsed.profile?.profile_picture || null);
+        setUserPhoto(
+          parsed.photoURL || parsed.profile?.profile_picture || null,
+        );
       }
     } catch {
       // ignore
@@ -67,7 +117,11 @@ export default function Header({ onMenuClick, title = "Users Management" }: Head
           title="Settings"
           className="w-[42px] h-[42px] rounded-full bg-[#f5efdc] flex items-center justify-center hover:bg-[#eae2c9] transition-colors cursor-pointer"
         >
-          <img src="/images/setting-icon.png" alt="Settings" className="w-6 h-6 object-contain" />
+          <img
+            src="/images/setting-icon.png"
+            alt="Settings"
+            className="w-6 h-6 object-contain"
+          />
         </Link>
 
         {/* Notifications round button */}
@@ -76,14 +130,22 @@ export default function Header({ onMenuClick, title = "Users Management" }: Head
           title="Notifications"
           className="w-[42px] h-[42px] rounded-full bg-[#f5efdc] flex items-center justify-center hover:bg-[#eae2c9] transition-colors cursor-pointer"
         >
-          <img src="/images/notification-icon.png" alt="Notifications" className="w-6 h-6 object-contain" />
+          <img
+            src="/images/notification-icon.png"
+            alt="Notifications"
+            className="w-6 h-6 object-contain"
+          />
         </Link>
 
         {/* Profile Pill */}
         <div className="flex items-center gap-2.5 py-1 pl-1 pr-3.5 rounded-full bg-white border border-[#ececec] shadow-xs">
           <div className="w-[36px] h-[36px] rounded-full bg-[#0E3E27]/10 text-[#0E3E27] font-bold flex items-center justify-center text-xs overflow-hidden flex-shrink-0">
             {userPhoto ? (
-              <img src={userPhoto} alt={userEmail} className="w-full h-full object-cover" />
+              <img
+                src={userPhoto}
+                alt={userEmail}
+                className="w-full h-full object-cover"
+              />
             ) : (
               userEmail.charAt(0).toUpperCase()
             )}

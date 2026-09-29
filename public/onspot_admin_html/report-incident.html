@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report an Incident — On S.P.O.T.</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: "Inter", sans-serif;
+        background: #f1f3ee;
+        color: #2c2c2c;
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 32px 16px 56px;
+      }
+      .ir-wrap { width: 100%; max-width: 560px; }
+      .ir-brand {
+        text-align: center;
+        margin-bottom: 18px;
+      }
+      .ir-brand img { height: 46px; width: auto; }
+      .ir-card {
+        background: #fff;
+        border: 1px solid #e7e7e1;
+        border-radius: 14px;
+        padding: 28px 26px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+      }
+      .ir-head { margin-bottom: 20px; }
+      .ir-head h1 {
+        font-size: 21px;
+        font-weight: 800;
+        color: #2f4426;
+        margin-bottom: 6px;
+      }
+      .ir-head p { font-size: 13px; color: #777; line-height: 1.5; }
+      .ir-field { margin-bottom: 16px; }
+      .ir-field label {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #3a3a3a;
+        margin-bottom: 6px;
+      }
+      .ir-field .req { color: #c0392b; }
+      .ir-field input,
+      .ir-field select,
+      .ir-field textarea {
+        width: 100%;
+        border: 1px solid #dcdcd5;
+        border-radius: 8px;
+        padding: 11px 13px;
+        font-size: 13.5px;
+        font-family: "Inter", sans-serif;
+        color: #333;
+        background: #fff;
+        outline: none;
+      }
+      .ir-field input:focus,
+      .ir-field select:focus,
+      .ir-field textarea:focus {
+        border-color: #4a6b3f;
+        box-shadow: 0 0 0 3px rgba(74, 107, 63, 0.12);
+      }
+      .ir-field textarea { resize: vertical; min-height: 110px; }
+      .ir-row { display: flex; gap: 14px; }
+      .ir-row .ir-field { flex: 1; }
+      .ir-err {
+        display: none;
+        color: #c0392b;
+        font-size: 11.5px;
+        margin-top: 5px;
+      }
+      .ir-field.invalid .ir-err { display: block; }
+      .ir-field.invalid input,
+      .ir-field.invalid select,
+      .ir-field.invalid textarea { border-color: #c0392b; }
+      .ir-submit {
+        width: 100%;
+        height: 46px;
+        border: none;
+        border-radius: 8px;
+        background: #4a6b3f;
+        color: #fff;
+        font-size: 14.5px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 4px;
+      }
+      .ir-submit:hover { background: #3c5733; }
+      .ir-note {
+        margin-top: 14px;
+        font-size: 11.5px;
+        color: #999;
+        text-align: center;
+        line-height: 1.5;
+      }
+      .ir-success {
+        display: none;
+        text-align: center;
+        padding: 18px 6px 6px;
+      }
+      .ir-success .ir-check {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #e7f4ea;
+        color: #2f9e44;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 14px;
+      }
+      .ir-success .ir-check svg { width: 34px; height: 34px; }
+      .ir-success h2 { font-size: 19px; color: #2f4426; margin-bottom: 8px; }
+      .ir-success p { font-size: 13px; color: #777; margin-bottom: 18px; }
+      .ir-success button {
+        height: 42px;
+        padding: 0 22px;
+        border: 1px solid #4a6b3f;
+        border-radius: 8px;
+        background: #fff;
+        color: #4a6b3f;
+        font-weight: 600;
+        font-size: 13.5px;
+        cursor: pointer;
+      }
+      .ir-success button:hover { background: #f3f7f1; }
+    </style>
+  </head>
+  <body>
+    <div class="ir-wrap">
+      <div class="ir-brand">
+        <img src="assets/images/on-spot-logo.png" alt="On S.P.O.T." />
+      </div>
+
+      <div class="ir-card">
+        <!-- ===== Form ===== -->
+        <form id="ir-form" novalidate>
+          <div class="ir-head">
+            <h1>Report an Incident</h1>
+            <p>
+              See something in the field — trash, poaching, illegal dumping or
+              habitat damage? Let us know and our team will review your report.
+            </p>
+          </div>
+
+          <div class="ir-field">
+            <label for="ir-type">Incident Type <span class="req">*</span></label>
+            <select id="ir-type" name="type">
+              <option value="">Select a type…</option>
+              <option>Trash / Litter</option>
+              <option>Poaching</option>
+              <option>Illegal Dumping</option>
+              <option>Habitat Damage</option>
+              <option>Wildlife in Distress</option>
+              <option>Trespassing</option>
+              <option>Other</option>
+            </select>
+            <span class="ir-err">Please choose an incident type.</span>
+          </div>
+
+          <div class="ir-field">
+            <label for="ir-location">Location / Area <span class="req">*</span></label>
+            <input
+              type="text"
+              id="ir-location"
+              name="location"
+              placeholder="e.g. Lake Travis, TX or nearest landmark"
+            />
+            <span class="ir-err">Please tell us where this happened.</span>
+          </div>
+
+          <div class="ir-field">
+            <label for="ir-description">What happened? <span class="req">*</span></label>
+            <textarea
+              id="ir-description"
+              name="description"
+              placeholder="Describe what you saw — when, where, and any details that might help."
+            ></textarea>
+            <span class="ir-err">Please describe the incident.</span>
+          </div>
+
+          <div class="ir-row">
+            <div class="ir-field">
+              <label for="ir-name">Your Name</label>
+              <input
+                type="text"
+                id="ir-name"
+                name="name"
+                placeholder="Optional"
+                autocomplete="name"
+              />
+            </div>
+            <div class="ir-field">
+              <label for="ir-email">Email</label>
+              <input
+                type="email"
+                id="ir-email"
+                name="email"
+                placeholder="Optional"
+                autocomplete="email"
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="ir-submit">Submit Report</button>
+          <p class="ir-note">
+            Your report is sent to the On S.P.O.T. admin team for review. You can
+            submit anonymously by leaving your name and email blank.
+          </p>
+        </form>
+
+        <!-- ===== Success ===== -->
+        <div class="ir-success" id="ir-success">
+          <div class="ir-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2>Report Submitted</h2>
+          <p>Thank you. Your report has been sent to the admin team for review.</p>
+          <button type="button" id="ir-another">Submit Another Report</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        'use strict';
+        var STORAGE_KEY = 'spot_incident_reports';
+        var form = document.getElementById('ir-form');
+        var success = document.getElementById('ir-success');
+
+        function load() {
+          try {
+            var raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : [];
+          } catch (e) {
+            return [];
+          }
+        }
+        function save(list) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        }
+        function makeId() {
+          return 'INC-' + Date.now().toString(36) + '-' + Math.floor(Math.random() * 1e4);
+        }
+        function setInvalid(id, bad) {
+          var f = document.getElementById(id).closest('.ir-field');
+          if (f) f.classList.toggle('invalid', bad);
+        }
+
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var type = document.getElementById('ir-type').value.trim();
+          var location = document.getElementById('ir-location').value.trim();
+          var description = document.getElementById('ir-description').value.trim();
+          var name = document.getElementById('ir-name').value.trim();
+          var email = document.getElementById('ir-email').value.trim();
+
+          setInvalid('ir-type', !type);
+          setInvalid('ir-location', !location);
+          setInvalid('ir-description', !description);
+          if (!type || !location || !description) {
+            var firstBad = form.querySelector('.ir-field.invalid');
+            if (firstBad) firstBad.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+
+          var list = load();
+          list.push({
+            id: makeId(),
+            name: name,
+            email: email,
+            type: type,
+            location: location,
+            description: description,
+            status: 'New',
+            date: new Date().toISOString()
+          });
+          save(list);
+
+          form.reset();
+          form.style.display = 'none';
+          success.style.display = 'block';
+        });
+
+        document.getElementById('ir-another').addEventListener('click', function () {
+          success.style.display = 'none';
+          form.style.display = 'block';
+          form.querySelectorAll('.ir-field.invalid').forEach(function (f) {
+            f.classList.remove('invalid');
+          });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      })();
+    </script>
+  </body>
+</html>

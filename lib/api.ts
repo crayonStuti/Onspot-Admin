@@ -474,8 +474,24 @@ export async function updateUserProfile(userId: string, data: any): Promise<any>
   });
 }
 
+export async function changeUserPassword(userId: string, newPassword: string): Promise<any> {
+  return await fetchApi(`/admin/users/${userId}/change-password`, {
+    method: "POST",
+    body: JSON.stringify({ newPassword }),
+  });
+}
+
 export async function getUserLicenses(userId: string): Promise<any> {
-  return await fetchApi("/licenses");
+  try {
+    const res = await getUserById(userId);
+    const user = res?.data?.user || res?.user || res?.data || res;
+    if (user && Array.isArray(user.licenses)) {
+      return user.licenses;
+    }
+  } catch (err) {
+    console.warn("getUserLicenses fallback error:", err);
+  }
+  return await fetchApi(`/licenses?user_id=${userId}`);
 }
 
 export async function getUserBookmarks(email: string): Promise<any> {
@@ -537,8 +553,15 @@ export interface StateItem {
   [key: string]: any;
 }
 
-export async function getStates(page: number = 1, limit: number = 100): Promise<any> {
+export async function getStates(
+  page: number = 1,
+  limit: number = 100,
+  search: string = ""
+): Promise<any> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (search && search.trim()) {
+    params.append("search", search.trim());
+  }
   return await fetchApi(`/states?${params.toString()}`);
 }
 
@@ -812,4 +835,235 @@ export async function getMapPins(
 export async function getMapPinById(id: string): Promise<any> {
   return await fetchApi(`/map/pins?id=${id}`);
 }
+
+/* =========================================================================
+   SPONSORS API
+   ========================================================================= */
+
+export interface SponsorItem {
+  id?: string;
+  sponsor_id?: string;
+  sponsor_name: string;
+  image?: string | null;
+  link?: string;
+  description?: string;
+  email_address?: string;
+  company_discount?: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: any;
+}
+
+export async function getSponsors(
+  page: number = 1,
+  limit: number = 10,
+  search: string = "",
+  status?: string
+): Promise<any> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (search && search.trim()) params.append("search", search.trim());
+  if (status && status !== "all") params.append("status", status);
+  return await fetchApi(`/sponsors?${params.toString()}`);
+}
+
+export async function getSponsorById(id: string): Promise<any> {
+  return await fetchApi(`/sponsors/${id}`);
+}
+
+export async function createSponsor(data: any): Promise<any> {
+  const isFormData = data instanceof FormData;
+  return await fetchApi("/sponsors", {
+    method: "POST",
+    body: isFormData ? data : JSON.stringify(data),
+  });
+}
+
+export async function updateSponsor(id: string, data: any): Promise<any> {
+  const isFormData = data instanceof FormData;
+  return await fetchApi(`/sponsors/${id}`, {
+    method: "PUT",
+    body: isFormData ? data : JSON.stringify(data),
+  });
+}
+
+export async function updateSponsorStatus(id: string, status: string): Promise<any> {
+  return await fetchApi(`/sponsors/${id}/status`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function deleteSponsor(id: string): Promise<any> {
+  return await fetchApi(`/sponsors/${id}`, {
+    method: "DELETE",
+  });
+}
+
+/* =========================================================================
+   DASHBOARD OVERVIEW API
+   ========================================================================= */
+
+export interface MetricGraphPoint {
+  week: string;
+  value: number;
+}
+
+export interface DashboardMetric {
+  count: number;
+  weekly_change: number;
+  trend: "up" | "down" | "flat" | string;
+  formatted_text: string;
+  graph_data: MetricGraphPoint[];
+}
+
+export interface MembershipBreakdown {
+  level: string;
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+export interface MembershipConversion {
+  period: string;
+  total_users: number;
+  breakdown: MembershipBreakdown[];
+}
+
+export interface StateUserStat {
+  state: string;
+  count: number;
+}
+
+export interface UsersByState {
+  limit: string;
+  data: StateUserStat[];
+}
+
+export interface DashboardOverviewData {
+  total_users: DashboardMetric;
+  active_users: DashboardMetric;
+  free_members: DashboardMetric;
+  basic_members: DashboardMetric;
+  premium_members: DashboardMetric;
+  expiring_expired_members: DashboardMetric;
+  licenses_uploaded: DashboardMetric;
+  revenue_this_month: DashboardMetric;
+  membership_conversion: MembershipConversion;
+  users_by_state: UsersByState;
+}
+
+export interface DashboardOverviewResponse {
+  message: string;
+  data: DashboardOverviewData;
+}
+
+export async function getDashboardOverview(
+  period: string = "30d",
+  stateLimit: string = "top10"
+): Promise<DashboardOverviewResponse> {
+  const params = new URLSearchParams();
+  if (period) params.append("period", period);
+  if (stateLimit) params.append("state_limit", stateLimit);
+  return await fetchApi(`/admin/dashboard/overview?${params.toString()}`);
+}
+
+/* =========================================================================
+   ADMIN LICENSES API
+   ========================================================================= */
+
+export interface LicenseUser {
+  id: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  display_name?: string | null;
+  email: string;
+  username?: string | null;
+  profile_picture?: string | null;
+}
+
+export interface LicenseState {
+  state_id: string;
+  state_code: string;
+  state_name: string;
+  state_flag_image?: string | null;
+}
+
+export interface AdminLicenseItem {
+  id: string;
+  license_number: string;
+  license_type: string;
+  valid_from?: string | null;
+  valid_to?: string | null;
+  document_url?: string | null;
+  front_photo_url?: string | null;
+  back_photo_url?: string | null;
+  status?: string | null;
+  created_at: string;
+  updated_at: string;
+  user?: LicenseUser | null;
+  state?: LicenseState | null;
+}
+
+export interface AdminLicensesPagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage?: number;
+  limit?: number;
+  hasNext?: boolean;
+  hasPrev?: boolean;
+}
+
+export interface AdminLicensesSummaryMetric {
+  count: number;
+  weekly_change?: number;
+  trend?: string;
+  formatted_text?: string;
+}
+
+export interface AdminLicensesData {
+  total_licenses?: AdminLicensesSummaryMetric;
+  approved_licenses?: AdminLicensesSummaryMetric;
+  pending_licenses?: AdminLicensesSummaryMetric;
+  rejected_licenses?: AdminLicensesSummaryMetric;
+  resubmission_licenses?: AdminLicensesSummaryMetric;
+  licenses: AdminLicenseItem[];
+  pagination: AdminLicensesPagination;
+}
+
+export interface AdminLicensesResponse {
+  message: string;
+  data: AdminLicensesData;
+}
+
+export interface AdminLicensesFilterParams {
+  state_id?: string;
+  license_type?: string;
+  upload_date?: string;
+  status?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export async function getAdminLicenses(
+  params: AdminLicensesFilterParams = {}
+): Promise<AdminLicensesResponse> {
+  const query = new URLSearchParams();
+  if (params.page) query.append("page", String(params.page));
+  if (params.limit) query.append("limit", String(params.limit));
+  if (params.state_id && params.state_id !== "all") query.append("state_id", params.state_id);
+  if (params.license_type && params.license_type !== "all") query.append("license_type", params.license_type.toLowerCase());
+  if (params.upload_date && params.upload_date !== "") query.append("upload_date", params.upload_date);
+  if (params.status && params.status !== "all" && params.status !== "") query.append("status", params.status);
+  if (params.search && params.search.trim()) query.append("search", params.search.trim());
+
+  return await fetchApi<AdminLicensesResponse>(`/admin/licenses?${query.toString()}`);
+}
+
+
 

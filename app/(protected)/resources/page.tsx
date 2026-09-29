@@ -17,9 +17,12 @@ import {
   Download,
   Globe,
   ExternalLink,
+  Archive,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
+import TableActionMenu from "@/components/admin/TableActionMenu";
 import {
   getAdminResources,
   getAdminResourceById,
@@ -147,6 +150,28 @@ export default function ResourcesPage() {
   );
   const [deleting, setDeleting] = useState(false);
 
+  // Publish / Archive Status Toggle State
+  const [updatingPublishId, setUpdatingPublishId] = useState<string | null>(
+    null,
+  );
+
+  // Row Action Menu State
+  const [openMenuResourceId, setOpenMenuResourceId] = useState<string | null>(
+    null,
+  );
+
+  // Close row actions menu on click outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(".act-menu-wrap")) {
+        setOpenMenuResourceId(null);
+      }
+    };
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, []);
+
   // Load States from API
   useEffect(() => {
     async function loadMeta() {
@@ -204,10 +229,8 @@ export default function ResourcesPage() {
     }
     const count = raw.count ?? raw.total ?? fallbackCount;
     const weekly_change = raw.weekly_change ?? 0;
-    const trend = (raw.trend || (weekly_change < 0 ? "down" : fallbackTrend)) as
-      | "up"
-      | "down"
-      | "flat";
+    const trend = (raw.trend ||
+      (weekly_change < 0 ? "down" : fallbackTrend)) as "up" | "down" | "flat";
     let formatted_text = raw.formatted_text;
     if (
       !formatted_text &&
@@ -375,10 +398,10 @@ export default function ResourcesPage() {
 
     try {
       const res = await getAdminResourceById(resItem.id);
-      const resource = res.data || res;
+      const resource = res?.data?.resource || res?.data || res || resItem;
 
       let iconPrev = null;
-      if (resource.category_icon) {
+      if (resource?.category_icon) {
         iconPrev = resource.category_icon.startsWith("http")
           ? resource.category_icon
           : `${API_URL}${resource.category_icon}`;
@@ -395,7 +418,11 @@ export default function ResourcesPage() {
           resource.is_published === "1" ||
           resource.is_published === true ||
           resource.is_published === 1,
-        activity: (resource.seasonalData?.activity || resource.activity || "").toLowerCase(),
+        activity: (
+          resource.seasonalData?.activity ||
+          resource.activity ||
+          ""
+        ).toLowerCase(),
         species: resource.seasonalData?.species || resource.species || "",
         season_name: resource.seasonalData?.season_name || "",
         season_start: resource.seasonalData?.season_start || "",
@@ -456,9 +483,12 @@ export default function ResourcesPage() {
           payload.append("activity", formData.activity.toLowerCase());
         }
         if (formData.species) payload.append("species", formData.species);
-        if (formData.season_name) payload.append("season_name", formData.season_name);
-        if (formData.season_start) payload.append("season_start", formData.season_start);
-        if (formData.season_end) payload.append("season_end", formData.season_end);
+        if (formData.season_name)
+          payload.append("season_name", formData.season_name);
+        if (formData.season_start)
+          payload.append("season_start", formData.season_start);
+        if (formData.season_end)
+          payload.append("season_end", formData.season_end);
         if (formData.rules) payload.append("rules", formData.rules);
       }
 
@@ -503,6 +533,36 @@ export default function ResourcesPage() {
       toast.error(err?.message || "Failed to delete resource");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  // Toggle Publish / Archive Status
+  const handleTogglePublish = async (
+    resItem: ResourceItem,
+    isPublishedCurrently: boolean,
+  ) => {
+    const nextPublishedState = !isPublishedCurrently;
+    setUpdatingPublishId(resItem.id);
+
+    try {
+      const payload = new FormData();
+      payload.append("is_published", String(nextPublishedState));
+
+      await updateResource(resItem.id, payload);
+      toast.success(
+        nextPublishedState
+          ? "Resource published successfully"
+          : "Resource archived successfully",
+      );
+      fetchResourcesList();
+    } catch (err: any) {
+      console.error("Toggle publish status error:", err);
+      toast.error(
+        err?.message ||
+          `Failed to ${nextPublishedState ? "publish" : "archive"} resource`,
+      );
+    } finally {
+      setUpdatingPublishId(null);
     }
   };
 
@@ -571,7 +631,7 @@ export default function ResourcesPage() {
               <div className="text-[26px] font-bold text-[#1f1f1f] mb-2 leading-tight">
                 {typeof stats.total_resources.count === "number"
                   ? stats.total_resources.count.toLocaleString()
-                  : stats.total_resources.count ?? (totalItems || 0)}
+                  : (stats.total_resources.count ?? (totalItems || 0))}
               </div>
               <div
                 className={`text-[12px] inline-flex items-center gap-1 font-normal ${
@@ -613,7 +673,7 @@ export default function ResourcesPage() {
               <div className="text-[26px] font-bold text-[#1f1f1f] mb-2 leading-tight">
                 {typeof stats.published.count === "number"
                   ? stats.published.count.toLocaleString()
-                  : stats.published.count ?? 0}
+                  : (stats.published.count ?? 0)}
               </div>
               <div
                 className={`text-[12px] inline-flex items-center gap-1 font-normal ${
@@ -655,7 +715,7 @@ export default function ResourcesPage() {
               <div className="text-[26px] font-bold text-[#1f1f1f] mb-2 leading-tight">
                 {typeof stats.needs_update.count === "number"
                   ? stats.needs_update.count.toLocaleString()
-                  : stats.needs_update.count ?? 0}
+                  : (stats.needs_update.count ?? 0)}
               </div>
               <div
                 className={`text-[12px] inline-flex items-center gap-1 font-normal ${
@@ -697,7 +757,7 @@ export default function ResourcesPage() {
               <div className="text-[26px] font-bold text-[#1f1f1f] mb-2 leading-tight">
                 {typeof stats.archived.count === "number"
                   ? stats.archived.count.toLocaleString()
-                  : stats.archived.count ?? 0}
+                  : (stats.archived.count ?? 0)}
               </div>
               <div
                 className={`text-[12px] inline-flex items-center gap-1 font-normal ${
@@ -758,7 +818,7 @@ export default function ResourcesPage() {
               <div className="text-[26px] font-bold text-[#1f1f1f] mb-2 leading-tight">
                 {typeof stats.pdf_document.count === "number"
                   ? stats.pdf_document.count.toLocaleString()
-                  : stats.pdf_document.count ?? 0}
+                  : (stats.pdf_document.count ?? 0)}
               </div>
               <div
                 className={`text-[12px] inline-flex items-center gap-1 font-normal ${
@@ -897,6 +957,16 @@ export default function ResourcesPage() {
                 </button>
               </span>
             )}
+
+            {/* Add Resource Button */}
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="h-[38px] px-4 rounded-[6px] bg-[#0E3E27] hover:bg-[#092c1b] text-white text-[13px] font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs whitespace-nowrap sm:ml-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Resource</span>
+            </button>
           </section>
 
           <section className="bg-white rounded-[14px] border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] p-[4px_20px_6px]">
@@ -970,24 +1040,11 @@ export default function ResourcesPage() {
                       const isPublished =
                         item.is_published === true ||
                         item.is_published === "1" ||
-                        item.is_published === 1;
+                        item.is_published === 1 ||
+                        item.is_published === "true";
 
-                      let badgeClass = "published";
-                      let badgeText = "Published";
-                      if (item.visibility) {
-                        badgeText = item.visibility;
-                        if (item.visibility === "Published")
-                          badgeClass = "published";
-                        else if (item.visibility === "Archived")
-                          badgeClass = "archived";
-                        else badgeClass = "need";
-                      } else if (isPublished) {
-                        badgeClass = "published";
-                        badgeText = "Published";
-                      } else {
-                        badgeClass = "need";
-                        badgeText = "Need Updated";
-                      }
+                      const badgeClass = isPublished ? "published" : "archived";
+                      const badgeText = isPublished ? "Published" : "Archived";
 
                       const updatedDate =
                         item.updated_at || item.created_at
@@ -1095,23 +1152,83 @@ export default function ResourcesPage() {
                                 </svg>
                               </button>
 
-                              {/* Delete */}
+                              {/* Archive / Publish Toggle */}
                               <button
-                                onClick={() => handleDeletePrompt(item)}
-                                title="Delete"
-                                className="w-7 h-7 border border-[#e2e2dc] rounded-[6px] bg-white text-[#7D848D] hover:bg-[#f7f7f4] hover:text-red-600 hover:border-red-200 inline-flex items-center justify-center transition-colors cursor-pointer"
+                                type="button"
+                                onClick={() =>
+                                  handleTogglePublish(
+                                    item,
+                                    badgeClass === "published",
+                                  )
+                                }
+                                disabled={updatingPublishId === item.id}
+                                title={
+                                  badgeClass === "published"
+                                    ? "Archive Resource"
+                                    : "Publish Resource"
+                                }
+                                aria-label={
+                                  badgeClass === "published"
+                                    ? "Archive Resource"
+                                    : "Publish Resource"
+                                }
+                                className={`w-7 h-7 border rounded-[6px] bg-white inline-flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                                  badgeClass === "published"
+                                    ? "border-[#e2e2dc] text-[#7D848D] hover:bg-[#fff7ed] hover:text-[#C45508] hover:border-[#fed7aa]"
+                                    : "border-[#e2e2dc] text-[#7D848D] hover:bg-[#f0fdf4] hover:text-[#16a34a] hover:border-[#bbf7d0]"
+                                }`}
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                {updatingPublishId === item.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0E3E27]" />
+                                ) : badgeClass === "published" ? (
+                                  <Archive className="w-3.5 h-3.5" />
+                                ) : (
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                )}
                               </button>
 
-                              {/* More */}
-                              <button
-                                onClick={() => handleViewResource(item)}
-                                title="More"
-                                className="w-7 h-7 border border-[#e2e2dc] rounded-[6px] bg-white text-[#7D848D] hover:bg-[#f7f7f4] hover:text-[#2d4a23] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
-                              >
-                                <MoreVertical className="w-3.5 h-3.5" />
-                              </button>
+                              {/* Reusable Portal-based TableActionMenu to prevent overflow clipping */}
+                              <TableActionMenu
+                                menuWidth={195}
+                                triggerClassName="!w-7 !h-7 !rounded-[6px]"
+                                triggerIcon={<MoreVertical className="w-3.5 h-3.5" />}
+                                items={[
+                                  {
+                                    label: "View Details",
+                                    icon: <Eye className="w-3.5 h-3.5" />,
+                                    onClick: () => handleViewResource(item),
+                                  },
+                                  {
+                                    label: "Edit Resource",
+                                    icon: <Edit2 className="w-3.5 h-3.5" />,
+                                    onClick: () => handleOpenEdit(item),
+                                  },
+                                  {
+                                    label:
+                                      badgeClass === "published"
+                                        ? "Archive Resource"
+                                        : "Publish Resource",
+                                    icon:
+                                      badgeClass === "published" ? (
+                                        <Archive className="w-3.5 h-3.5 text-amber-600" />
+                                      ) : (
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                      ),
+                                    onClick: () =>
+                                      handleTogglePublish(
+                                        item,
+                                        badgeClass === "published",
+                                      ),
+                                  },
+                                  {
+                                    label: "Delete Resource",
+                                    icon: <Trash2 className="w-3.5 h-3.5" />,
+                                    variant: "danger",
+                                    separator: true,
+                                    onClick: () => handleDeletePrompt(item),
+                                  },
+                                ]}
+                              />
                             </div>
                           </td>
                         </tr>
@@ -1129,7 +1246,7 @@ export default function ResourcesPage() {
             totalItems={totalItems}
             pageSize={limit}
             itemCountOnPage={resources.length}
-            itemLabel="users"
+            itemLabel="resources"
             onPageChange={(newPage) => setPage(newPage)}
             loading={loading}
           />
@@ -1939,8 +2056,14 @@ export default function ResourcesPage() {
                   <span className="text-gray-400 block font-medium">
                     Status
                   </span>
-                  <span className="font-semibold text-emerald-700">
-                    {selectedResource.is_published ? "Published" : "Draft"}
+                  <span
+                    className={`font-semibold ${
+                      selectedResource.is_published
+                        ? "text-emerald-700"
+                        : "text-[#7D848D]"
+                    }`}
+                  >
+                    {selectedResource.is_published ? "Published" : "Archived"}
                   </span>
                 </div>
               </div>
