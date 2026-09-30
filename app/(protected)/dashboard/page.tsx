@@ -19,13 +19,12 @@ import {
   DashboardMetric,
 } from "@/lib/api";
 
-
 /* -------------------------------------------------------------------------- */
 /* Helper: Generate Continuous SVG Path matching dashboard.html (NO CIRCLES)  */
 /* -------------------------------------------------------------------------- */
 function generateCleanSparkline(
   data: { week: string; value: number }[],
-  isDownTrend: boolean
+  isDownTrend: boolean,
 ): { linePath: string; areaPath: string } {
   const width = 200;
   const height = 56;
@@ -83,7 +82,9 @@ function generateCleanSparkline(
 
   // Build SVG path strings with straight/sub-bezier continuity
   const pathCommands = interpolatedPoints.map((pt, i) =>
-    i === 0 ? `M${pt.x.toFixed(0)},${pt.y.toFixed(0)}` : `L${pt.x.toFixed(0)},${pt.y.toFixed(0)}`
+    i === 0
+      ? `M${pt.x.toFixed(0)},${pt.y.toFixed(0)}`
+      : `L${pt.x.toFixed(0)},${pt.y.toFixed(0)}`,
   );
 
   const linePath = pathCommands.join(" ");
@@ -119,7 +120,7 @@ function MetricCard({
 
   const { linePath, areaPath } = useMemo(
     () => generateCleanSparkline(graphData, isDown),
-    [graphData, isDown]
+    [graphData, isDown],
   );
 
   const formattedCount = useMemo(() => {
@@ -142,7 +143,8 @@ function MetricCard({
         background: "#fff",
         borderRadius: "14px",
         padding: "16px",
-        boxShadow: "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
+        boxShadow:
+          "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
         minWidth: 0,
         display: "flex",
         flexDirection: "column",
@@ -184,7 +186,9 @@ function MetricCard({
       </div>
 
       {!metric ? (
-        <div style={{ padding: "18px 0 10px", color: "#999", fontSize: "12px" }}>
+        <div
+          style={{ padding: "18px 0 10px", color: "#999", fontSize: "12px" }}
+        >
           No data available
         </div>
       ) : (
@@ -262,7 +266,11 @@ function MetricCard({
                 <defs>
                   {isDown ? (
                     <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#e88080" stopOpacity="0.55" />
+                      <stop
+                        offset="0%"
+                        stopColor="#e88080"
+                        stopOpacity="0.55"
+                      />
                       <stop offset="100%" stopColor="#e88080" stopOpacity="0" />
                     </linearGradient>
                   ) : (
@@ -324,7 +332,13 @@ function UsersByStatesCard({
 
   const ticks = useMemo(() => {
     const step = maxCount / 4;
-    return [0, Math.round(step), Math.round(step * 2), Math.round(step * 3), maxCount];
+    return [
+      0,
+      Math.round(step),
+      Math.round(step * 2),
+      Math.round(step * 3),
+      maxCount,
+    ];
   }, [maxCount]);
 
   return (
@@ -334,7 +348,8 @@ function UsersByStatesCard({
         background: "#fff",
         borderRadius: "14px",
         padding: "16px",
-        boxShadow: "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
+        boxShadow:
+          "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -441,12 +456,22 @@ function UsersByStatesCard({
           }}
         >
           {safeData.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px 0", color: "#999", fontSize: "12px" }}>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "40px 0",
+                color: "#999",
+                fontSize: "12px",
+              }}
+            >
               No state data available.
             </div>
           ) : (
             safeData.map((item) => {
-              const widthPct = Math.min(100, Math.max(4, (item.count / maxCount) * 100));
+              const widthPct = Math.min(
+                100,
+                Math.max(4, (item.count / maxCount) * 100),
+              );
               return (
                 <div
                   key={item.state}
@@ -537,7 +562,12 @@ function UsersByStatesCard({
 /* -------------------------------------------------------------------------- */
 interface MembershipConversionProps {
   totalUsers?: number;
-  breakdown?: { level: string; name: string; count: number; percentage: number }[];
+  breakdown?: {
+    level: string;
+    name: string;
+    count: number;
+    percentage: number;
+  }[];
   period: string;
   onPeriodChange: (period: string) => void;
   loading?: boolean;
@@ -573,7 +603,8 @@ function MembershipConversionCard({
         background: "#fff",
         borderRadius: "14px",
         padding: "16px",
-        boxShadow: "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
+        boxShadow:
+          "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -656,7 +687,9 @@ function MembershipConversionCard({
           }}
         >
           {/* SVG Donut */}
-          <div style={{ width: "220px", height: "220px", position: "relative" }}>
+          <div
+            style={{ width: "220px", height: "220px", position: "relative" }}
+          >
             <svg width="220" height="220" viewBox="0 0 200 200">
               <g transform="rotate(-90 100 100)">
                 {segments.map((seg) => (
@@ -710,7 +743,8 @@ function MembershipConversionCard({
             }}
           >
             {safeBreakdown.map((item) => {
-              const color = DONUT_COLORS[item.level?.toLowerCase()] || "#64748b";
+              const color =
+                DONUT_COLORS[item.level?.toLowerCase()] || "#64748b";
               return (
                 <div
                   key={item.level}
@@ -736,7 +770,13 @@ function MembershipConversionCard({
                     <div style={{ fontWeight: 600, color: "#1f1f1f" }}>
                       {item.name}
                     </div>
-                    <div style={{ color: "#7D848D", fontSize: "11px", marginTop: "1px" }}>
+                    <div
+                      style={{
+                        color: "#7D848D",
+                        fontSize: "11px",
+                        marginTop: "1px",
+                      }}
+                    >
                       {item.percentage}% ({item.count})
                     </div>
                   </div>
@@ -790,7 +830,7 @@ export default function DashboardPage() {
   return (
     <div style={{ paddingBottom: "40px" }}>
       {/* Top Header bar with refresh */}
-      <div
+      {/* <div
         style={{
           display: "flex",
           alignItems: "center",
@@ -848,7 +888,7 @@ export default function DashboardPage() {
           />
           <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
         </button>
-      </div>
+      </div> */}
 
       {loading && !data ? (
         <div
@@ -857,7 +897,8 @@ export default function DashboardPage() {
             borderRadius: "14px",
             padding: "80px 20px",
             textAlign: "center",
-            boxShadow: "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
+            boxShadow:
+              "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
           }}
         >
           <RefreshCw
@@ -869,7 +910,14 @@ export default function DashboardPage() {
               margin: "0 auto 12px",
             }}
           />
-          <p style={{ color: "#7D848D", fontSize: "14px", fontWeight: 500, margin: 0 }}>
+          <p
+            style={{
+              color: "#7D848D",
+              fontSize: "14px",
+              fontWeight: 500,
+              margin: 0,
+            }}
+          >
             Loading dashboard data...
           </p>
         </div>
@@ -880,13 +928,23 @@ export default function DashboardPage() {
             borderRadius: "14px",
             padding: "80px 20px",
             textAlign: "center",
-            boxShadow: "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
+            boxShadow:
+              "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
           }}
         >
-          <p style={{ color: "#1f1f1f", fontSize: "16px", fontWeight: 600, marginBottom: "6px" }}>
+          <p
+            style={{
+              color: "#1f1f1f",
+              fontSize: "16px",
+              fontWeight: 600,
+              marginBottom: "6px",
+            }}
+          >
             No data available
           </p>
-          <p style={{ color: "#7D848D", fontSize: "13px", marginBottom: "18px" }}>
+          <p
+            style={{ color: "#7D848D", fontSize: "13px", marginBottom: "18px" }}
+          >
             Dashboard overview metrics are currently unavailable.
           </p>
           <button
@@ -928,7 +986,11 @@ export default function DashboardPage() {
               label="Total Users"
               metric={data?.total_users}
               icon={
-                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style={{ width: "24px", height: "24px" }}
+                >
                   <circle cx="9" cy="8" r="3.6" />
                   <path d="M2 21c0-3.87 3.13-7 7-7s7 3.13 7 7H2z" />
                   <circle cx="17" cy="9" r="2.6" />
@@ -943,7 +1005,11 @@ export default function DashboardPage() {
               label="Active Users"
               metric={data?.active_users}
               icon={
-                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style={{ width: "24px", height: "24px" }}
+                >
                   <circle cx="12" cy="8" r="4.2" />
                   <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z" />
                 </svg>
@@ -1020,7 +1086,11 @@ export default function DashboardPage() {
               label="Licenses Uploaded"
               metric={data?.licenses_uploaded}
               icon={
-                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style={{ width: "24px", height: "24px" }}
+                >
                   <path d="M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2H2V7zm0 4h20v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6zm3 3v2h5v-2H5z" />
                 </svg>
               }
@@ -1032,7 +1102,9 @@ export default function DashboardPage() {
               label="Basic Members"
               metric={data?.basic_members}
               icon={
-                <Shield style={{ width: "22px", height: "22px", color: "#2d4a23" }} />
+                <Shield
+                  style={{ width: "22px", height: "22px", color: "#2d4a23" }}
+                />
               }
             />
 
@@ -1042,7 +1114,11 @@ export default function DashboardPage() {
               label="Revenue This Month"
               metric={data?.revenue_this_month}
               icon={
-                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  style={{ width: "24px", height: "24px" }}
+                >
                   <path d="M12 3L3 21h18L12 3zm0 5l5.5 11h-11L12 8z" />
                   <path d="M9 17h6v1.5H9z" />
                 </svg>
@@ -1070,7 +1146,8 @@ export default function DashboardPage() {
                 background: "#fff",
                 borderRadius: "14px",
                 padding: "16px",
-                boxShadow: "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
+                boxShadow:
+                  "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
@@ -1098,52 +1175,147 @@ export default function DashboardPage() {
                   Summary Breakdown
                 </h3>
                 <span style={{ fontSize: "11.5px", color: "#7D848D" }}>
-                  Based on {period === "7d" ? "Last 7 Days" : period === "90d" ? "Last 90 Days" : "Last 30 Days"}
+                  Based on{" "}
+                  {period === "7d"
+                    ? "Last 7 Days"
+                    : period === "90d"
+                      ? "Last 90 Days"
+                      : "Last 30 Days"}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-3 my-auto">
-                <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
-                  <div style={{ fontSize: "11px", color: "#7D848D" }}>Active User Rate</div>
-                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
+                <div
+                  style={{
+                    padding: "12px",
+                    background: "#fafafa",
+                    borderRadius: "10px",
+                  }}
+                >
+                  <div style={{ fontSize: "11px", color: "#7D848D" }}>
+                    Active User Rate
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: 700,
+                      color: "#0E3E27",
+                      marginTop: "3px",
+                    }}
+                  >
                     {(data?.total_users?.count || 0) > 0
                       ? `${(((data?.active_users?.count || 0) / (data?.total_users?.count || 1)) * 100).toFixed(1)}%`
                       : "0%"}
                   </div>
-                  <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
-                    {data?.active_users?.count ?? 0} of {data?.total_users?.count ?? 0} active
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      color: "#999",
+                      marginTop: "2px",
+                    }}
+                  >
+                    {data?.active_users?.count ?? 0} of{" "}
+                    {data?.total_users?.count ?? 0} active
                   </div>
                 </div>
 
-                <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
-                  <div style={{ fontSize: "11px", color: "#7D848D" }}>Paid Members</div>
-                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
-                    {(data?.basic_members?.count || 0) + (data?.premium_members?.count || 0)}
+                <div
+                  style={{
+                    padding: "12px",
+                    background: "#fafafa",
+                    borderRadius: "10px",
+                  }}
+                >
+                  <div style={{ fontSize: "11px", color: "#7D848D" }}>
+                    Paid Members
                   </div>
-                  <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
+                  <div
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: 700,
+                      color: "#0E3E27",
+                      marginTop: "3px",
+                    }}
+                  >
+                    {(data?.basic_members?.count || 0) +
+                      (data?.premium_members?.count || 0)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      color: "#999",
+                      marginTop: "2px",
+                    }}
+                  >
                     Basic & Premium tier
                   </div>
                 </div>
 
-                <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
-                  <div style={{ fontSize: "11px", color: "#7D848D" }}>Licenses per User</div>
-                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
+                <div
+                  style={{
+                    padding: "12px",
+                    background: "#fafafa",
+                    borderRadius: "10px",
+                  }}
+                >
+                  <div style={{ fontSize: "11px", color: "#7D848D" }}>
+                    Licenses per User
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: 700,
+                      color: "#0E3E27",
+                      marginTop: "3px",
+                    }}
+                  >
                     {(data?.total_users?.count || 0) > 0
-                      ? ((data?.licenses_uploaded?.count || 0) / (data?.total_users?.count || 1)).toFixed(2)
+                      ? (
+                          (data?.licenses_uploaded?.count || 0) /
+                          (data?.total_users?.count || 1)
+                        ).toFixed(2)
                       : "0.00"}
                   </div>
-                  <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      color: "#999",
+                      marginTop: "2px",
+                    }}
+                  >
                     {data?.licenses_uploaded?.count ?? 0} total uploaded
                   </div>
                 </div>
 
-                <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
-                  <div style={{ fontSize: "11px", color: "#7D848D" }}>Monthly Revenue</div>
-                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
+                <div
+                  style={{
+                    padding: "12px",
+                    background: "#fafafa",
+                    borderRadius: "10px",
+                  }}
+                >
+                  <div style={{ fontSize: "11px", color: "#7D848D" }}>
+                    Monthly Revenue
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: 700,
+                      color: "#0E3E27",
+                      marginTop: "3px",
+                    }}
+                  >
                     ${Number(data?.revenue_this_month?.count || 0).toFixed(2)}
                   </div>
-                  <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
-                    {data?.revenue_this_month?.formatted_text || "No trend data"}
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      color: "#999",
+                      marginTop: "2px",
+                    }}
+                  >
+                    {data?.revenue_this_month?.formatted_text ||
+                      "No trend data"}
                   </div>
                 </div>
               </div>
@@ -1160,7 +1332,9 @@ export default function DashboardPage() {
                 }}
               >
                 <span>Overview Status</span>
-                <span style={{ color: "#34A853", fontWeight: 600 }}>Active</span>
+                <span style={{ color: "#34A853", fontWeight: 600 }}>
+                  Active
+                </span>
               </div>
             </div>
           </div>
