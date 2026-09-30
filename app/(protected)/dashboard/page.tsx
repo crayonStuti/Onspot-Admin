@@ -19,126 +19,6 @@ import {
   DashboardMetric,
 } from "@/lib/api";
 
-// Fallback data from API spec
-const FALLBACK_DASHBOARD_DATA: DashboardOverviewData = {
-  total_users: {
-    count: 35,
-    weekly_change: 1,
-    trend: "up",
-    formatted_text: "+1 this week",
-    graph_data: [
-      { week: "Week 1", value: 24 },
-      { week: "Week 2", value: 24 },
-      { week: "Week 3", value: 29 },
-      { week: "Week 4", value: 35 },
-    ],
-  },
-  active_users: {
-    count: 34,
-    weekly_change: 0,
-    trend: "flat",
-    formatted_text: "0 this week",
-    graph_data: [
-      { week: "Week 1", value: 24 },
-      { week: "Week 2", value: 24 },
-      { week: "Week 3", value: 29 },
-      { week: "Week 4", value: 34 },
-    ],
-  },
-  free_members: {
-    count: 24,
-    weekly_change: -2,
-    trend: "down",
-    formatted_text: "-2 this week",
-    graph_data: [
-      { week: "Week 1", value: 18 },
-      { week: "Week 2", value: 18 },
-      { week: "Week 3", value: 22 },
-      { week: "Week 4", value: 24 },
-    ],
-  },
-  basic_members: {
-    count: 3,
-    weekly_change: 3,
-    trend: "up",
-    formatted_text: "+3 this week",
-    graph_data: [
-      { week: "Week 1", value: 0 },
-      { week: "Week 2", value: 0 },
-      { week: "Week 3", value: 0 },
-      { week: "Week 4", value: 3 },
-    ],
-  },
-  premium_members: {
-    count: 5,
-    weekly_change: 1,
-    trend: "up",
-    formatted_text: "+1 this week",
-    graph_data: [
-      { week: "Week 1", value: 2 },
-      { week: "Week 2", value: 2 },
-      { week: "Week 3", value: 3 },
-      { week: "Week 4", value: 5 },
-    ],
-  },
-  expiring_expired_members: {
-    count: 15,
-    weekly_change: 10,
-    trend: "down",
-    formatted_text: "+10 this week",
-    graph_data: [
-      { week: "Week 1", value: 1 },
-      { week: "Week 2", value: 1 },
-      { week: "Week 3", value: 3 },
-      { week: "Week 4", value: 15 },
-    ],
-  },
-  licenses_uploaded: {
-    count: 12,
-    weekly_change: 3,
-    trend: "up",
-    formatted_text: "+3 this week",
-    graph_data: [
-      { week: "Week 1", value: 1 },
-      { week: "Week 2", value: 1 },
-      { week: "Week 3", value: 5 },
-      { week: "Week 4", value: 12 },
-    ],
-  },
-  revenue_this_month: {
-    count: 389.94,
-    weekly_change: 9.96,
-    trend: "up",
-    formatted_text: "+$9.96 this week",
-    graph_data: [
-      { week: "Week 1", value: 0 },
-      { week: "Week 2", value: 0 },
-      { week: "Week 3", value: 189.99 },
-      { week: "Week 4", value: 199.95 },
-    ],
-  },
-  membership_conversion: {
-    period: "30d",
-    total_users: 13,
-    breakdown: [
-      { level: "free", name: "Free", count: 7, percentage: 53.8 },
-      { level: "basic", name: "Basic", count: 3, percentage: 23.1 },
-      { level: "premium", name: "Premium", count: 3, percentage: 23.1 },
-    ],
-  },
-  users_by_state: {
-    limit: "top10",
-    data: [
-      { state: "New York", count: 3 },
-      { state: "Minnesota", count: 2 },
-      { state: "Hawaii", count: 1 },
-      { state: "Alaska", count: 1 },
-      { state: "Georgia", count: 1 },
-      { state: "Oklahoma", count: 1 },
-      { state: "Vermont", count: 1 },
-    ],
-  },
-};
 
 /* -------------------------------------------------------------------------- */
 /* Helper: Generate Continuous SVG Path matching dashboard.html (NO CIRCLES)  */
@@ -218,7 +98,7 @@ function generateCleanSparkline(
 interface MetricCardProps {
   id: string;
   label: string;
-  metric: DashboardMetric;
+  metric?: DashboardMetric | null;
   icon: React.ReactNode;
   isCurrency?: boolean;
   forceTheme?: "up" | "down";
@@ -232,15 +112,20 @@ function MetricCard({
   isCurrency = false,
   forceTheme,
 }: MetricCardProps) {
-  const isDown = forceTheme ? forceTheme === "down" : metric.trend === "down";
+  const isDown = forceTheme ? forceTheme === "down" : metric?.trend === "down";
   const gradId = `sparkline-grad-${id}`;
 
+  const graphData = metric?.graph_data || [];
+
   const { linePath, areaPath } = useMemo(
-    () => generateCleanSparkline(metric.graph_data, isDown),
-    [metric.graph_data, isDown]
+    () => generateCleanSparkline(graphData, isDown),
+    [graphData, isDown]
   );
 
   const formattedCount = useMemo(() => {
+    if (!metric || metric.count === undefined || metric.count === null) {
+      return "—";
+    }
     if (isCurrency) {
       return `$${Number(metric.count).toLocaleString("en-US", {
         minimumFractionDigits: 2,
@@ -248,7 +133,7 @@ function MetricCard({
       })}`;
     }
     return Number(metric.count).toLocaleString("en-US");
-  }, [metric.count, isCurrency]);
+  }, [metric?.count, isCurrency]);
 
   return (
     <div
@@ -298,86 +183,113 @@ function MetricCard({
         </span>
       </div>
 
-      {/* Main Count */}
-      <div
-        className="value"
-        style={{
-          fontSize: "20px",
-          fontWeight: 700,
-          color: "#1f1f1f",
-          marginBottom: "4px",
-        }}
-      >
-        {formattedCount}
-      </div>
+      {!metric ? (
+        <div style={{ padding: "18px 0 10px", color: "#999", fontSize: "12px" }}>
+          No data available
+        </div>
+      ) : (
+        <>
+          {/* Main Count */}
+          <div
+            className="value"
+            style={{
+              fontSize: "20px",
+              fontWeight: 700,
+              color: "#1f1f1f",
+              marginBottom: "4px",
+            }}
+          >
+            {formattedCount}
+          </div>
 
-      {/* Delta indicator */}
-      <div
-        className={`delta ${isDown ? "down" : "up"}`}
-        style={{
-          fontSize: "11px",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-          color: isDown ? "#e03131" : "#34A853",
-          fontWeight: 500,
-        }}
-      >
-        {isDown ? (
-          <span>&darr;{metric.formatted_text}</span>
-        ) : metric.trend === "up" ? (
-          <span>&uarr;{metric.formatted_text}</span>
-        ) : (
-          <span>{metric.formatted_text}</span>
-        )}
-      </div>
-
-      {/* Sparkline Chart Container (Pure SVG with zero circular points) */}
-      <div
-        className="chart"
-        style={{
-          marginTop: "6px",
-          height: "56px",
-          width: "100%",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <svg
-          width="100%"
-          height="56"
-          viewBox="0 0 200 56"
-          preserveAspectRatio="none"
-          style={{ display: "block" }}
-        >
-          <defs>
-            {isDown ? (
-              <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#e88080" stopOpacity="0.55" />
-                <stop offset="100%" stopColor="#e88080" stopOpacity="0" />
-              </linearGradient>
+          {/* Delta indicator */}
+          <div
+            className={`delta ${isDown ? "down" : "up"}`}
+            style={{
+              fontSize: "11px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              color: isDown ? "#e03131" : "#34A853",
+              fontWeight: 500,
+            }}
+          >
+            {metric.formatted_text ? (
+              isDown ? (
+                <span>&darr;{metric.formatted_text}</span>
+              ) : metric.trend === "up" ? (
+                <span>&uarr;{metric.formatted_text}</span>
+              ) : (
+                <span>{metric.formatted_text}</span>
+              )
             ) : (
-              <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#34A853" stopOpacity="1" />
-                <stop offset="100%" stopColor="#34A853" stopOpacity="0" />
-              </linearGradient>
+              <span style={{ color: "#999" }}>No change data</span>
             )}
-          </defs>
+          </div>
 
-          {/* Area Gradient Fill */}
-          <path d={areaPath} fill={`url(#${gradId})`} />
+          {/* Sparkline Chart Container (Pure SVG with zero circular points) */}
+          <div
+            className="chart"
+            style={{
+              marginTop: "6px",
+              height: "56px",
+              width: "100%",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            {graphData.length === 0 ? (
+              <div
+                style={{
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#bbb",
+                  fontSize: "10px",
+                }}
+              >
+                No trend data
+              </div>
+            ) : (
+              <svg
+                width="100%"
+                height="56"
+                viewBox="0 0 200 56"
+                preserveAspectRatio="none"
+                style={{ display: "block" }}
+              >
+                <defs>
+                  {isDown ? (
+                    <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="#e88080" stopOpacity="0.55" />
+                      <stop offset="100%" stopColor="#e88080" stopOpacity="0" />
+                    </linearGradient>
+                  ) : (
+                    <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="#34A853" stopOpacity="1" />
+                      <stop offset="100%" stopColor="#34A853" stopOpacity="0" />
+                    </linearGradient>
+                  )}
+                </defs>
 
-          {/* Continuous Line Stroke (NO CIRCLES) */}
-          <path
-            d={linePath}
-            fill="none"
-            stroke={isDown ? "#d24a4a" : "#34A853"}
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
+                {/* Area Gradient Fill */}
+                <path d={areaPath} fill={`url(#${gradId})`} />
+
+                {/* Continuous Line Stroke (NO CIRCLES) */}
+                <path
+                  d={linePath}
+                  fill="none"
+                  stroke={isDown ? "#d24a4a" : "#34A853"}
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -386,28 +298,29 @@ function MetricCard({
 /* User by States Component                                                   */
 /* -------------------------------------------------------------------------- */
 interface UsersByStatesProps {
-  data: { state: string; count: number }[];
+  data?: { state: string; count: number }[];
   currentLimit: string;
   onLimitChange: (limit: string) => void;
   loading?: boolean;
 }
 
 function UsersByStatesCard({
-  data,
+  data = [],
   currentLimit,
   onLimitChange,
   loading = false,
 }: UsersByStatesProps) {
+  const safeData = data || [];
   const maxCount = useMemo(() => {
-    if (!data || data.length === 0) return 5;
-    const max = Math.max(...data.map((d) => d.count));
+    if (!safeData || safeData.length === 0) return 5;
+    const max = Math.max(...safeData.map((d) => d.count || 0));
     if (max <= 5) return 5;
     if (max <= 10) return 10;
     if (max <= 50) return Math.ceil(max / 10) * 10;
     if (max <= 500) return Math.ceil(max / 50) * 50;
     if (max <= 1000) return Math.ceil(max / 100) * 100;
     return Math.ceil(max / 500) * 500;
-  }, [data]);
+  }, [safeData]);
 
   const ticks = useMemo(() => {
     const step = maxCount / 4;
@@ -527,12 +440,12 @@ function UsersByStatesCard({
             overflowY: "auto",
           }}
         >
-          {data.length === 0 ? (
+          {safeData.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px 0", color: "#999", fontSize: "12px" }}>
               No state data available.
             </div>
           ) : (
-            data.map((item) => {
+            safeData.map((item) => {
               const widthPct = Math.min(100, Math.max(4, (item.count / maxCount) * 100));
               return (
                 <div
@@ -623,8 +536,8 @@ function UsersByStatesCard({
 /* Membership Conversion Component                                            */
 /* -------------------------------------------------------------------------- */
 interface MembershipConversionProps {
-  totalUsers: number;
-  breakdown: { level: string; name: string; count: number; percentage: number }[];
+  totalUsers?: number;
+  breakdown?: { level: string; name: string; count: number; percentage: number }[];
   period: string;
   onPeriodChange: (period: string) => void;
   loading?: boolean;
@@ -637,18 +550,19 @@ const DONUT_COLORS: Record<string, string> = {
 };
 
 function MembershipConversionCard({
-  totalUsers,
-  breakdown,
+  totalUsers = 0,
+  breakdown = [],
   period,
   onPeriodChange,
   loading = false,
 }: MembershipConversionProps) {
+  const safeBreakdown = breakdown || [];
   let accumulated = 0;
-  const segments = breakdown.map((item) => {
+  const segments = safeBreakdown.map((item) => {
     const strokeDasharray = `${item.percentage} ${100 - item.percentage}`;
     const strokeDashoffset = -accumulated;
     accumulated += item.percentage;
-    const color = DONUT_COLORS[item.level.toLowerCase()] || "#64748b";
+    const color = DONUT_COLORS[item.level?.toLowerCase()] || "#64748b";
     return { ...item, color, strokeDasharray, strokeDashoffset };
   });
 
@@ -715,107 +629,123 @@ function MembershipConversionCard({
       </div>
 
       {/* Donut and Legend Wrap */}
-      <div
-        className="donut-wrap"
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "24px",
-          padding: "8px 0",
-        }}
-      >
-        {/* SVG Donut */}
-        <div style={{ width: "220px", height: "220px", position: "relative" }}>
-          <svg width="220" height="220" viewBox="0 0 200 200">
-            <g transform="rotate(-90 100 100)">
-              {segments.map((seg) => (
-                <circle
-                  key={seg.level}
-                  cx="100"
-                  cy="100"
-                  r="70"
-                  fill="none"
-                  stroke={seg.color}
-                  strokeWidth="34"
-                  pathLength="100"
-                  strokeDasharray={seg.strokeDasharray}
-                  strokeDashoffset={seg.strokeDashoffset}
-                  className="transition-all duration-500"
-                />
-              ))}
-            </g>
-            {/* Center Total Count */}
-            <text
-              x="100"
-              y="98"
-              textAnchor="middle"
-              fontSize="20"
-              fontWeight="700"
-              fill="#1f1f1f"
-            >
-              {totalUsers.toLocaleString()}
-            </text>
-            <text
-              x="100"
-              y="116"
-              textAnchor="middle"
-              fontSize="10"
-              fill="#888"
-            >
-              Total Users
-            </text>
-          </svg>
-        </div>
-
-        {/* Legend */}
+      {safeBreakdown.length === 0 ? (
         <div
-          className="legend"
           style={{
             display: "flex",
-            flexDirection: "column",
-            gap: "14px",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "50px 0",
+            color: "#999",
             fontSize: "12px",
-            minWidth: "160px",
+            flex: 1,
           }}
         >
-          {breakdown.map((item) => {
-            const color = DONUT_COLORS[item.level.toLowerCase()] || "#64748b";
-            return (
-              <div
-                key={item.level}
-                className="row"
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "8px",
-                }}
+          No conversion data available.
+        </div>
+      ) : (
+        <div
+          className="donut-wrap"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "24px",
+            padding: "8px 0",
+          }}
+        >
+          {/* SVG Donut */}
+          <div style={{ width: "220px", height: "220px", position: "relative" }}>
+            <svg width="220" height="220" viewBox="0 0 200 200">
+              <g transform="rotate(-90 100 100)">
+                {segments.map((seg) => (
+                  <circle
+                    key={seg.level}
+                    cx="100"
+                    cy="100"
+                    r="70"
+                    fill="none"
+                    stroke={seg.color}
+                    strokeWidth="34"
+                    pathLength="100"
+                    strokeDasharray={seg.strokeDasharray}
+                    strokeDashoffset={seg.strokeDashoffset}
+                    className="transition-all duration-500"
+                  />
+                ))}
+              </g>
+              {/* Center Total Count */}
+              <text
+                x="100"
+                y="98"
+                textAnchor="middle"
+                fontSize="20"
+                fontWeight="700"
+                fill="#1f1f1f"
               >
-                <span
-                  className="sw"
+                {totalUsers.toLocaleString()}
+              </text>
+              <text
+                x="100"
+                y="116"
+                textAnchor="middle"
+                fontSize="10"
+                fill="#888"
+              >
+                Total Users
+              </text>
+            </svg>
+          </div>
+
+          {/* Legend */}
+          <div
+            className="legend"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "14px",
+              fontSize: "12px",
+              minWidth: "160px",
+            }}
+          >
+            {safeBreakdown.map((item) => {
+              const color = DONUT_COLORS[item.level?.toLowerCase()] || "#64748b";
+              return (
+                <div
+                  key={item.level}
+                  className="row"
                   style={{
-                    width: "9px",
-                    height: "9px",
-                    borderRadius: "50%",
-                    marginTop: "4px",
-                    backgroundColor: color,
-                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "8px",
                   }}
-                />
-                <div>
-                  <div style={{ fontWeight: 600, color: "#1f1f1f" }}>
-                    {item.name}
-                  </div>
-                  <div style={{ color: "#7D848D", fontSize: "11px", marginTop: "1px" }}>
-                    {item.percentage}% ({item.count})
+                >
+                  <span
+                    className="sw"
+                    style={{
+                      width: "9px",
+                      height: "9px",
+                      borderRadius: "50%",
+                      marginTop: "4px",
+                      backgroundColor: color,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 600, color: "#1f1f1f" }}>
+                      {item.name}
+                    </div>
+                    <div style={{ color: "#7D848D", fontSize: "11px", marginTop: "1px" }}>
+                      {item.percentage}% ({item.count})
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -824,7 +754,7 @@ function MembershipConversionCard({
 /* Main Dashboard Page                                                        */
 /* -------------------------------------------------------------------------- */
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardOverviewData>(FALLBACK_DASHBOARD_DATA);
+  const [data, setData] = useState<DashboardOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -833,15 +763,19 @@ export default function DashboardPage() {
 
   const loadData = async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const res = await getDashboardOverview(period, stateLimit);
       if (res && res.data) {
         setData(res.data);
+      } else {
+        setData(null);
       }
     } catch (err: any) {
-      console.warn("Using fallback dashboard snapshot data:", err);
+      console.error("Dashboard overview API error:", err);
+      setData(null);
       if (isManualRefresh) {
-        toast.info("Using cached dashboard snapshot.");
+        toast.error("Failed to refresh dashboard data.");
       }
     } finally {
       setLoading(false);
@@ -888,7 +822,7 @@ export default function DashboardPage() {
 
         <button
           onClick={() => loadData(true)}
-          disabled={refreshing}
+          disabled={refreshing || loading}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -900,7 +834,7 @@ export default function DashboardPage() {
             fontSize: "12px",
             fontWeight: 500,
             color: "#333",
-            cursor: "pointer",
+            cursor: refreshing || loading ? "not-allowed" : "pointer",
             boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
           }}
         >
@@ -916,251 +850,322 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* Grid: 4 columns for stats + 1.9fr column for states-card (matching style.css) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
-        {/* Row 1 Stats */}
-        {/* Total Users */}
-        <MetricCard
-          id="total-users"
-          label="Total Users"
-          metric={data.total_users}
-          icon={
-            <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
-              <circle cx="9" cy="8" r="3.6" />
-              <path d="M2 21c0-3.87 3.13-7 7-7s7 3.13 7 7H2z" />
-              <circle cx="17" cy="9" r="2.6" />
-              <path d="M14.5 14.7c.79-.45 1.7-.7 2.5-.7 2.76 0 5 2.24 5 5h-5.5c0-1.6-.78-3.07-2-4.3z" />
-            </svg>
-          }
-        />
-
-        {/* Active Users */}
-        <MetricCard
-          id="active-users"
-          label="Active Users"
-          metric={data.active_users}
-          icon={
-            <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
-              <circle cx="12" cy="8" r="4.2" />
-              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z" />
-            </svg>
-          }
-        />
-
-        {/* Free Members */}
-        <MetricCard
-          id="free-members"
-          label="Free Members"
-          metric={data.free_members}
-          icon={
-            <img
-              src="/onspot_admin_html/admin/assets/images/free-member.png"
-              alt=""
-              width={22}
-              height={22}
-              style={{ objectFit: "contain" }}
-            />
-          }
-        />
-
-        {/* Premium Members */}
-        <MetricCard
-          id="premium-members"
-          label="Premium Members"
-          metric={data.premium_members}
-          icon={
-            <img
-              src="/onspot_admin_html/admin/assets/images/premium-member.png"
-              alt=""
-              width={22}
-              height={22}
-              style={{ objectFit: "contain" }}
-            />
-          }
-          forceTheme="down"
-        />
-
-        {/* User by States (Spans 2 rows on xl screens) */}
-        <div className="md:col-span-2 lg:col-span-3 xl:col-span-1 xl:row-span-2">
-          <UsersByStatesCard
-            data={data.users_by_state.data}
-            currentLimit={stateLimit}
-            onLimitChange={(lim) => setStateLimit(lim)}
-            loading={loading}
-          />
-        </div>
-
-        {/* Row 2 Stats */}
-        {/* Expiring Memberships */}
-        <MetricCard
-          id="expiring-members"
-          label="Expiring Memberships"
-          metric={data.expiring_expired_members}
-          icon={
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#e03131"
-              strokeWidth="2"
-              style={{ width: "24px", height: "24px" }}
-            >
-              <circle cx="12" cy="12" r="9" />
-              <polyline points="12 7 12 12 15.5 14" />
-            </svg>
-          }
-          forceTheme="down"
-        />
-
-        {/* Licenses Uploaded */}
-        <MetricCard
-          id="licenses-uploaded"
-          label="Licenses Uploaded"
-          metric={data.licenses_uploaded}
-          icon={
-            <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
-              <path d="M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2H2V7zm0 4h20v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6zm3 3v2h5v-2H5z" />
-            </svg>
-          }
-        />
-
-        {/* Basic Members (Replacing omitted Reports Pending) */}
-        <MetricCard
-          id="basic-members"
-          label="Basic Members"
-          metric={data.basic_members}
-          icon={
-            <Shield style={{ width: "22px", height: "22px", color: "#2d4a23" }} />
-          }
-        />
-
-        {/* Revenue This Month */}
-        <MetricCard
-          id="revenue-month"
-          label="Revenue This Month"
-          metric={data.revenue_this_month}
-          icon={
-            <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
-              <path d="M12 3L3 21h18L12 3zm0 5l5.5 11h-11L12 8z" />
-              <path d="M9 17h6v1.5H9z" />
-            </svg>
-          }
-          isCurrency={true}
-        />
-      </div>
-
-      {/* Lower Section: Membership Conversion Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div>
-          <MembershipConversionCard
-            totalUsers={data.membership_conversion.total_users}
-            breakdown={data.membership_conversion.breakdown}
-            period={period}
-            onPeriodChange={(p) => setPeriod(p)}
-            loading={loading}
-          />
-        </div>
-
-        {/* Activity & Conversion Metrics Breakdown */}
+      {loading && !data ? (
         <div
-          className="card"
           style={{
             background: "#fff",
             borderRadius: "14px",
-            padding: "16px",
+            padding: "80px 20px",
+            textAlign: "center",
             boxShadow: "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
           }}
         >
-          <div
-            className="panel-head"
+          <RefreshCw
             style={{
-              display: "flex",
-              justifyContent: "space-between",
+              width: "28px",
+              height: "28px",
+              color: "#0E3E27",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 12px",
+            }}
+          />
+          <p style={{ color: "#7D848D", fontSize: "14px", fontWeight: 500, margin: 0 }}>
+            Loading dashboard data...
+          </p>
+        </div>
+      ) : !data ? (
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: "14px",
+            padding: "80px 20px",
+            textAlign: "center",
+            boxShadow: "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
+          }}
+        >
+          <p style={{ color: "#1f1f1f", fontSize: "16px", fontWeight: 600, marginBottom: "6px" }}>
+            No data available
+          </p>
+          <p style={{ color: "#7D848D", fontSize: "13px", marginBottom: "18px" }}>
+            Dashboard overview metrics are currently unavailable.
+          </p>
+          <button
+            onClick={() => loadData(true)}
+            disabled={refreshing}
+            style={{
+              display: "inline-flex",
               alignItems: "center",
-              marginBottom: "14px",
-              paddingBottom: "12px",
-              borderBottom: "1px solid #ececec",
+              gap: "6px",
+              padding: "8px 18px",
+              backgroundColor: "#0E3E27",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "13px",
+              fontWeight: 500,
+              color: "#fff",
+              cursor: refreshing ? "not-allowed" : "pointer",
             }}
           >
-            <h3
+            <RefreshCw
               style={{
-                fontSize: "14.5px",
-                fontWeight: 600,
-                color: "#1f1f1f",
-                margin: 0,
+                width: "14px",
+                height: "14px",
+                color: "#fff",
+                animation: refreshing ? "spin 1s linear infinite" : "none",
+              }}
+            />
+            <span>{refreshing ? "Refreshing..." : "Retry"}</span>
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* Grid: 4 columns for stats + 1.9fr column for states-card (matching style.css) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+            {/* Row 1 Stats */}
+            {/* Total Users */}
+            <MetricCard
+              id="total-users"
+              label="Total Users"
+              metric={data?.total_users}
+              icon={
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
+                  <circle cx="9" cy="8" r="3.6" />
+                  <path d="M2 21c0-3.87 3.13-7 7-7s7 3.13 7 7H2z" />
+                  <circle cx="17" cy="9" r="2.6" />
+                  <path d="M14.5 14.7c.79-.45 1.7-.7 2.5-.7 2.76 0 5 2.24 5 5h-5.5c0-1.6-.78-3.07-2-4.3z" />
+                </svg>
+              }
+            />
+
+            {/* Active Users */}
+            <MetricCard
+              id="active-users"
+              label="Active Users"
+              metric={data?.active_users}
+              icon={
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
+                  <circle cx="12" cy="8" r="4.2" />
+                  <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8z" />
+                </svg>
+              }
+            />
+
+            {/* Free Members */}
+            <MetricCard
+              id="free-members"
+              label="Free Members"
+              metric={data?.free_members}
+              icon={
+                <img
+                  src="/onspot_admin_html/admin/assets/images/free-member.png"
+                  alt=""
+                  width={22}
+                  height={22}
+                  style={{ objectFit: "contain" }}
+                />
+              }
+            />
+
+            {/* Premium Members */}
+            <MetricCard
+              id="premium-members"
+              label="Premium Members"
+              metric={data?.premium_members}
+              icon={
+                <img
+                  src="/onspot_admin_html/admin/assets/images/premium-member.png"
+                  alt=""
+                  width={22}
+                  height={22}
+                  style={{ objectFit: "contain" }}
+                />
+              }
+              forceTheme="down"
+            />
+
+            {/* User by States (Spans 2 rows on xl screens) */}
+            <div className="md:col-span-2 lg:col-span-3 xl:col-span-1 xl:row-span-2">
+              <UsersByStatesCard
+                data={data?.users_by_state?.data}
+                currentLimit={stateLimit}
+                onLimitChange={(lim) => setStateLimit(lim)}
+                loading={loading}
+              />
+            </div>
+
+            {/* Row 2 Stats */}
+            {/* Expiring Memberships */}
+            <MetricCard
+              id="expiring-members"
+              label="Expiring Memberships"
+              metric={data?.expiring_expired_members}
+              icon={
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#e03131"
+                  strokeWidth="2"
+                  style={{ width: "24px", height: "24px" }}
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <polyline points="12 7 12 12 15.5 14" />
+                </svg>
+              }
+              forceTheme="down"
+            />
+
+            {/* Licenses Uploaded */}
+            <MetricCard
+              id="licenses-uploaded"
+              label="Licenses Uploaded"
+              metric={data?.licenses_uploaded}
+              icon={
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
+                  <path d="M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2H2V7zm0 4h20v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6zm3 3v2h5v-2H5z" />
+                </svg>
+              }
+            />
+
+            {/* Basic Members */}
+            <MetricCard
+              id="basic-members"
+              label="Basic Members"
+              metric={data?.basic_members}
+              icon={
+                <Shield style={{ width: "22px", height: "22px", color: "#2d4a23" }} />
+              }
+            />
+
+            {/* Revenue This Month */}
+            <MetricCard
+              id="revenue-month"
+              label="Revenue This Month"
+              metric={data?.revenue_this_month}
+              icon={
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: "24px", height: "24px" }}>
+                  <path d="M12 3L3 21h18L12 3zm0 5l5.5 11h-11L12 8z" />
+                  <path d="M9 17h6v1.5H9z" />
+                </svg>
+              }
+              isCurrency={true}
+            />
+          </div>
+
+          {/* Lower Section: Membership Conversion Card */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <MembershipConversionCard
+                totalUsers={data?.membership_conversion?.total_users}
+                breakdown={data?.membership_conversion?.breakdown}
+                period={period}
+                onPeriodChange={(p) => setPeriod(p)}
+                loading={loading}
+              />
+            </div>
+
+            {/* Activity & Conversion Metrics Breakdown */}
+            <div
+              className="card"
+              style={{
+                background: "#fff",
+                borderRadius: "14px",
+                padding: "16px",
+                boxShadow: "0 6px 20px rgba(60, 60, 60, 0.10), 0 2px 6px rgba(60, 60, 60, 0.06)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
               }}
             >
-              Summary Breakdown
-            </h3>
-            <span style={{ fontSize: "11.5px", color: "#7D848D" }}>
-              Based on {period === "7d" ? "Last 7 Days" : period === "90d" ? "Last 90 Days" : "Last 30 Days"}
-            </span>
+              <div
+                className="panel-head"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "14px",
+                  paddingBottom: "12px",
+                  borderBottom: "1px solid #ececec",
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: "14.5px",
+                    fontWeight: 600,
+                    color: "#1f1f1f",
+                    margin: 0,
+                  }}
+                >
+                  Summary Breakdown
+                </h3>
+                <span style={{ fontSize: "11.5px", color: "#7D848D" }}>
+                  Based on {period === "7d" ? "Last 7 Days" : period === "90d" ? "Last 90 Days" : "Last 30 Days"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 my-auto">
+                <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
+                  <div style={{ fontSize: "11px", color: "#7D848D" }}>Active User Rate</div>
+                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
+                    {(data?.total_users?.count || 0) > 0
+                      ? `${(((data?.active_users?.count || 0) / (data?.total_users?.count || 1)) * 100).toFixed(1)}%`
+                      : "0%"}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
+                    {data?.active_users?.count ?? 0} of {data?.total_users?.count ?? 0} active
+                  </div>
+                </div>
+
+                <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
+                  <div style={{ fontSize: "11px", color: "#7D848D" }}>Paid Members</div>
+                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
+                    {(data?.basic_members?.count || 0) + (data?.premium_members?.count || 0)}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
+                    Basic & Premium tier
+                  </div>
+                </div>
+
+                <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
+                  <div style={{ fontSize: "11px", color: "#7D848D" }}>Licenses per User</div>
+                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
+                    {(data?.total_users?.count || 0) > 0
+                      ? ((data?.licenses_uploaded?.count || 0) / (data?.total_users?.count || 1)).toFixed(2)
+                      : "0.00"}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
+                    {data?.licenses_uploaded?.count ?? 0} total uploaded
+                  </div>
+                </div>
+
+                <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
+                  <div style={{ fontSize: "11px", color: "#7D848D" }}>Monthly Revenue</div>
+                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
+                    ${Number(data?.revenue_this_month?.count || 0).toFixed(2)}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
+                    {data?.revenue_this_month?.formatted_text || "No trend data"}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  paddingTop: "12px",
+                  borderTop: "1px solid #ececec",
+                  marginTop: "12px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: "11px",
+                  color: "#7D848D",
+                }}
+              >
+                <span>Overview Status</span>
+                <span style={{ color: "#34A853", fontWeight: 600 }}>Active</span>
+              </div>
+            </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-3 my-auto">
-            <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
-              <div style={{ fontSize: "11px", color: "#7D848D" }}>Active User Rate</div>
-              <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
-                {data.total_users.count > 0
-                  ? `${((data.active_users.count / data.total_users.count) * 100).toFixed(1)}%`
-                  : "0%"}
-              </div>
-              <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
-                {data.active_users.count} of {data.total_users.count} active
-              </div>
-            </div>
-
-            <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
-              <div style={{ fontSize: "11px", color: "#7D848D" }}>Paid Members</div>
-              <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
-                {data.basic_members.count + data.premium_members.count}
-              </div>
-              <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
-                Basic & Premium tier
-              </div>
-            </div>
-
-            <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
-              <div style={{ fontSize: "11px", color: "#7D848D" }}>Licenses per User</div>
-              <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
-                {data.total_users.count > 0
-                  ? (data.licenses_uploaded.count / data.total_users.count).toFixed(2)
-                  : "0.00"}
-              </div>
-              <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
-                {data.licenses_uploaded.count} total uploaded
-              </div>
-            </div>
-
-            <div style={{ padding: "12px", background: "#fafafa", borderRadius: "10px" }}>
-              <div style={{ fontSize: "11px", color: "#7D848D" }}>Monthly Revenue</div>
-              <div style={{ fontSize: "18px", fontWeight: 700, color: "#0E3E27", marginTop: "3px" }}>
-                ${Number(data.revenue_this_month.count).toFixed(2)}
-              </div>
-              <div style={{ fontSize: "10px", color: "#999", marginTop: "2px" }}>
-                {data.revenue_this_month.formatted_text}
-              </div>
-            </div>
-          </div>
-
-          <div
-            style={{
-              paddingTop: "12px",
-              borderTop: "1px solid #ececec",
-              marginTop: "12px",
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: "11px",
-              color: "#7D848D",
-            }}
-          >
-            <span>Overview Status</span>
-            <span style={{ color: "#34A853", fontWeight: 600 }}>Active</span>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

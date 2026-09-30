@@ -19,6 +19,9 @@ import {
   ExternalLink,
   Archive,
   CheckCircle2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
@@ -69,6 +72,8 @@ export default function ResourcesPage() {
   const [selectedVisibility, setSelectedVisibility] = useState("");
   const [selectedTimeframe, setSelectedTimeframe] = useState("");
   const [selectedActivity, setSelectedActivity] = useState("");
+  const [sortBy, setSortBy] = useState<string>("created_at");
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
 
   const [statesList, setStatesList] = useState<any[]>([]);
   const [activityTypes, setActivityTypes] = useState<string[]>([]);
@@ -276,6 +281,8 @@ export default function ResourcesPage() {
         last_updated: selectedTimeframe,
         timeframe: selectedTimeframe,
         activity: selectedActivity,
+        sortBy,
+        sortOrder,
       });
 
       if (res && res.data) {
@@ -338,7 +345,31 @@ export default function ResourcesPage() {
     selectedVisibility,
     selectedTimeframe,
     selectedActivity,
+    sortBy,
+    sortOrder,
   ]);
+
+  // Sort handler for column headers
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder((prev) => (prev === "ASC" ? "DESC" : "ASC"));
+    } else {
+      setSortBy(field);
+      setSortOrder("ASC");
+    }
+    setPage(1);
+  };
+
+  const renderSortIcon = (field: string) => {
+    if (sortBy !== field) {
+      return <ArrowUpDown className="w-3.5 h-3.5 text-[#b0b0a8] opacity-60 group-hover:opacity-100" />;
+    }
+    return sortOrder === "ASC" ? (
+      <ArrowUp className="w-3.5 h-3.5 text-[#0E3E27]" />
+    ) : (
+      <ArrowDown className="w-3.5 h-3.5 text-[#0E3E27]" />
+    );
+  };
 
   // Debounced search trigger
   useEffect(() => {
@@ -974,23 +1005,53 @@ export default function ResourcesPage() {
               <table className="w-full text-left border-collapse text-[13px]">
                 <thead>
                   <tr className="border-b border-[#ececec]">
-                    <th className="py-4 px-2 font-semibold text-[#111111] text-[13px]">
-                      Resource Title
+                    <th
+                      onClick={() => handleSort("created_at")}
+                      className="py-4 px-2 font-semibold text-[#111111] text-[13px] cursor-pointer select-none group"
+                    >
+                      <div className="inline-flex items-center gap-1.5">
+                        <span>Resource Title</span>
+                        {renderSortIcon("created_at")}
+                      </div>
                     </th>
                     <th className="py-4 px-2 font-semibold text-[#111111] text-[13px]">
                       State
                     </th>
-                    <th className="py-4 px-2 font-semibold text-[#111111] text-[13px]">
-                      Category
+                    <th
+                      onClick={() => handleSort("category")}
+                      className="py-4 px-2 font-semibold text-[#111111] text-[13px] cursor-pointer select-none group"
+                    >
+                      <div className="inline-flex items-center gap-1.5">
+                        <span>Category</span>
+                        {renderSortIcon("category")}
+                      </div>
                     </th>
-                    <th className="py-4 px-2 font-semibold text-[#111111] text-[13px]">
-                      Type
+                    <th
+                      onClick={() => handleSort("resource_type")}
+                      className="py-4 px-2 font-semibold text-[#111111] text-[13px] cursor-pointer select-none group"
+                    >
+                      <div className="inline-flex items-center gap-1.5">
+                        <span>Type</span>
+                        {renderSortIcon("resource_type")}
+                      </div>
                     </th>
-                    <th className="py-4 px-2 font-semibold text-[#111111] text-[13px]">
-                      Last Updated
+                    <th
+                      onClick={() => handleSort("created_at")}
+                      className="py-4 px-2 font-semibold text-[#111111] text-[13px] cursor-pointer select-none group"
+                    >
+                      <div className="inline-flex items-center gap-1.5">
+                        <span>Last Updated</span>
+                        {renderSortIcon("created_at")}
+                      </div>
                     </th>
-                    <th className="py-4 px-2 font-semibold text-[#111111] text-[13px]">
-                      Visibility
+                    <th
+                      onClick={() => handleSort("is_published")}
+                      className="py-4 px-2 font-semibold text-[#111111] text-[13px] cursor-pointer select-none group"
+                    >
+                      <div className="inline-flex items-center gap-1.5">
+                        <span>Visibility</span>
+                        {renderSortIcon("is_published")}
+                      </div>
                     </th>
                     <th className="py-4 px-2 text-right font-semibold text-[#111111] text-[13px]">
                       Actions

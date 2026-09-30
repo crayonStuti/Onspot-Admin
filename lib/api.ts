@@ -538,6 +538,38 @@ export async function deleteMembership(membershipId: string): Promise<any> {
   });
 }
 
+export interface AdminMembershipSummaryMetric {
+  count: number;
+  weekly_change?: number;
+  trend?: "up" | "down" | "flat" | string;
+  formatted_text?: string;
+}
+
+export interface AdminMembershipTierItem {
+  membership_id: string;
+  name: string;
+  user_count: number;
+}
+
+export interface AdminMembershipOverviewData {
+  summary: {
+    total_subscribers: AdminMembershipSummaryMetric;
+    mrr: AdminMembershipSummaryMetric;
+    arr: AdminMembershipSummaryMetric;
+    premium_members: AdminMembershipSummaryMetric;
+  };
+  tier_breakdown: AdminMembershipTierItem[];
+}
+
+export interface AdminMembershipOverviewResponse {
+  message?: string;
+  data: AdminMembershipOverviewData;
+}
+
+export async function getAdminMembershipOverview(): Promise<AdminMembershipOverviewResponse> {
+  return await fetchApi<AdminMembershipOverviewResponse>("/memberships?admin_overview=true");
+}
+
 /* =========================================================================
    STATES API
    ========================================================================= */
@@ -681,6 +713,8 @@ export interface GetAdminResourcesParams {
   is_published?: string | boolean;
   last_updated?: string;
   timeframe?: string;
+  sortBy?: "created_at" | "resource_type" | "category" | "is_published" | string;
+  sortOrder?: "ASC" | "DESC" | string;
 }
 
 export async function getAdminResources(
@@ -696,6 +730,8 @@ export async function getAdminResources(
     is_published?: string | boolean;
     last_updated?: string;
     timeframe?: string;
+    sortBy?: string;
+    sortOrder?: string;
   }
 ): Promise<any> {
   let paramsObj: GetAdminResourcesParams = {};
@@ -753,6 +789,12 @@ export async function getAdminResources(
   } else if (paramsObj.last_updated && paramsObj.last_updated !== "all" && !params.has("timeframe")) {
     params.append("timeframe", paramsObj.last_updated);
   }
+  if (paramsObj.sortBy) {
+    params.append("sortBy", paramsObj.sortBy);
+  }
+  if (paramsObj.sortOrder) {
+    params.append("sortOrder", paramsObj.sortOrder);
+  }
 
   return await fetchApi(`/resources/admin/all?${params.toString()}`);
 }
@@ -791,45 +833,179 @@ export async function getLicenseTypes(): Promise<any> {
    MAP PINS / GPS ACTIVITY
    ========================================================================= */
 
+export interface AdminPinUser {
+  id: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  display_name?: string | null;
+  username?: string | null;
+  email: string;
+  profile_picture?: string | null;
+  state?: string | null;
+}
+
+export interface AdminPinState {
+  state_id?: string;
+  state_code?: string;
+  state_name: string;
+  state_flag_image?: string | null;
+}
+
+export interface AdminPinSummary {
+  total_pins: number | {
+    count?: number;
+    weekly_change?: number;
+    change_30d?: number;
+    delta?: number;
+    trend?: "up" | "down" | "flat" | string;
+    formatted_text?: string;
+  };
+  total_tag_types?: number;
+  most_tagged_state?: {
+    state_id: string;
+    state_name: string;
+    state_code: string;
+    pin_count: number;
+  } | null;
+  most_active_user?: {
+    id: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    display_name?: string | null;
+    username?: string | null;
+    email: string;
+    profile_picture?: string | null;
+    pin_count: number;
+  } | null;
+  shared_publicly?: {
+    count: number;
+    percentage: number;
+  };
+}
+
+export interface ActivityOverviewPoint {
+  week: string;
+  count: number;
+  start_date: string;
+  end_date: string;
+}
+
+export interface TopStateByPins {
+  state_id: string;
+  state_name: string;
+  state_code: string;
+  state_flag_image?: string | null;
+  pin_count: number;
+}
+
 export interface MapPinItem {
   id: string;
+  user_id?: string;
   latitude: string | number;
   longitude: string | number;
   visibility: string;
-  description?: string;
+  is_public?: boolean;
+  description?: string | null;
+  tagged_location?: string;
+  location_name?: string;
+  title?: string;
+  loc?: string;
   created_at?: string;
   updated_at?: string;
-  state?: any;
+  user?: AdminPinUser | any;
+  state?: AdminPinState | any;
   state_name?: string;
   tag_type?: any;
   type?: any;
-  title?: string;
-  location_name?: string;
-  loc?: string;
-  user?: {
-    id?: string;
-    email?: string;
-    first_name?: string;
-    last_name?: string;
-    display_name?: string;
-    avatar?: string;
-  };
   tags?: { id: string; name: string }[];
   [key: string]: any;
 }
 
+export interface GetAdminPinsParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  state?: string;
+  state_id?: string;
+  visibility?: string;
+  tag_type?: string;
+  user_id?: string;
+  activity_filter?: "7_days" | "30_days" | "90_days" | "last_year" | string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface AdminPinsResponse {
+  message: string;
+  data: {
+    summary: AdminPinSummary;
+    activity_overview: ActivityOverviewPoint[];
+    top_states_by_pins: TopStateByPins[];
+    pins: MapPinItem[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      itemsPerPage: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  };
+}
+
 export async function getMapPins(
-  page: number = 1,
+  paramsOrPage: number | GetAdminPinsParams = 1,
   limit: number = 10,
   search: string = "",
   state?: string,
-  visibility?: string
-): Promise<any> {
-  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  if (search) params.append("search", search);
-  if (state && state !== "all") params.append("state", state);
-  if (visibility && visibility !== "all") params.append("visibility", visibility);
-  return await fetchApi(`/map/pins?${params.toString()}`);
+  visibility?: string,
+  tag_type?: string,
+  user_id?: string,
+  start_date?: string,
+  end_date?: string,
+  activity_filter?: string
+): Promise<AdminPinsResponse> {
+  let paramsObj: GetAdminPinsParams = {};
+
+  if (typeof paramsOrPage === "object" && paramsOrPage !== null) {
+    paramsObj = { ...paramsOrPage };
+  } else {
+    paramsObj = {
+      page: paramsOrPage,
+      limit,
+      search,
+      state,
+      visibility,
+      tag_type,
+      user_id,
+      start_date,
+      end_date,
+      activity_filter,
+    };
+  }
+
+  const params = new URLSearchParams();
+  if (paramsObj.page) params.append("page", String(paramsObj.page));
+  if (paramsObj.limit) params.append("limit", String(paramsObj.limit));
+  if (paramsObj.search && paramsObj.search.trim()) params.append("search", paramsObj.search.trim());
+  if (paramsObj.state && paramsObj.state !== "all") params.append("state", paramsObj.state);
+  if (paramsObj.state_id && paramsObj.state_id !== "all") params.append("state_id", paramsObj.state_id);
+  if (paramsObj.visibility && paramsObj.visibility !== "all") params.append("visibility", paramsObj.visibility);
+  if (paramsObj.tag_type && paramsObj.tag_type !== "all") params.append("tag_type", paramsObj.tag_type);
+  if (paramsObj.user_id && paramsObj.user_id !== "all") params.append("user_id", paramsObj.user_id);
+  if (paramsObj.activity_filter && paramsObj.activity_filter !== "all") params.append("activity_filter", paramsObj.activity_filter);
+  if (paramsObj.start_date) params.append("start_date", paramsObj.start_date);
+  if (paramsObj.end_date) params.append("end_date", paramsObj.end_date);
+
+  return await fetchApi<AdminPinsResponse>(`/admin/pins?${params.toString()}`);
+}
+
+export async function getMapPinTags(): Promise<any> {
+  try {
+    return await fetchApi("/map/tags");
+  } catch {
+    return await fetchApi("/map/pin-tags");
+  }
 }
 
 export async function getMapPinById(id: string): Promise<any> {

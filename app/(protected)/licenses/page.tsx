@@ -132,24 +132,6 @@ export default function LicensesPage() {
     }
   }, [page, limit, stateId, licenseType, uploadDate, searchQuery]);
 
-  // Sync with Header #top-search bar
-  useEffect(() => {
-    const topSearch = document.getElementById(
-      "top-search",
-    ) as HTMLInputElement | null;
-    if (!topSearch) return;
-
-    const handleTopInput = (e: Event) => {
-      const val = (e.target as HTMLInputElement).value;
-      setSearchQuery(val);
-      setPage(1);
-    };
-
-    topSearch.addEventListener("input", handleTopInput);
-    return () => {
-      topSearch.removeEventListener("input", handleTopInput);
-    };
-  }, []);
 
   // Debounced search trigger (calls backend API)
   useEffect(() => {
@@ -165,10 +147,6 @@ export default function LicensesPage() {
     setLicenseType("");
     setUploadDate("30d");
     setSearchQuery("");
-    const topSearch = document.getElementById(
-      "top-search",
-    ) as HTMLInputElement | null;
-    if (topSearch) topSearch.value = "";
     setPage(1);
   };
 
@@ -358,13 +336,8 @@ export default function LicensesPage() {
             id="filter-search"
             value={searchQuery}
             onChange={(e) => {
-              const val = e.target.value;
-              setSearchQuery(val);
+              setSearchQuery(e.target.value);
               setPage(1);
-              const topSearch = document.getElementById(
-                "top-search",
-              ) as HTMLInputElement | null;
-              if (topSearch && topSearch.value !== val) topSearch.value = val;
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
