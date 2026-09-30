@@ -854,18 +854,26 @@ export interface AdminPinState {
 export interface AdminPinSummary {
   total_pins: number | {
     count?: number;
-    weekly_change?: number;
+    last_30_days_count?: number;
+    previous_30_days_count?: number;
+    change_vs_last_30_days?: number;
     change_30d?: number;
     delta?: number;
+    weekly_change?: number;
     trend?: "up" | "down" | "flat" | string;
     formatted_text?: string;
   };
-  total_tag_types?: number;
+  total_tag_types?: number | {
+    count?: number;
+    formatted_text?: string;
+  };
   most_tagged_state?: {
     state_id: string;
     state_name: string;
     state_code: string;
     pin_count: number;
+    trend?: "up" | "down" | "flat" | string;
+    formatted_text?: string;
   } | null;
   most_active_user?: {
     id: string;
@@ -876,6 +884,8 @@ export interface AdminPinSummary {
     email: string;
     profile_picture?: string | null;
     pin_count: number;
+    trend?: "up" | "down" | "flat" | string;
+    formatted_text?: string;
   } | null;
   shared_publicly?: {
     count: number;
@@ -884,10 +894,16 @@ export interface AdminPinSummary {
 }
 
 export interface ActivityOverviewPoint {
-  week: string;
+  label?: string;
+  week?: string;
   count: number;
   start_date: string;
   end_date: string;
+}
+
+export interface ActivityOverviewObject {
+  filter?: string;
+  data: ActivityOverviewPoint[];
 }
 
 export interface TopStateByPins {
@@ -939,7 +955,7 @@ export interface AdminPinsResponse {
   message: string;
   data: {
     summary: AdminPinSummary;
-    activity_overview: ActivityOverviewPoint[];
+    activity_overview: ActivityOverviewPoint[] | ActivityOverviewObject;
     top_states_by_pins: TopStateByPins[];
     pins: MapPinItem[];
     pagination: {

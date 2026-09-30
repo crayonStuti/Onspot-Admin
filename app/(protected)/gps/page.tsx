@@ -127,16 +127,6 @@ export default function GPSActivityPage() {
   const fetchPinsList = useCallback(async () => {
     setLoading(true);
     try {
-      // Calculate start_date from timeframe if explicit date range isn't provided
-      let computedStart = dateRangeStart;
-      let computedEnd = dateRangeEnd;
-
-      if (!computedStart && selectedTimeframe && selectedTimeframe !== "all") {
-        const days = parseInt(selectedTimeframe) || 30;
-        const d = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-        computedStart = d.toISOString().slice(0, 10);
-      }
-
       let activityFilterParam: string | undefined = undefined;
       if (selectedTimeframe === "7" || selectedTimeframe === "7_days") {
         activityFilterParam = "7_days";
@@ -176,8 +166,8 @@ export default function GPSActivityPage() {
             ? selectedUserId
             : undefined,
         activity_filter: activityFilterParam,
-        start_date: computedStart || undefined,
-        end_date: computedEnd || undefined,
+        start_date: dateRangeStart || undefined,
+        end_date: dateRangeEnd || undefined,
       });
 
       if (res && res.data) {
@@ -185,9 +175,16 @@ export default function GPSActivityPage() {
         if (res.data.summary) {
           setSummary(res.data.summary);
         }
-        // Activity Overview points
+        // Activity Overview points (supports both array and { filter, data: [...] })
         if (Array.isArray(res.data.activity_overview)) {
           setActivityOverview(res.data.activity_overview);
+        } else if (
+          res.data.activity_overview &&
+          Array.isArray((res.data.activity_overview as any).data)
+        ) {
+          setActivityOverview((res.data.activity_overview as any).data);
+        } else {
+          setActivityOverview([]);
         }
         // Top States by pins
         if (Array.isArray(res.data.top_states_by_pins)) {
@@ -335,15 +332,14 @@ export default function GPSActivityPage() {
   const chartPoints = useMemo(() => {
     if (!activityOverview || activityOverview.length === 0) {
       return [
-        { label: "Week 1", count: 0 },
-        { label: "Week 2", count: 0 },
-        { label: "Week 3", count: 0 },
-        { label: "Week 4", count: 0 },
-        { label: "Week 5", count: 0 },
+        { label: "Q1", count: 0 },
+        { label: "Q2", count: 0 },
+        { label: "Q3", count: 0 },
+        { label: "Q4", count: 0 },
       ];
     }
     return activityOverview.map((item) => ({
-      label: item.week || "Week",
+      label: (item as any).label || (item as any).week || "Period",
       count: Number(item.count) || 0,
       startDate: item.start_date,
       endDate: item.end_date,
@@ -426,10 +422,10 @@ export default function GPSActivityPage() {
           }}
         >
           <option value="all">All Time</option>
-          <option value="30">Last 30 Days</option>
-          <option value="7">Last 7 Days</option>
-          <option value="90">Last 90 Days</option>
-          <option value="365">Last Year</option>
+          <option value="7_days">Last 7 Days</option>
+          <option value="30_days">Last 30 Days</option>
+          <option value="90_days">Last 90 Days</option>
+          <option value="last_year">Last Year</option>
         </select>
       </div>
 
@@ -459,7 +455,8 @@ export default function GPSActivityPage() {
 
             const delta =
               typeof rawTotal === "object" && rawTotal !== null
-                ? (rawTotal.change_30d ??
+                ? ((rawTotal as any).change_vs_last_30_days ??
+                  rawTotal.change_30d ??
                   rawTotal.delta ??
                   rawTotal.weekly_change)
                 : (summary as any)?.delta;
@@ -538,7 +535,8 @@ export default function GPSActivityPage() {
             {loading ? "..." : summary?.most_tagged_state?.state_name || "None"}
           </div>
           <div className="text-[12px] text-[#34A853] font-medium flex items-center gap-1">
-            {summary?.most_tagged_state?.pin_count ?? 0} Pins
+            {summary?.most_tagged_state?.formatted_text ||
+              `${summary?.most_tagged_state?.pin_count ?? 0} Pins`}
           </div>
         </div>
 
@@ -568,7 +566,8 @@ export default function GPSActivityPage() {
                 "None"}
           </div>
           <div className="text-[12px] text-[#34A853] font-medium flex items-center gap-1">
-            {summary?.most_active_user?.pin_count ?? 0} Pins
+            {summary?.most_active_user?.formatted_text ||
+              `${summary?.most_active_user?.pin_count ?? 0} Pins`}
           </div>
         </div>
 
@@ -592,7 +591,7 @@ export default function GPSActivityPage() {
           </div>
         </div>
 
-        {/* 5. Total Tag Types (Only rendered when API supplies total_tag_types) */}
+        {/* 5. Total Tag Types (Handles both raw number and { count, formatted_text }) */}
         {summary?.total_tag_types !== undefined && (
           <div className="bg-white rounded-[14px] p-[18px_20px] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] border border-[#ececec]">
             <div className="flex items-start justify-between mb-1.5">
@@ -604,10 +603,16 @@ export default function GPSActivityPage() {
               </span>
             </div>
             <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
-              {summary.total_tag_types.toLocaleString()}
+              {typeof summary.total_tag_types === "object" &&
+              summary.total_tag_types !== null
+                ? (summary.total_tag_types.count ?? 0).toLocaleString()
+                : Number(summary.total_tag_types ?? 0).toLocaleString()}
             </div>
             <div className="text-[12px] text-[#888] font-normal">
-              Types used
+              {typeof summary.total_tag_types === "object" &&
+              summary.total_tag_types !== null
+                ? summary.total_tag_types.formatted_text || "Types used"
+                : "Types used"}
             </div>
           </div>
         )}
