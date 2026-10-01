@@ -68,7 +68,10 @@ function generateCleanSparkline(
     const currentX = (s / steps) * width;
     // Find surrounding raw points
     const rawProgress = (s / steps) * (rawPoints.length - 1);
-    const idx = Math.max(0, Math.min(Math.floor(rawProgress), rawPoints.length - 2));
+    const idx = Math.max(
+      0,
+      Math.min(Math.floor(rawProgress), rawPoints.length - 2),
+    );
     const t = rawProgress - idx;
 
     const p0 = rawPoints[Math.max(0, idx - 1)] ?? rawPoints[0];
@@ -1036,7 +1039,7 @@ export default function DashboardPage() {
               metric={data?.free_members}
               icon={
                 <img
-                  src="/onspot_admin_html/admin/assets/images/free-member.png"
+                  src="/images/free-member.png"
                   alt=""
                   width={22}
                   height={22}
@@ -1052,7 +1055,7 @@ export default function DashboardPage() {
               metric={data?.premium_members}
               icon={
                 <img
-                  src="/onspot_admin_html/admin/assets/images/premium-member.png"
+                  src="/images/premium-member.png"
                   alt=""
                   width={22}
                   height={22}
