@@ -21,6 +21,8 @@ import {
   ChevronDown,
   Check,
   ExternalLink,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
@@ -29,12 +31,38 @@ import {
   getMapPinTags,
   getStates,
   getUsers,
+  deleteMapPin,
   MapPinItem,
   AdminPinSummary,
   ActivityOverviewPoint,
   TopStateByPins,
+  TopTagTypesData,
   API_URL,
 } from "@/lib/api";
+import EditPinModal from "@/components/gps/EditPinModal";
+
+const TAG_TYPE_COLORS = [
+  "#2F80ED", // Vibrant Blue (e.g. Fishing Spot)
+  "#1E232A", // Dark Charcoal (e.g. Hunting)
+  "#47664B", // Forest Olive Green (e.g. Scouting)
+  "#CDBE92", // Warm Beige / Tan (e.g. Boat Launch)
+  "#8E959E", // Neutral Grey (e.g. Other)
+  "#F59E0B", // Amber
+  "#8B5CF6", // Purple
+  "#EC4899", // Rose
+  "#14B8A6", // Teal
+  "#E11D48", // Crimson
+];
+
+const TAG_TYPE_COLOR_MAP: Record<string, string> = {
+  fishing: "#2F80ED",
+  "fishing spot": "#2F80ED",
+  hunting: "#1E232A",
+  scouting: "#47664B",
+  "boat launch": "#CDBE92",
+  other: "#8E959E",
+  others: "#8E959E",
+};
 
 export default function GPSActivityPage() {
   // Map Pins state
@@ -44,6 +72,8 @@ export default function GPSActivityPage() {
     ActivityOverviewPoint[]
   >([]);
   const [topStates, setTopStates] = useState<TopStateByPins[]>([]);
+  const [topTagTypes, setTopTagTypes] = useState<TopTagTypesData | null>(null);
+  const [hoveredTagIndex, setHoveredTagIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Pagination
@@ -73,6 +103,13 @@ export default function GPSActivityPage() {
   // View Details Modal state
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedPin, setSelectedPin] = useState<MapPinItem | null>(null);
+
+  // Edit & Delete Pin Modal states
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [pinToEdit, setPinToEdit] = useState<MapPinItem | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [pinToDelete, setPinToDelete] = useState<MapPinItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Helper for user display name
   const getUserDisplayName = (u?: any) => {
@@ -190,6 +227,12 @@ export default function GPSActivityPage() {
         if (Array.isArray(res.data.top_states_by_pins)) {
           setTopStates(res.data.top_states_by_pins);
         }
+        // Top Tag Types
+        const tagTypesData =
+          res.data.top_tag_types || (res as any).top_tag_types || null;
+        if (tagTypesData) {
+          setTopTagTypes(tagTypesData);
+        }
         // Pins list
         if (Array.isArray(res.data.pins)) {
           setMapPins(res.data.pins);
@@ -254,6 +297,35 @@ export default function GPSActivityPage() {
   const handleViewPin = (pin: MapPinItem) => {
     setSelectedPin(pin);
     setViewModalOpen(true);
+  };
+
+  // Edit Pin handler
+  const handleEditPin = (pin: MapPinItem) => {
+    setPinToEdit(pin);
+    setEditModalOpen(true);
+  };
+
+  // Delete Pin handler
+  const handleDeletePin = (pin: MapPinItem) => {
+    setPinToDelete(pin);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pinToDelete) return;
+    setDeleting(true);
+    try {
+      await deleteMapPin(pinToDelete.id);
+      toast.success("GPS pin deleted successfully.");
+      setDeleteConfirmOpen(false);
+      setPinToDelete(null);
+      fetchPinsList();
+    } catch (err: any) {
+      console.error("Delete pin error:", err);
+      toast.error(err?.message || "Failed to delete GPS pin.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   // Share Pin handler
@@ -393,6 +465,103 @@ export default function GPSActivityPage() {
     const bottomY = (padTop + chartHeight).toFixed(1);
     return `${linePath} L${lastX},${bottomY} L${firstX},${bottomY} Z`;
   }, [linePath, plottedPoints, padTop, chartHeight]);
+
+  // Dynamic Tag Types for filter dropdown from API (none hardcoded)
+  const dynamicTagOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    // 1. From API tagTypesList
+    tagTypesList.forEach((item) => {
+      const it = item as any;
+      const name =
+        typeof item === "string"
+          ? item
+          : it?.name || it?.tag || it?.label || it?.tag_name || "";
+      if (name && name.trim()) {
+        map.set(name.trim().toLowerCase(), name.trim());
+      }
+    });
+    // 2. From top_tag_types breakdown returned by API
+    if (topTagTypes?.breakdown && Array.isArray(topTagTypes.breakdown)) {
+      topTagTypes.breakdown.forEach((item) => {
+        if (item.name && item.name.trim()) {
+          map.set(item.name.trim().toLowerCase(), item.name.trim());
+        }
+      });
+    }
+    return Array.from(map.values());
+  }, [tagTypesList, topTagTypes]);
+
+  // Donut chart calculations for Top Tag Types
+  const donutData = useMemo(() => {
+    const rawTotalPins = summary?.total_pins;
+    const totalPinsCount =
+      typeof rawTotalPins === "object" &&
+      rawTotalPins !== null &&
+      typeof rawTotalPins.count === "number"
+        ? rawTotalPins.count
+        : typeof rawTotalPins === "number"
+          ? rawTotalPins
+          : typeof (topTagTypes as any)?.total_pins === "object" &&
+              (topTagTypes as any)?.total_pins !== null
+            ? ((topTagTypes as any).total_pins.count ?? totalItems)
+            : totalItems ?? 0;
+
+    if (
+      !topTagTypes ||
+      !Array.isArray(topTagTypes.breakdown) ||
+      topTagTypes.breakdown.length === 0
+    ) {
+      return { total: totalPinsCount, slices: [] };
+    }
+
+    const breakdown = topTagTypes.breakdown;
+    const totalEntries =
+      topTagTypes.total_tag_entries ||
+      breakdown.reduce((acc, curr) => acc + (curr.count || 0), 0);
+
+    const radius = 62;
+    const circumference = 2 * Math.PI * radius;
+    let accumulatedLength = 0;
+
+    const slices = breakdown.map((item, index) => {
+      const lowerName = (item.name || "").trim().toLowerCase();
+      const color =
+        TAG_TYPE_COLOR_MAP[lowerName] ||
+        TAG_TYPE_COLORS[index % TAG_TYPE_COLORS.length];
+
+      const fraction =
+        totalEntries > 0
+          ? (item.count || 0) / totalEntries
+          : (item.percentage || 0) / 100;
+      const sliceLength = fraction * circumference;
+      const strokeOffset = accumulatedLength;
+      accumulatedLength += sliceLength;
+
+      // Formatted percentage string
+      const pctFormatted =
+        typeof item.percentage === "number"
+          ? `${Number(item.percentage.toFixed(1))}%`
+          : totalEntries > 0
+            ? `${((item.count / totalEntries) * 100).toFixed(1)}%`
+            : "0%";
+
+      // Gap between slices if more than 1 segment
+      const gap = breakdown.length > 1 ? 2.5 : 0;
+      const dashLength = Math.max(0, sliceLength - gap);
+      const dashSpace = circumference - dashLength;
+
+      return {
+        ...item,
+        color,
+        pctFormatted,
+        dashLength,
+        dashSpace,
+        strokeOffset,
+      };
+    });
+
+    return { total: totalPinsCount, slices };
+  }, [topTagTypes, summary, totalItems]);
 
   return (
     <div className="space-y-6">
@@ -668,9 +837,11 @@ export default function GPSActivityPage() {
           }}
         >
           <option value="">All Tag Types</option>
-          <option value="hunting">Hunting</option>
-          <option value="fishing">Fishing</option>
-          <option value="other">Other</option>
+          {dynamicTagOptions.map((tag) => (
+            <option key={tag} value={tag}>
+              {tag}
+            </option>
+          ))}
         </select>
 
         {/* 3. User Filter */}
@@ -1018,6 +1189,24 @@ export default function GPSActivityPage() {
                                 <Eye className="w-3.5 h-3.5" />
                               </button>
 
+                              {/* Edit */}
+                              <button
+                                onClick={() => handleEditPin(pin)}
+                                title="Edit pin"
+                                className="w-[28px] h-[26px] border border-[#e4e4df] rounded-[5px] bg-white text-[#777] hover:bg-emerald-50 hover:text-[#0E3E27] hover:border-emerald-200 inline-flex items-center justify-center transition-colors cursor-pointer"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Delete */}
+                              <button
+                                onClick={() => handleDeletePin(pin)}
+                                title="Delete pin"
+                                className="w-[28px] h-[26px] border border-[#e4e4df] rounded-[5px] bg-white text-[#777] hover:bg-red-50 hover:text-red-600 hover:border-red-200 inline-flex items-center justify-center transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+
                               {/* Share */}
                               <button
                                 onClick={() => handleSharePin(pin)}
@@ -1025,15 +1214,6 @@ export default function GPSActivityPage() {
                                 className="w-[28px] h-[26px] border border-[#e4e4df] rounded-[5px] bg-white text-[#777] hover:bg-[#f7f7f4] hover:text-[#2d4a23] inline-flex items-center justify-center transition-colors cursor-pointer"
                               >
                                 <Share2 className="w-3.5 h-3.5" />
-                              </button>
-
-                              {/* More */}
-                              <button
-                                onClick={() => handleViewPin(pin)}
-                                title="Details"
-                                className="w-[28px] h-[26px] border border-[#e4e4df] rounded-[5px] bg-white text-[#777] hover:bg-[#f7f7f4] hover:text-[#2d4a23] inline-flex items-center justify-center transition-colors cursor-pointer"
-                              >
-                                <MoreVertical className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </td>
@@ -1238,7 +1418,153 @@ export default function GPSActivityPage() {
             </button>
           </div>
 
-          {/* 3. Live Map Preview Panel */}
+          {/* 3. Top Tag Types Panel */}
+          <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)]">
+            <h3 className="text-[16px] font-bold text-[#1f1f1f] pb-3 mb-3 border-b border-[#ececec]">
+              Top Tag Types
+            </h3>
+
+            {/* Donut Chart */}
+            <div className="relative w-[180px] h-[180px] mx-auto my-3 flex items-center justify-center">
+              <svg
+                viewBox="0 0 200 200"
+                className="w-full h-full -rotate-90 transform"
+              >
+                {/* Background track circle */}
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="62"
+                  fill="none"
+                  stroke={donutData.slices.length === 0 ? "#E5E7EB" : "#F3F4F6"}
+                  strokeWidth="26"
+                />
+                {/* Slices */}
+                {donutData.slices.map((slice, idx) => {
+                  const isHovered = hoveredTagIndex === idx;
+                  const isAnyHovered = hoveredTagIndex !== null;
+
+                  return (
+                    <circle
+                      key={slice.name || idx}
+                      cx="100"
+                      cy="100"
+                      r="62"
+                      fill="none"
+                      stroke={slice.color}
+                      strokeWidth={isHovered ? 31 : 26}
+                      strokeDasharray={`${slice.dashLength} ${slice.dashSpace}`}
+                      strokeDashoffset={-slice.strokeOffset}
+                      opacity={isHovered ? 1 : isAnyHovered ? 0.45 : 1}
+                      className="transition-all duration-200 ease-out cursor-pointer"
+                      onMouseEnter={() => setHoveredTagIndex(idx)}
+                      onMouseLeave={() => setHoveredTagIndex(null)}
+                    >
+                      <title>{`${slice.name}: ${slice.pctFormatted} (${slice.count.toLocaleString()} pins)`}</title>
+                    </circle>
+                  );
+                })}
+              </svg>
+
+              {/* Center hole text */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-2 transition-all duration-200">
+                {hoveredTagIndex !== null && donutData.slices[hoveredTagIndex] ? (
+                  (() => {
+                    const hSlice = donutData.slices[hoveredTagIndex];
+                    return (
+                      <>
+                        <span
+                          className="text-[12px] font-semibold text-[#1f1f1f] max-w-[95px] truncate"
+                          title={hSlice.name}
+                        >
+                          {hSlice.name}
+                        </span>
+                        <span
+                          className="text-[20px] font-bold tracking-tight leading-tight mt-0.5"
+                          style={{ color: hSlice.color }}
+                        >
+                          {hSlice.pctFormatted}
+                        </span>
+                        <span className="text-[10.5px] text-[#7D848D] font-normal mt-0.5">
+                          {hSlice.count.toLocaleString()}{" "}
+                          {hSlice.count === 1 ? "pin" : "pins"}
+                        </span>
+                      </>
+                    );
+                  })()
+                ) : (
+                  <>
+                    <span className="text-[22px] font-bold text-[#1f1f1f] tracking-tight leading-none">
+                      {donutData.total.toLocaleString()}
+                    </span>
+                    <span className="text-[12px] text-[#7D848D] font-normal mt-1">
+                      Total Pins
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Breakdown List */}
+            {donutData.slices.length === 0 ? (
+              <div className="py-4 text-center text-xs text-gray-400">
+                No tag type activity available.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5 mt-3 pt-2">
+                {donutData.slices.map((item, idx) => {
+                  const isHovered = hoveredTagIndex === idx;
+                  const isAnyHovered = hoveredTagIndex !== null;
+
+                  return (
+                    <div
+                      key={item.name || idx}
+                      className={`flex items-center justify-between text-[13px] py-1 px-2 -mx-2 rounded-[8px] transition-all duration-150 cursor-pointer ${
+                        isHovered
+                          ? "bg-gray-100/90 font-medium scale-[1.01]"
+                          : isAnyHovered
+                            ? "opacity-50"
+                            : "hover:bg-gray-50"
+                      }`}
+                      onMouseEnter={() => setHoveredTagIndex(idx)}
+                      onMouseLeave={() => setHoveredTagIndex(null)}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-transform duration-150"
+                          style={{
+                            backgroundColor: item.color,
+                            transform: isHovered ? "scale(1.35)" : "scale(1)",
+                          }}
+                        />
+                        <span
+                          className={`truncate transition-colors ${
+                            isHovered
+                              ? "text-[#111] font-semibold"
+                              : "text-[#2B303A] font-normal"
+                          }`}
+                          title={item.name}
+                        >
+                          {item.name}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-[12.5px] tabular-nums ml-2 flex-shrink-0 transition-colors ${
+                          isHovered
+                            ? "text-[#111] font-semibold"
+                            : "text-[#7D848D] font-normal"
+                        }`}
+                      >
+                        {item.count.toLocaleString()} ({item.pctFormatted})
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 4. Live Map Preview Panel */}
           <div className="h-[260px] rounded-[14px] overflow-hidden border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] bg-white">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d44196.236392315026!2d-93.81033787191589!3d46.185289524094266!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b157a8f77c8e1f%3A0xfbe655e10ff018bc!2sVineland%2C%20MN%2056359%2C%20USA!5e0!3m2!1sen!2sin!4v1781021191340!5m2!1sen!2sin"
@@ -1390,6 +1716,75 @@ export default function GPSActivityPage() {
                 className="px-5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-gray-700 transition-all cursor-pointer"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== EDIT PIN MODAL ===================== */}
+      <EditPinModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setPinToEdit(null);
+        }}
+        onSuccess={() => {
+          fetchPinsList();
+        }}
+        pin={pinToEdit}
+        availableTagSuggestions={dynamicTagOptions}
+      />
+
+      {/* ===================== DELETE CONFIRMATION MODAL ===================== */}
+      {deleteConfirmOpen && pinToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-gray-100 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">
+                  Delete GPS Pin
+                </h3>
+                <p className="text-xs text-gray-500">
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Are you sure you want to delete the GPS pin for{" "}
+              <strong className="text-gray-900">
+                {pinToDelete.tagged_location ||
+                  pinToDelete.location_name ||
+                  pinToDelete.title ||
+                  `${pinToDelete.latitude}, ${pinToDelete.longitude}`}
+              </strong>
+              ?
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setPinToDelete(null);
+                }}
+                disabled={deleting}
+                className="h-9 px-4 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                className="h-9 px-5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm disabled:opacity-60"
+              >
+                {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>{deleting ? "Deleting..." : "Delete Pin"}</span>
               </button>
             </div>
           </div>

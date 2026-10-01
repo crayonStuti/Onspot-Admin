@@ -962,12 +962,24 @@ export interface GetAdminPinsParams {
   end_date?: string;
 }
 
+export interface TopTagTypeBreakdown {
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+export interface TopTagTypesData {
+  total_tag_entries: number;
+  breakdown: TopTagTypeBreakdown[];
+}
+
 export interface AdminPinsResponse {
   message: string;
   data: {
     summary: AdminPinSummary;
     activity_overview: ActivityOverviewPoint[] | ActivityOverviewObject;
     top_states_by_pins: TopStateByPins[];
+    top_tag_types?: TopTagTypesData;
     pins: MapPinItem[];
     pagination: {
       currentPage: number;
@@ -1037,6 +1049,30 @@ export async function getMapPinTags(): Promise<any> {
 
 export async function getMapPinById(id: string): Promise<any> {
   return await fetchApi(`/map/pins?id=${id}`);
+}
+
+export interface UpdateMapPinPayload {
+  latitude: number | string;
+  longitude: number | string;
+  description?: string;
+  visibility?: "public" | "private" | string;
+  tags?: string[];
+}
+
+export async function updateMapPin(
+  id: string,
+  payload: UpdateMapPinPayload
+): Promise<any> {
+  return await fetchApi(`/admin/pins/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteMapPin(id: string): Promise<any> {
+  return await fetchApi(`/admin/pins/${id}`, {
+    method: "DELETE",
+  });
 }
 
 /* =========================================================================
