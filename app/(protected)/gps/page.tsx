@@ -674,7 +674,7 @@ export default function GPSActivityPage() {
         </select>
 
         {/* 3. User Filter */}
-        <select
+        {/* <select
           id="filter-user"
           value={selectedUserId}
           onChange={(e) => {
@@ -695,7 +695,7 @@ export default function GPSActivityPage() {
               {getUserDisplayName(u)}
             </option>
           ))}
-        </select>
+        </select> */}
 
         {/* 4. Shared Public Filter */}
         <select

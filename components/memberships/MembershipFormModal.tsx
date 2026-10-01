@@ -8,11 +8,22 @@ import { createMembership, updateMembership, API_URL } from "@/lib/api";
 export interface MembershipItem {
   id: string;
   name: string;
+  level?: string;
   description?: string;
   feature?: any;
   price_usd?: string | number;
+  monthly_price?: string | number;
+  monthly_price_id?: string | null;
+  yearly_price?: string | number;
+  yearly_price_id?: string | null;
+  stripe_product_id?: string | null;
+  taxes?: string | number;
   duration_days?: number | string;
   totalUsers?: string | number;
+  subscriber_count?: number;
+  subscriber_percentage?: number;
+  revenue_generated?: number;
+  revenue_percentage?: number;
   created_at?: string;
   updated_at?: string;
   image?: string;
@@ -121,11 +132,15 @@ export default function MembershipFormModal({
     if (initialData) {
       setName(initialData.name || "");
       setDescription(initialData.description || "");
-      setPriceUsd(
+      const rawPrice =
         initialData.price_usd !== undefined && initialData.price_usd !== null
-          ? String(initialData.price_usd)
-          : ""
-      );
+          ? initialData.price_usd
+          : initialData.monthly_price !== undefined && initialData.monthly_price !== null
+            ? initialData.monthly_price
+            : initialData.yearly_price !== undefined && initialData.yearly_price !== null
+              ? initialData.yearly_price
+              : "";
+      setPriceUsd(String(rawPrice));
       setDurationDays(
         initialData.duration_days !== undefined && initialData.duration_days !== null
           ? String(initialData.duration_days)

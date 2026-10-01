@@ -37,6 +37,15 @@ function generateCleanSparkline(
     };
   }
 
+  // If only 1 data point is present (e.g. week 1 of the month), render a flat baseline
+  if (data.length === 1) {
+    const defaultY = isDownTrend ? 30 : 38;
+    return {
+      linePath: `M0,${defaultY} L${width},${defaultY}`,
+      areaPath: `M0,${defaultY} L${width},${defaultY} L${width},${height} L0,${height} Z`,
+    };
+  }
+
   const values = data.map((d) => d.value);
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -59,13 +68,17 @@ function generateCleanSparkline(
     const currentX = (s / steps) * width;
     // Find surrounding raw points
     const rawProgress = (s / steps) * (rawPoints.length - 1);
-    const idx = Math.min(Math.floor(rawProgress), rawPoints.length - 2);
+    const idx = Math.max(0, Math.min(Math.floor(rawProgress), rawPoints.length - 2));
     const t = rawProgress - idx;
 
-    const p0 = rawPoints[Math.max(0, idx - 1)];
-    const p1 = rawPoints[idx];
-    const p2 = rawPoints[Math.min(rawPoints.length - 1, idx + 1)];
-    const p3 = rawPoints[Math.min(rawPoints.length - 1, idx + 2)];
+    const p0 = rawPoints[Math.max(0, idx - 1)] ?? rawPoints[0];
+    const p1 = rawPoints[idx] ?? rawPoints[0];
+    const p2 = rawPoints[Math.min(rawPoints.length - 1, idx + 1)] ?? p1;
+    const p3 = rawPoints[Math.min(rawPoints.length - 1, idx + 2)] ?? p2;
+
+    if (!p1) {
+      continue;
+    }
 
     // Catmull-Rom cubic interpolation for continuous organic wave
     const y =

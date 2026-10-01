@@ -543,27 +543,38 @@ export interface AdminMembershipSummaryMetric {
   weekly_change?: number;
   trend?: "up" | "down" | "flat" | string;
   formatted_text?: string;
+  rate_percentage?: number;
 }
 
 export interface AdminMembershipTierItem {
   membership_id: string;
   name: string;
   user_count: number;
+  percentage?: number;
+}
+
+export interface AdminMembershipSummaryCards {
+  total_subscribers?: AdminMembershipSummaryMetric;
+  monthly_recurring_revenue?: AdminMembershipSummaryMetric;
+  mrr?: AdminMembershipSummaryMetric;
+  annual_recurring_revenue?: AdminMembershipSummaryMetric;
+  arr?: AdminMembershipSummaryMetric;
+  premium_members?: AdminMembershipSummaryMetric;
+  churn_rate?: AdminMembershipSummaryMetric;
 }
 
 export interface AdminMembershipOverviewData {
-  summary: {
-    total_subscribers: AdminMembershipSummaryMetric;
-    mrr: AdminMembershipSummaryMetric;
-    arr: AdminMembershipSummaryMetric;
-    premium_members: AdminMembershipSummaryMetric;
-  };
-  tier_breakdown: AdminMembershipTierItem[];
+  summary?: AdminMembershipSummaryCards;
+  summary_cards?: AdminMembershipSummaryCards;
+  tier_breakdown?: AdminMembershipTierItem[];
+  plans?: any[];
 }
 
 export interface AdminMembershipOverviewResponse {
   message?: string;
-  data: AdminMembershipOverviewData;
+  data?: AdminMembershipOverviewData;
+  summary_cards?: AdminMembershipSummaryCards;
+  plans?: any[];
 }
 
 export async function getAdminMembershipOverview(): Promise<AdminMembershipOverviewResponse> {

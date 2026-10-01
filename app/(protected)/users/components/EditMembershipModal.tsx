@@ -47,7 +47,13 @@ export function EditMembershipModal({
       setLoadingPlans(true);
       try {
         const res = await getMemberships(1, 20);
-        const data = res?.data?.memberships || res?.data || res || [];
+        const data =
+          res?.data?.memberships ||
+          res?.data?.plans ||
+          res?.plans ||
+          res?.data ||
+          res ||
+          [];
         if (Array.isArray(data) && data.length > 0) {
           setAvailablePlans(data);
         }
