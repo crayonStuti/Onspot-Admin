@@ -516,11 +516,11 @@ export default function MembershipsPage() {
       })()}
 
       {/* ===================== MEMBERSHIP PLANS LIST ===================== */}
-      <section className="bg-white rounded-[14px] p-6 sm:p-7 shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] border border-[#ececec]">
+      <section className="bg-white rounded-[14px] p-4 sm:p-7 shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] border border-[#ececec] w-full min-w-0 overflow-hidden">
         {/* Card Header */}
-        <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6">
           <div>
-            <h2 className="text-[22px] font-bold text-[#1f1f1f] tracking-tight">
+            <h2 className="text-[20px] sm:text-[22px] font-bold text-[#1f1f1f] tracking-tight">
               Membership Plans
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -530,16 +530,16 @@ export default function MembershipsPage() {
           </div>
           <button
             onClick={handleOpenCreate}
-            className="h-[38px] px-4 rounded-[8px] bg-[#0E3E27] hover:bg-[#092c1b] text-white text-[13px] font-medium transition-colors flex items-center gap-2 cursor-pointer shadow-xs"
+            className="h-[38px] px-4 rounded-[8px] bg-[#0E3E27] hover:bg-[#092c1b] text-white text-[13px] font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs shrink-0 whitespace-nowrap self-start sm:self-auto"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 shrink-0" />
             <span>Add Membership Plan</span>
           </button>
         </div>
 
         {/* Plans Table (6 columns matching HTML) */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto w-full max-w-full">
+          <table className="w-full min-w-[700px] text-left border-collapse">
             <thead>
               <tr className="border-b border-[#ececec]">
                 <th className="py-3.5 px-3 text-black font-medium text-[13.5px]">

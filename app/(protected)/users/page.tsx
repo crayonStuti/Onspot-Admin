@@ -519,26 +519,26 @@ export default function UsersPage() {
       </section>
 
       {/* ===================== DIVISION-SEC: USERS TABLE + MAP (matching HTML) ===================== */}
-      <section className="flex flex-col xl:flex-row items-stretch gap-6">
+      <section className="flex flex-col xl:flex-row items-stretch gap-6 w-full min-w-0">
         {/* Table Card (matching HTML .table-card) */}
-        <div className="flex-1 xl:w-[76%] bg-white rounded-[14px] p-5 sm:p-6 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] flex flex-col justify-between">
+        <div className="flex-1 xl:w-[76%] w-full min-w-0 bg-white rounded-[14px] p-4 sm:p-6 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] flex flex-col justify-between overflow-hidden">
           <div>
             {/* Panel Head */}
-            <div className="flex items-center justify-between gap-3 pb-3 mb-2 border-b border-[#ececec]">
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 mb-2 border-b border-[#ececec]">
               <h3 className="font-semibold text-[#1f1f1f] text-[15px]">
                 Users
               </h3>
 
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 {/* View all Users dropdown (matching HTML #users-view) */}
                 <select
                   value={quickView}
                   onChange={(e) => handleQuickViewChange(e.target.value)}
-                  className="h-[30px] text-[12.5px] text-[#4a4a4a] border border-[#e4e4df] rounded-[7px] px-3 pr-7 bg-white focus:outline-none cursor-pointer font-medium appearance-none"
+                  className="h-[30px] text-[12px] sm:text-[12.5px] text-[#4a4a4a] border border-[#e4e4df] rounded-[7px] px-2.5 sm:px-3 pr-6 sm:pr-7 bg-white focus:outline-none cursor-pointer font-medium appearance-none shrink-0"
                   style={{
                     backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>")`,
                     backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 9px center",
+                    backgroundPosition: "right 8px center",
                   }}
                 >
                   <option value="all">View all Users</option>
@@ -551,7 +551,7 @@ export default function UsersPage() {
                 <button
                   type="button"
                   onClick={handleExportCSV}
-                  className="h-[30px] px-3 rounded-[7px] border border-[#e4e4df] bg-white hover:bg-[#f7f7f2] text-[12px] font-medium text-[#4a4a4a] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="h-[30px] px-2.5 sm:px-3 rounded-[7px] border border-[#e4e4df] bg-white hover:bg-[#f7f7f2] text-[12px] font-medium text-[#4a4a4a] inline-flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
                 >
                   <svg
                     className="w-3 h-3 text-[#6b6b6b]"
@@ -584,17 +584,17 @@ export default function UsersPage() {
                 <button
                   type="button"
                   onClick={handleOpenAddUser}
-                  className="h-[30px] px-3 rounded-[7px] bg-[#2d4a23] hover:bg-[#233a1b] text-[12px] font-medium text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                  className="h-[30px] px-3 rounded-[7px] bg-[#2d4a23] hover:bg-[#233a1b] text-[12px] font-medium text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs shrink-0 whitespace-nowrap"
                 >
-                  <Plus className="w-3.5 h-3.5 text-white" />
+                  <Plus className="w-3.5 h-3.5 text-white shrink-0" />
                   <span>Add User</span>
                 </button>
               </div>
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto min-h-[440px] pb-12">
-              <table className="w-full text-left border-collapse text-[13px]">
+            <div className="overflow-x-auto min-h-[440px] pb-12 w-full max-w-full">
+              <table className="w-full min-w-[720px] text-left border-collapse text-[13px]">
                 <thead>
                   <tr className="border-b border-[#ececec]">
                     <th className="py-3 px-2 w-[55px] text-center font-semibold text-[#111111] text-[13px]">
@@ -1184,6 +1184,10 @@ export default function UsersPage() {
                         validTo !== "Unlimited" &&
                         new Date(validTo) < new Date();
                       const photos = lic.photos || [];
+                      const rawFrontImg =
+                        photos.length > 0 && photos[0] && typeof photos[0].front_image === "string"
+                          ? photos[0].front_image.trim()
+                          : "";
 
                       return (
                         <div
@@ -1223,7 +1227,7 @@ export default function UsersPage() {
                             <span>Exp: {validTo}</span>
                           </div>
 
-                          {photos.length > 0 && photos[0]?.front_image && (
+                          {rawFrontImg && (
                             <div className="pt-1 flex items-center gap-1.5">
                               <span className="text-[10px] text-gray-400">
                                 Card Photo:
@@ -1237,9 +1241,9 @@ export default function UsersPage() {
                               >
                                 <img
                                   src={
-                                    photos[0].front_image.startsWith("http")
-                                      ? photos[0].front_image
-                                      : `${API_URL}${photos[0].front_image.startsWith("/") ? "" : "/"}${photos[0].front_image}`
+                                    rawFrontImg.startsWith("http")
+                                      ? rawFrontImg
+                                      : `${API_URL}${rawFrontImg.startsWith("/") ? "" : "/"}${rawFrontImg}`
                                   }
                                   alt="License Card"
                                   className="w-10 h-7 object-cover rounded border border-gray-200 shadow-2xs"

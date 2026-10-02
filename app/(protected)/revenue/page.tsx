@@ -286,7 +286,7 @@ export default function RevenuePage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto text-[#1f1f1f]">
+    <div className="space-y-6 w-full min-w-0 pb-10 text-[#1f1f1f]">
       {/* Top Banner & Refresh Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -467,11 +467,11 @@ export default function RevenuePage() {
       {/* ==================================================================== */}
       {/* 2. MAIN BODY GRID (LEFT: Charts & Table, RIGHT: Insights & Actions) */}
       {/* ==================================================================== */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start w-full min-w-0">
         {/* ================= LEFT SECTION (xl:col-span-8) ================= */}
-        <div className="xl:col-span-8 space-y-6">
+        <div className="xl:col-span-8 space-y-6 w-full min-w-0">
           {/* Charts Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full min-w-0">
             {/* Chart 1: Revenue by Plan (Donut Chart) */}
             <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.08),0_2px_6px_rgba(60,60,60,0.04)] flex flex-col justify-between">
               <h3 className="text-[15px] font-semibold text-[#1f1f1f] pb-3 mb-4 border-b border-[#ececec]">
@@ -568,7 +568,7 @@ export default function RevenuePage() {
                     height="220"
                     viewBox={`0 0 ${monthChartData.W} ${monthChartData.H}`}
                     preserveAspectRatio="none"
-                    className="overflow-visible"
+                    className="overflow-hidden block"
                   >
                     <defs>
                       <linearGradient id="revenue_month_grad" x1="0" x2="0" y1="0" y2="1">
@@ -670,7 +670,7 @@ export default function RevenuePage() {
           </div>
 
           {/* Transactions Table Section */}
-          <section className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.08),0_2px_6px_rgba(60,60,60,0.04)]">
+          <section className="bg-white rounded-[14px] p-4 sm:p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.08),0_2px_6px_rgba(60,60,60,0.04)] w-full min-w-0 overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-[#ececec] gap-2">
               <h3 className="text-[15px] font-semibold text-[#1f1f1f]">
                 Recent Revenue Transactions
@@ -680,7 +680,7 @@ export default function RevenuePage() {
               </span>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto w-full max-w-full">
               <table className="w-full text-left text-[13px] border-collapse min-w-[700px]">
                 <thead>
                   <tr className="border-b border-[#ececec] text-[#111111] font-semibold">
@@ -827,7 +827,7 @@ export default function RevenuePage() {
         </div>
 
         {/* ================= RIGHT SECTION (xl:col-span-4) ================= */}
-        <div className="xl:col-span-4 space-y-5">
+        <div className="xl:col-span-4 space-y-5 w-full min-w-0">
           {/* Card 1: Top Performing Plan */}
           <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.08),0_2px_6px_rgba(60,60,60,0.04)]">
             <h3 className="text-[15px] font-semibold text-[#1f1f1f] pb-3 mb-4 border-b border-[#ececec]">

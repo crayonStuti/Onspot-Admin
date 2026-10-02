@@ -242,7 +242,7 @@ export default function GPSActivityPage() {
         // Pagination
         if (res.data.pagination) {
           setTotalPages(res.data.pagination.totalPages || 1);
-          setTotalItems(res.data.pagination.totalItems ?? res.data.pins.length);
+          setTotalItems(res.data.pagination.totalItems ?? res.data.pins?.length ?? 0);
         } else {
           setTotalPages(1);
           setTotalItems(res.data.pins?.length || 0);
@@ -999,16 +999,16 @@ export default function GPSActivityPage() {
       </section>
 
       {/* ===================== BODY GRID (LEFT TABLE 1.6fr / RIGHT PANELS 1fr) ===================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start w-full min-w-0">
         {/* ===================== LEFT COLUMN: TABLE (7 OR 8 COLS) ===================== */}
-        <div className="lg:col-span-7 xl:col-span-8 flex flex-col space-y-4">
-          <section className="bg-white rounded-[14px] p-5 pb-3 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)]">
+        <div className="lg:col-span-7 xl:col-span-8 flex flex-col space-y-4 w-full min-w-0">
+          <section className="bg-white rounded-[14px] p-4 sm:p-5 pb-3 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] w-full min-w-0 overflow-hidden">
             <h3 className="text-[17px] font-bold text-[#1f1f1f] mb-3">
               Recent GPS/ Tagging Activity
             </h3>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-[13px]">
+            <div className="overflow-x-auto w-full max-w-full">
+              <table className="w-full min-w-[720px] text-left border-collapse text-[13px]">
                 <thead>
                   <tr className="border-b border-[#ececec]">
                     <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px] whitespace-nowrap">
@@ -1246,7 +1246,7 @@ export default function GPSActivityPage() {
         </div>
 
         {/* ===================== RIGHT COLUMN: PANELS & CHARTS (4 OR 5 COLS) ===================== */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-4">
+        <div className="lg:col-span-5 xl:col-span-4 space-y-4 w-full min-w-0">
           {/* 1. Activity Overview Panel (Area Line Chart) */}
           <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)]">
             <h3 className="text-[16px] font-bold text-[#1f1f1f] pb-3 mb-3 border-b border-[#ececec]">

@@ -150,7 +150,7 @@ export default function EditPinModal({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto">
             {/* Coordinates Section with Map Picker trigger */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
@@ -270,7 +270,7 @@ export default function EditPinModal({
               </div>
 
               {/* Tag Input */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full min-w-0">
                 <input
                   type="text"
                   value={newTagInput}
@@ -282,15 +282,15 @@ export default function EditPinModal({
                     }
                   }}
                   placeholder="Type tag and press Enter..."
-                  className="flex-1 h-9 px-3 text-xs bg-white border border-gray-200 rounded-lg focus:border-[#0E3E27] focus:outline-none"
+                  className="flex-1 min-w-0 h-9 px-3 text-xs bg-white border border-gray-200 rounded-lg focus:border-[#0E3E27] focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => handleAddTag(newTagInput)}
                   disabled={!newTagInput.trim()}
-                  className="h-9 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors disabled:opacity-40 cursor-pointer flex items-center gap-1"
+                  className="h-9 px-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors disabled:opacity-40 cursor-pointer flex items-center gap-1 shrink-0 whitespace-nowrap"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3.5 h-3.5 shrink-0" />
                   <span>Add</span>
                 </button>
               </div>
