@@ -46,6 +46,9 @@ export default function MapLocationPickerDialog({
   const markerInstanceRef = useRef<any>(null);
   const autocompleteRef = useRef<any>(null);
 
+  // Hidden: Google Places requires active billing account
+  const SHOW_SEARCH_AND_LOCATION = false;
+
   const apiKey =
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
     process.env.FIREBASE_WEB_API_KEY ||
@@ -129,8 +132,12 @@ export default function MapLocationPickerDialog({
           }
         });
 
-        // 5. Setup Google Places Autocomplete
-        if (searchInputRef.current && window.google.maps.places) {
+        // 5. Setup Google Places Autocomplete (only if enabled)
+        if (
+          SHOW_SEARCH_AND_LOCATION &&
+          searchInputRef.current &&
+          window.google.maps.places
+        ) {
           const autocomplete = new window.google.maps.places.Autocomplete(
             searchInputRef.current,
             {
@@ -304,39 +311,41 @@ export default function MapLocationPickerDialog({
           </button>
         </div>
 
-        {/* Search Bar with Google Places Autocomplete */}
-        <div className="px-6 py-3 border-b border-gray-100 bg-white relative z-20">
-          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search places, address or city with Google Places..."
-                className="w-full h-10 pl-9 pr-4 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0E3E27] focus:outline-none transition-colors"
-              />
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+        {/* Search Bar with Google Places Autocomplete & My Location (Hidden as requested) */}
+        {SHOW_SEARCH_AND_LOCATION && (
+          <div className="px-6 py-3 border-b border-gray-100 bg-white relative z-20">
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search places, address or city with Google Places..."
+                  className="w-full h-10 pl-9 pr-4 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0E3E27] focus:outline-none transition-colors"
+                />
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
 
-            <button
-              type="submit"
-              className="h-10 px-4 bg-[#0E3E27] hover:bg-[#155435] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
-            >
-              Search
-            </button>
+              <button
+                type="submit"
+                className="h-10 px-4 bg-[#0E3E27] hover:bg-[#155435] text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                Search
+              </button>
 
-            <button
-              type="button"
-              onClick={handleUseCurrentLocation}
-              title="Use current location"
-              className="h-10 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <Navigation className="w-3.5 h-3.5 text-[#0E3E27]" />
-              <span className="hidden sm:inline">My Location</span>
-            </button>
-          </form>
-        </div>
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                title="Use current location"
+                className="h-10 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Navigation className="w-3.5 h-3.5 text-[#0E3E27]" />
+                <span className="hidden sm:inline">My Location</span>
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Map Canvas */}
         <div className="flex-1 w-full relative min-h-[400px] bg-gray-100">

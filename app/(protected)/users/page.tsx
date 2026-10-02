@@ -525,7 +525,9 @@ export default function UsersPage() {
           <div>
             {/* Panel Head */}
             <div className="flex items-center justify-between gap-3 pb-3 mb-2 border-b border-[#ececec]">
-              <h3 className="font-semibold text-[#1f1f1f] text-[15px]">Users</h3>
+              <h3 className="font-semibold text-[#1f1f1f] text-[15px]">
+                Users
+              </h3>
 
               <div className="flex items-center gap-2.5">
                 {/* View all Users dropdown (matching HTML #users-view) */}
@@ -768,16 +770,12 @@ export default function UsersPage() {
                           <td className="py-3.5 px-3 align-middle">
                             <span
                               className={`inline-flex items-center gap-1.5 text-[13px] ${
-                                isActive
-                                  ? "text-[#34A853]"
-                                  : "text-[#e03131]"
+                                isActive ? "text-[#34A853]" : "text-[#e03131]"
                               }`}
                             >
                               <span
                                 className={`w-2 h-2 rounded-full ${
-                                  isActive
-                                    ? "bg-[#2f9e44]"
-                                    : "bg-[#e03131]"
+                                  isActive ? "bg-[#2f9e44]" : "bg-[#e03131]"
                                 }`}
                               />
                               {user.status
@@ -831,22 +829,22 @@ export default function UsersPage() {
                                     ),
                                     onClick: () => handleViewUser(user),
                                   },
-                                  {
-                                    label: "Edit Membership",
-                                    icon: (
-                                      <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="1.8"
-                                        strokeLinejoin="round"
-                                        className="w-4 h-4"
-                                      >
-                                        <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
-                                      </svg>
-                                    ),
-                                    onClick: () => setMembershipModalUser(user),
-                                  },
+                                  // {
+                                  //   label: "Edit Membership",
+                                  //   icon: (
+                                  //     <svg
+                                  //       viewBox="0 0 24 24"
+                                  //       fill="none"
+                                  //       stroke="currentColor"
+                                  //       strokeWidth="1.8"
+                                  //       strokeLinejoin="round"
+                                  //       className="w-4 h-4"
+                                  //     >
+                                  //       <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+                                  //     </svg>
+                                  //   ),
+                                  //   onClick: () => setMembershipModalUser(user),
+                                  // },
                                   {
                                     label:
                                       user.status === "suspended" ||
@@ -1172,12 +1170,19 @@ export default function UsersPage() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {userLicenses.map((lic, i) => {
-                      const typeName = lic.license_type || lic.name || lic.title || "License";
-                      const licNum = lic.license_number || (lic.id ? `#${lic.id.slice(0, 8)}` : "");
+                      const typeName =
+                        lic.license_type || lic.name || lic.title || "License";
+                      const licNum =
+                        lic.license_number ||
+                        (lic.id ? `#${lic.id.slice(0, 8)}` : "");
                       const stateName = lic.state?.state_name || lic.state_name;
-                      const issuer = lic.issued_by?.organisation || lic.organisation;
-                      const validTo = lic.valid_to || lic.expires_at || "Unlimited";
-                      const isExpired = validTo !== "Unlimited" && new Date(validTo) < new Date();
+                      const issuer =
+                        lic.issued_by?.organisation || lic.organisation;
+                      const validTo =
+                        lic.valid_to || lic.expires_at || "Unlimited";
+                      const isExpired =
+                        validTo !== "Unlimited" &&
+                        new Date(validTo) < new Date();
                       const photos = lic.photos || [];
 
                       return (
@@ -1191,7 +1196,9 @@ export default function UsersPage() {
                             </span>
                             <span
                               className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                                isExpired ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-800"
+                                isExpired
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-emerald-100 text-emerald-800"
                               }`}
                             >
                               {isExpired ? "Expired" : "Active"}
@@ -1200,20 +1207,31 @@ export default function UsersPage() {
 
                           {licNum && (
                             <div className="text-[11px] text-gray-600">
-                              License #: <span className="font-medium text-gray-800">{licNum}</span>
+                              License #:{" "}
+                              <span className="font-medium text-gray-800">
+                                {licNum}
+                              </span>
                             </div>
                           )}
 
                           <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1 border-t border-gray-200/60">
-                            <span>{stateName ? `${stateName}` : (issuer || "State Agency")}</span>
+                            <span>
+                              {stateName
+                                ? `${stateName}`
+                                : issuer || "State Agency"}
+                            </span>
                             <span>Exp: {validTo}</span>
                           </div>
 
                           {photos.length > 0 && photos[0]?.front_image && (
                             <div className="pt-1 flex items-center gap-1.5">
-                              <span className="text-[10px] text-gray-400">Card Photo:</span>
+                              <span className="text-[10px] text-gray-400">
+                                Card Photo:
+                              </span>
                               <div
-                                onClick={() => setLicensesModalUser(selectedUserDetails)}
+                                onClick={() =>
+                                  setLicensesModalUser(selectedUserDetails)
+                                }
                                 className="cursor-pointer hover:opacity-80 transition-opacity"
                                 title="Click to view full photo"
                               >

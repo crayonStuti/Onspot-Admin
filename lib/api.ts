@@ -1304,5 +1304,124 @@ export async function getAdminLicenses(
   return await fetchApi<AdminLicensesResponse>(`/admin/licenses?${query.toString()}`);
 }
 
+/* -------------------------------------------------------------------------- */
+/* Revenue Overview API Types & Service                                       */
+/* -------------------------------------------------------------------------- */
+
+export interface RevenueSummaryCardMetric {
+  count?: number;
+  change_vs_prev_period?: number;
+  trend?: "up" | "down" | string;
+  formatted_text?: string;
+}
+
+export interface RevenueConversionRateMetric {
+  rate_percentage?: number;
+  paid_users?: number;
+  total_users?: number;
+  trend?: "up" | "down" | string;
+  formatted_text?: string;
+}
+
+export interface RevenueSummaryCards {
+  subscription_revenue?: RevenueSummaryCardMetric;
+  monthly_revenue?: RevenueSummaryCardMetric;
+  conversion_rate?: RevenueConversionRateMetric;
+  [key: string]: any;
+}
+
+export interface RevenuePlanBreakdownItem {
+  name: string;
+  user_count: number;
+  percentage: number;
+}
+
+export interface RevenueByPlanData {
+  total_active_users: number;
+  breakdown: RevenuePlanBreakdownItem[];
+}
+
+export interface RevenueByMonthItem {
+  month: string;
+  revenue: number;
+}
+
+export interface RevenueTopPerformingPlan {
+  plan_name: string;
+  total_revenue: number;
+  percentage_of_total: number;
+  formatted_text?: string;
+}
+
+export interface RevenueHighestRevenueDay {
+  date: string;
+  total_revenue: number;
+  formatted_text?: string;
+}
+
+export interface RevenueTransactionUser {
+  id?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+}
+
+export interface RevenueTransactionItem {
+  id: string;
+  date: string;
+  revenue_type?: string;
+  plan_name?: string;
+  amount: number;
+  currency?: string;
+  payment_method?: string;
+  status: string;
+  user?: RevenueTransactionUser;
+}
+
+export interface RevenueTransactionsPagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage?: number;
+  hasNext?: boolean;
+  hasPrev?: boolean;
+}
+
+export interface RevenueTransactionsData {
+  data: RevenueTransactionItem[];
+  pagination?: RevenueTransactionsPagination;
+}
+
+export interface RevenueOverviewData {
+  summary_cards?: RevenueSummaryCards;
+  revenue_by_plan?: RevenueByPlanData;
+  revenue_by_month?: RevenueByMonthItem[];
+  top_performing_plan?: RevenueTopPerformingPlan;
+  highest_revenue_day?: RevenueHighestRevenueDay;
+  transactions?: RevenueTransactionsData;
+}
+
+export interface RevenueOverviewResponse {
+  message: string;
+  data: RevenueOverviewData;
+}
+
+export interface RevenueOverviewParams {
+  page?: number;
+  limit?: number;
+}
+
+export async function getRevenueOverview(
+  params: RevenueOverviewParams = {}
+): Promise<RevenueOverviewResponse> {
+  const query = new URLSearchParams();
+  if (params.page) query.append("page", String(params.page));
+  if (params.limit) query.append("limit", String(params.limit));
+
+  const qs = query.toString();
+  return await fetchApi<RevenueOverviewResponse>(`/admin/revenue/overview${qs ? `?${qs}` : ""}`);
+}
+
+
 
 
