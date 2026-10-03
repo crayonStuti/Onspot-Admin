@@ -666,7 +666,6 @@ export default function UsersPage() {
                     </tr>
                   ) : (
                     users.map((user, idx) => {
-                      const isNearBottom = idx >= Math.max(1, users.length - 4);
                       const isSelected = selectedUserIds.includes(user.id);
                       const fullName = getUserDisplayName(user);
                       const rawMembership =
@@ -1185,7 +1184,9 @@ export default function UsersPage() {
                         new Date(validTo) < new Date();
                       const photos = lic.photos || [];
                       const rawFrontImg =
-                        photos.length > 0 && photos[0] && typeof photos[0].front_image === "string"
+                        photos.length > 0 &&
+                        photos[0] &&
+                        typeof photos[0].front_image === "string"
                           ? photos[0].front_image.trim()
                           : "";
 

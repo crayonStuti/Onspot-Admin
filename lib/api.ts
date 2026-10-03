@@ -1422,6 +1422,162 @@ export async function getRevenueOverview(
   return await fetchApi<RevenueOverviewResponse>(`/admin/revenue/overview${qs ? `?${qs}` : ""}`);
 }
 
+/* =========================================================================
+   NOTIFICATIONS API
+   ========================================================================= */
 
+export type NotificationVisualType = "info" | "error" | "congratulation" | "warning" | "offer";
+export type NotificationTargetAudience = "all_users" | "premium" | "state_wise";
+export type NotificationDateRange = "last_7_days" | "last_30_days" | "last_90_days";
+export type NotificationSendType = "both" | "push" | "email";
+export type NotificationStatus = "sent" | "draft";
 
+export interface NotificationPerformanceOverview {
+  total_opened: number;
+  total_opened_percentage: string;
+  total_clicked: number;
+  total_clicked_percentage: string;
+  total_unopened: number;
+  total_unopened_percentage: string;
+  bounced: number;
+}
 
+export interface NotificationStats {
+  total_sent: number;
+  total_reach: number;
+  avg_open_rate: string;
+  avg_click_rate: string;
+  performance_overview?: NotificationPerformanceOverview;
+}
+
+export interface NotificationPagination {
+  total_items: number;
+  current_page: number;
+  per_page: number;
+  total_pages: number;
+}
+
+export interface NotificationItem {
+  id: string;
+  user_id?: string;
+  title: string;
+  message: string;
+  type: NotificationVisualType;
+  target_audience: NotificationTargetAudience;
+  send_type?: NotificationSendType;
+  status?: string;
+  target_state_id?: string | null;
+  state_id?: string | null;
+  is_read?: boolean;
+  is_deleted?: boolean;
+  created_at: string;
+  updated_at?: string;
+  open_rate?: string;
+  open_rate_number?: number;
+  user?: {
+    id?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  };
+  targetState?: {
+    state_id?: string;
+    state_name?: string;
+    state_code?: string;
+  } | null;
+}
+
+export interface NotificationsResponse {
+  stats: NotificationStats;
+  pagination: NotificationPagination;
+  data: NotificationItem[];
+}
+
+export interface NotificationFilters {
+  target_audience?: string;
+  type?: string;
+  send_type?: string;
+  status?: string;
+  date_range?: string;
+  state_id?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface CreateNotificationPayload {
+  title: string;
+  message: string;
+  type: NotificationVisualType;
+  target_audience: NotificationTargetAudience;
+  send_type?: NotificationSendType;
+  status?: NotificationStatus;
+  state_id?: string;
+}
+
+export interface UpdateNotificationPayload {
+  title?: string;
+  message?: string;
+  type?: NotificationVisualType;
+  target_audience?: NotificationTargetAudience;
+  send_type?: NotificationSendType;
+  status?: NotificationStatus;
+  state_id?: string;
+}
+
+export async function getAdminNotifications(
+  filters: NotificationFilters = {}
+): Promise<NotificationsResponse> {
+  const query = new URLSearchParams();
+  if (filters.page) query.append("page", String(filters.page));
+  if (filters.limit) query.append("limit", String(filters.limit));
+  if (filters.target_audience && filters.target_audience !== "all") {
+    query.append("target_audience", filters.target_audience);
+  }
+  if (filters.type && filters.type !== "all") {
+    query.append("type", filters.type);
+  }
+  if (filters.send_type && filters.send_type !== "all") {
+    query.append("send_type", filters.send_type);
+  }
+  if (filters.status && filters.status !== "all") {
+    query.append("status", filters.status);
+  }
+  if (filters.date_range && filters.date_range !== "all") {
+    query.append("date_range", filters.date_range);
+  }
+  if (filters.state_id && filters.state_id !== "all") {
+    query.append("state_id", filters.state_id);
+  }
+  if (filters.search && filters.search.trim()) {
+    query.append("search", filters.search.trim());
+  }
+
+  const qs = query.toString();
+  return await fetchApi<NotificationsResponse>(`/notifications${qs ? `?${qs}` : ""}`);
+}
+
+export async function createNotification(
+  payload: CreateNotificationPayload
+): Promise<{ message: string; count?: number; data?: any }> {
+  return await fetchApi("/notifications", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateNotification(
+  id: string,
+  payload: UpdateNotificationPayload
+): Promise<any> {
+  return await fetchApi(`/notifications/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteNotification(id: string): Promise<any> {
+  return await fetchApi(`/notifications/${id}`, {
+    method: "DELETE",
+  });
+}

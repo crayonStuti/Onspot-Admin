@@ -1,41 +1,30 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import {
-  TrendingUp,
-  TrendingDown,
-  RefreshCw,
   CreditCard,
   Calendar,
   Award,
   Crown,
   Percent,
-  DollarSign,
   ChevronRight,
   AlertCircle,
-  Clock,
-  ArrowUpRight,
-  Shield,
   Layers,
   FileText,
   Sliders,
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
-import {
-  getRevenueOverview,
-  RevenueOverviewData,
-  RevenueTransactionItem,
-} from "@/lib/api";
+import { getRevenueOverview, RevenueOverviewData } from "@/lib/api";
 
 const DONUT_COLORS = [
-  "#2d4a23", // Dark Forest Green
-  "#4285F4", // Blue
-  "#FBBC05", // Amber
-  "#9334ea", // Purple
-  "#06b6d4", // Cyan
-  "#f97316", // Orange
+  "#2d4a23",
+  "#4285F4",
+  "#FBBC05",
+  "#9334ea",
+  "#06b6d4",
+  "#f97316",
 ];
 
 export default function RevenuePage() {
@@ -46,7 +35,6 @@ export default function RevenuePage() {
   const [limit] = useState(10);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch data from backend API
   const loadData = useCallback(
     async (isManualRefresh = false, targetPage?: number) => {
       const activePage = targetPage ?? page;
@@ -79,7 +67,7 @@ export default function RevenuePage() {
         setRefreshing(false);
       }
     },
-    [page, limit, data]
+    [page, limit, data],
   );
 
   useEffect(() => {
@@ -90,9 +78,6 @@ export default function RevenuePage() {
     setPage(newPage);
   };
 
-  /* -------------------------------------------------------------------------- */
-  /* Helper: Format Currencies and Numbers                                      */
-  /* -------------------------------------------------------------------------- */
   const formatMoney = (val?: number | string | null, currency = "USD") => {
     if (val === undefined || val === null || val === "") return "$0.00";
     const num = Number(val);
@@ -120,9 +105,6 @@ export default function RevenuePage() {
     }
   };
 
-  /* -------------------------------------------------------------------------- */
-  /* Donut Chart SVG Calculations                                              */
-  /* -------------------------------------------------------------------------- */
   const planData = useMemo(() => {
     if (!data?.revenue_by_plan) return null;
     const breakdown = data.revenue_by_plan.breakdown || [];
@@ -135,7 +117,6 @@ export default function RevenuePage() {
       cumOffset += pct;
       const color = DONUT_COLORS[index % DONUT_COLORS.length];
 
-      // Calculate label coordinates along the circle
       const mid = offset + pct / 2;
       const angle = (mid / 100) * 2 * Math.PI - Math.PI / 2;
       const r = 68;
@@ -160,9 +141,6 @@ export default function RevenuePage() {
     };
   }, [data?.revenue_by_plan]);
 
-  /* -------------------------------------------------------------------------- */
-  /* Monthly Area / Line Chart SVG Calculations                                */
-  /* -------------------------------------------------------------------------- */
   const monthChartData = useMemo(() => {
     const list = data?.revenue_by_month || [];
     if (!list || list.length === 0) return null;
@@ -199,7 +177,6 @@ export default function RevenuePage() {
 
     const max = getNiceMax(rawMax);
 
-    // Format tick label dynamically ($25, $500, $1.5k, $20k, $1M)
     const formatAxisLabel = (v: number): string => {
       if (v === 0) return "$0";
       if (v >= 1000000) {
@@ -211,7 +188,6 @@ export default function RevenuePage() {
       return `$${Math.round(v)}`;
     };
 
-    // Format floating point value dynamically ($29.99, $146, $389.94, $1.2k)
     const formatPointValue = (v: number): string => {
       if (v === 0) return "$0";
       if (v >= 10000) {
@@ -238,7 +214,8 @@ export default function RevenuePage() {
       const count = list.length;
       const x = pL + (count > 1 ? (i / (count - 1)) * cw : cw / 2);
       const rev = Number(item.revenue) || 0;
-      const y = pT + ch - (max > 0 ? Math.min(1, Math.max(0, rev / max)) * ch : 0);
+      const y =
+        pT + ch - (max > 0 ? Math.min(1, Math.max(0, rev / max)) * ch : 0);
       return {
         x,
         y,
@@ -249,7 +226,9 @@ export default function RevenuePage() {
     });
 
     const linePath = points
-      .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+      .map(
+        (p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`,
+      )
       .join(" ");
 
     const areaPath =
@@ -274,9 +253,6 @@ export default function RevenuePage() {
     };
   }, [data?.revenue_by_month]);
 
-  /* -------------------------------------------------------------------------- */
-  /* Transactions Pagination Details                                           */
-  /* -------------------------------------------------------------------------- */
   const transactions = data?.transactions?.data || [];
   const pagination = data?.transactions?.pagination || {
     currentPage: page,
@@ -287,30 +263,6 @@ export default function RevenuePage() {
 
   return (
     <div className="space-y-6 w-full min-w-0 pb-10 text-[#1f1f1f]">
-      {/* Top Banner & Refresh Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1f1f1f]">
-            Revenue &amp; Monetization
-          </h1>
-          <p className="text-xs sm:text-sm text-[#7D848D] mt-0.5">
-            Monitor real-time subscription performance, transaction breakdown, and monthly revenue trends.
-          </p>
-        </div>
-
-        <button
-          onClick={() => loadData(true)}
-          disabled={loading || refreshing}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold text-[#2d4a23] bg-[#eef1ea] hover:bg-[#e2e7dc] rounded-[8px] transition-colors disabled:opacity-60 cursor-pointer self-start sm:self-auto"
-          title="Refresh Data"
-        >
-          <RefreshCw
-            className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-[#2d4a23]" : ""}`}
-          />
-          <span>{refreshing ? "Updating..." : "Refresh Data"}</span>
-        </button>
-      </div>
-
       {/* Global Error Banner */}
       {error && (
         <div className="bg-[#fdecec] border border-[#f3c0c0] rounded-[10px] p-4 flex items-center justify-between gap-3 text-xs text-[#e03131]">
@@ -327,11 +279,7 @@ export default function RevenuePage() {
         </div>
       )}
 
-      {/* ==================================================================== */}
-      {/* 1. STAT CARDS ROW (Matching HTML stat-card design)                  */}
-      {/* ==================================================================== */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Card 1: Subscription Revenue */}
         <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.08),0_2px_6px_rgba(60,60,60,0.04)] flex flex-col justify-between">
           <div className="flex items-start justify-between mb-1.5">
             <span className="text-[#7D848D] text-[13px] font-medium">
@@ -431,11 +379,14 @@ export default function RevenuePage() {
           ) : (
             <>
               <div className="text-[24px] font-bold text-[#1f1f1f] my-1">
-                {data?.summary_cards?.conversion_rate?.rate_percentage !== undefined
+                {data?.summary_cards?.conversion_rate?.rate_percentage !==
+                undefined
                   ? `${data.summary_cards.conversion_rate.rate_percentage}%`
                   : "—"}
-                {data?.summary_cards?.conversion_rate?.paid_users !== undefined &&
-                  data?.summary_cards?.conversion_rate?.total_users !== undefined && (
+                {data?.summary_cards?.conversion_rate?.paid_users !==
+                  undefined &&
+                  data?.summary_cards?.conversion_rate?.total_users !==
+                    undefined && (
                     <span className="text-xs font-normal text-[#7D848D] ml-2">
                       ({data.summary_cards.conversion_rate.paid_users} /{" "}
                       {data.summary_cards.conversion_rate.total_users} users)
@@ -464,15 +415,9 @@ export default function RevenuePage() {
         </div>
       </section>
 
-      {/* ==================================================================== */}
-      {/* 2. MAIN BODY GRID (LEFT: Charts & Table, RIGHT: Insights & Actions) */}
-      {/* ==================================================================== */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start w-full min-w-0">
-        {/* ================= LEFT SECTION (xl:col-span-8) ================= */}
         <div className="xl:col-span-8 space-y-6 w-full min-w-0">
-          {/* Charts Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full min-w-0">
-            {/* Chart 1: Revenue by Plan (Donut Chart) */}
             <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.08),0_2px_6px_rgba(60,60,60,0.04)] flex flex-col justify-between">
               <h3 className="text-[15px] font-semibold text-[#1f1f1f] pb-3 mb-4 border-b border-[#ececec]">
                 Revenue by Plan
@@ -527,7 +472,10 @@ export default function RevenuePage() {
                   {/* Donut Legend */}
                   <div className="flex flex-col gap-3 text-[12.5px] w-full sm:w-auto">
                     {planData.segments.map((s, idx) => (
-                      <div key={`legend-${idx}`} className="flex items-start gap-2.5">
+                      <div
+                        key={`legend-${idx}`}
+                        className="flex items-start gap-2.5"
+                      >
                         <span
                           className="w-2.5 h-2.5 rounded-full shrink-0 mt-1"
                           style={{ backgroundColor: s.color }}
@@ -537,7 +485,8 @@ export default function RevenuePage() {
                             {s.name}
                           </div>
                           <div className="text-[#7D848D] text-[11.5px]">
-                            {s.percentage}% ({s.user_count.toLocaleString()} users)
+                            {s.percentage}% ({s.user_count.toLocaleString()}{" "}
+                            users)
                           </div>
                         </div>
                       </div>
@@ -547,7 +496,6 @@ export default function RevenuePage() {
               )}
             </div>
 
-            {/* Chart 2: Revenue by Month (Area Trend) */}
             <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.08),0_2px_6px_rgba(60,60,60,0.04)] flex flex-col justify-between">
               <h3 className="text-[15px] font-semibold text-[#1f1f1f] pb-3 mb-4 border-b border-[#ececec]">
                 Revenue by Month
@@ -571,13 +519,26 @@ export default function RevenuePage() {
                     className="overflow-hidden block"
                   >
                     <defs>
-                      <linearGradient id="revenue_month_grad" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="#5da3f5" stopOpacity="0.45" />
-                        <stop offset="100%" stopColor="#5da3f5" stopOpacity="0.0" />
+                      <linearGradient
+                        id="revenue_month_grad"
+                        x1="0"
+                        x2="0"
+                        y1="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#5da3f5"
+                          stopOpacity="0.45"
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#5da3f5"
+                          stopOpacity="0.0"
+                        />
                       </linearGradient>
                     </defs>
 
-                    {/* Horizontal Grid lines */}
                     <g stroke="#f1f1ed" strokeDasharray="3 4">
                       {monthChartData.yTicks.map((t, idx) => (
                         <line
@@ -601,7 +562,10 @@ export default function RevenuePage() {
 
                     {/* Area Fill */}
                     {monthChartData.areaPath && (
-                      <path d={monthChartData.areaPath} fill="url(#revenue_month_grad)" />
+                      <path
+                        d={monthChartData.areaPath}
+                        fill="url(#revenue_month_grad)"
+                      />
                     )}
 
                     {/* Line Stroke */}
@@ -696,7 +660,10 @@ export default function RevenuePage() {
                 <tbody>
                   {loading && !data ? (
                     Array.from({ length: 4 }).map((_, idx) => (
-                      <tr key={`skel-${idx}`} className="border-b border-[#f1f1ed]">
+                      <tr
+                        key={`skel-${idx}`}
+                        className="border-b border-[#f1f1ed]"
+                      >
                         <td className="py-3.5 px-3">
                           <div className="h-4 w-28 bg-[#f1f1ed] rounded animate-pulse" />
                         </td>
@@ -738,7 +705,9 @@ export default function RevenuePage() {
 
                       const statusLower = (txn.status || "").toLowerCase();
                       const isCompleted =
-                        statusLower === "completed" || statusLower === "paid" || statusLower === "success";
+                        statusLower === "completed" ||
+                        statusLower === "paid" ||
+                        statusLower === "success";
                       const isRefunded =
                         statusLower === "refunded" || statusLower === "failed";
 
@@ -796,8 +765,8 @@ export default function RevenuePage() {
                                 isCompleted
                                   ? "text-[#34A853] bg-[#e8f5ec] border-[#b8e0c2]"
                                   : isRefunded
-                                  ? "text-[#e03131] bg-[#fdecec] border-[#f3c0c0]"
-                                  : "text-[#b45309] bg-[#fef3c7] border-[#fde68a]"
+                                    ? "text-[#e03131] bg-[#fdecec] border-[#f3c0c0]"
+                                    : "text-[#b45309] bg-[#fef3c7] border-[#fde68a]"
                               }`}
                             >
                               {txn.status || "Completed"}
