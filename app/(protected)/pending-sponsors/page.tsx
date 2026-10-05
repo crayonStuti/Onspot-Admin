@@ -38,7 +38,9 @@ export default function PendingSponsorsPage() {
 
   // View Details Modal State
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [selectedSponsor, setSelectedSponsor] = useState<SponsorItem | null>(null);
+  const [selectedSponsor, setSelectedSponsor] = useState<SponsorItem | null>(
+    null,
+  );
   const [viewLoading, setViewLoading] = useState(false);
 
   // Status Action Confirmation Modal State
@@ -72,12 +74,7 @@ export default function PendingSponsorsPage() {
   const fetchPendingSponsors = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getSponsors(
-        page,
-        limit,
-        searchQuery,
-        "pending"
-      );
+      const res = await getSponsors(page, limit, searchQuery, "pending");
       let list: SponsorItem[] = [];
 
       if (res && res.data) {
@@ -88,13 +85,13 @@ export default function PendingSponsorsPage() {
             setTotalItems(
               res.pagination.totalItems ||
                 res.pagination.totaldata ||
-                res.data.length
+                res.data.length,
             );
           } else {
             setTotalPages(
               res.totalPages ||
                 Math.ceil((res.total || res.data.length) / limit) ||
-                1
+                1,
             );
             setTotalItems(res.total || res.data.length);
           }
@@ -104,15 +101,13 @@ export default function PendingSponsorsPage() {
           if (pag) {
             setTotalPages(pag.totalPages || 1);
             setTotalItems(
-              pag.totalItems ||
-                pag.totaldata ||
-                res.data.sponsors.length
+              pag.totalItems || pag.totaldata || res.data.sponsors.length,
             );
           } else {
             setTotalPages(
               res.totalPages ||
                 Math.ceil((res.total || res.data.sponsors.length) / limit) ||
-                1
+                1,
             );
             setTotalItems(res.total || res.data.sponsors.length);
           }
@@ -171,7 +166,7 @@ export default function PendingSponsorsPage() {
   // Open Status Confirmation Modal
   const handleOpenStatusConfirm = (
     sponsor: SponsorItem,
-    targetStatus: "approved" | "rejected"
+    targetStatus: "approved" | "rejected",
   ) => {
     setStatusConfirmModal({ sponsor, targetStatus });
   };
@@ -190,10 +185,14 @@ export default function PendingSponsorsPage() {
     try {
       await updateSponsorStatus(id, targetStatus);
       toast.success(
-        `Sponsor successfully marked as ${targetStatus === "approved" ? "Approved" : "Rejected"}`
+        `Sponsor successfully marked as ${targetStatus === "approved" ? "Approved" : "Rejected"}`,
       );
       setStatusConfirmModal(null);
-      if (viewModalOpen && selectedSponsor && getSponsorId(selectedSponsor) === id) {
+      if (
+        viewModalOpen &&
+        selectedSponsor &&
+        getSponsorId(selectedSponsor) === id
+      ) {
         setViewModalOpen(false);
         setSelectedSponsor(null);
       }
@@ -201,7 +200,9 @@ export default function PendingSponsorsPage() {
     } catch (err: unknown) {
       const error = err as Error;
       console.error("Failed to update sponsor status:", error);
-      toast.error(error?.message || `Failed to update status to ${targetStatus}`);
+      toast.error(
+        error?.message || `Failed to update status to ${targetStatus}`,
+      );
     } finally {
       setUpdatingStatus(false);
     }
@@ -209,10 +210,8 @@ export default function PendingSponsorsPage() {
 
   return (
     <div className="space-y-6">
-      {/* ===================== FILTER & ACTION ROW ===================== */}
       <section className="bg-white rounded-[14px] p-4 sm:p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto flex-1">
-          {/* API-based Search Input */}
           <div className="relative w-full sm:max-w-md">
             <input
               type="text"
@@ -227,26 +226,25 @@ export default function PendingSponsorsPage() {
             <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
-          {/* Pending Badge Indicator */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold">
             <Clock className="w-3.5 h-3.5 text-amber-600" />
             <span>Pending Review ({totalItems})</span>
           </div>
         </div>
 
-        {/* Refresh List Button */}
         <button
           onClick={() => fetchPendingSponsors()}
           disabled={loading}
           className="h-[38px] px-3.5 rounded-[6px] border border-[#e4e4df] bg-white hover:bg-gray-50 text-gray-700 text-[13px] font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           title="Refresh list"
         >
-          <RotateCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          <RotateCw
+            className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+          />
           <span>Refresh</span>
         </button>
       </section>
 
-      {/* ===================== TABLE CARD ===================== */}
       <section className="bg-white rounded-[14px] p-5 pb-3 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)]">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[760px]">
@@ -313,12 +311,10 @@ export default function PendingSponsorsPage() {
                       key={sponsorId || idx}
                       className="hover:bg-[#fbfbf8] transition-colors"
                     >
-                      {/* Index */}
                       <td className="py-3.5 px-3 text-[#7D848D] align-middle font-mono text-xs">
                         {itemIndex}
                       </td>
 
-                      {/* Sponsor Name + Logo */}
                       <td className="py-3.5 px-3 align-middle">
                         <div className="flex items-center gap-3">
                           {sponsor.image ? (
@@ -345,7 +341,6 @@ export default function PendingSponsorsPage() {
                         </div>
                       </td>
 
-                      {/* Email */}
                       <td className="py-3.5 px-3 align-middle text-[#555] text-xs">
                         {sponsor.email_address ? (
                           <div className="flex items-center gap-1.5 text-gray-600">
@@ -359,7 +354,6 @@ export default function PendingSponsorsPage() {
                         )}
                       </td>
 
-                      {/* Discount */}
                       <td className="py-3.5 px-3 align-middle">
                         {sponsor.company_discount ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[#f5efdc] text-[#1f1f1f] border border-[#e6dfc6] font-medium text-xs">
@@ -371,7 +365,6 @@ export default function PendingSponsorsPage() {
                         )}
                       </td>
 
-                      {/* Website */}
                       <td className="py-3.5 px-3 align-middle">
                         {sponsor.link ? (
                           <a
@@ -395,7 +388,6 @@ export default function PendingSponsorsPage() {
                         )}
                       </td>
 
-                      {/* Status */}
                       <td className="py-3.5 px-3 align-middle whitespace-nowrap">
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                           <Clock className="w-3.5 h-3.5 text-amber-600" />
@@ -403,12 +395,12 @@ export default function PendingSponsorsPage() {
                         </span>
                       </td>
 
-                      {/* Actions */}
                       <td className="py-3.5 px-3 align-middle text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Approve Button */}
                           <button
-                            onClick={() => handleOpenStatusConfirm(sponsor, "approved")}
+                            onClick={() =>
+                              handleOpenStatusConfirm(sponsor, "approved")
+                            }
                             title="Approve Sponsor"
                             className="h-[30px] px-2.5 rounded-[7px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
                           >
@@ -416,9 +408,10 @@ export default function PendingSponsorsPage() {
                             <span>Approve</span>
                           </button>
 
-                          {/* Reject Button */}
                           <button
-                            onClick={() => handleOpenStatusConfirm(sponsor, "rejected")}
+                            onClick={() =>
+                              handleOpenStatusConfirm(sponsor, "rejected")
+                            }
                             title="Reject Sponsor"
                             className="h-[30px] px-2.5 rounded-[7px] bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium inline-flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
                           >
@@ -426,7 +419,6 @@ export default function PendingSponsorsPage() {
                             <span>Reject</span>
                           </button>
 
-                          {/* View details */}
                           <button
                             onClick={() => handleOpenView(sponsor)}
                             title="View Full Details"
@@ -445,7 +437,6 @@ export default function PendingSponsorsPage() {
         </div>
       </section>
 
-      {/* ===================== PAGINATION ===================== */}
       <Pagination
         currentPage={page}
         totalPages={totalPages}
@@ -457,7 +448,6 @@ export default function PendingSponsorsPage() {
         loading={loading}
       />
 
-      {/* ===================== VIEW DETAILS MODAL ===================== */}
       {viewModalOpen && selectedSponsor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 p-6">
@@ -501,7 +491,9 @@ export default function PendingSponsorsPage() {
             {viewLoading ? (
               <div className="py-12 flex flex-col items-center justify-center gap-2">
                 <Loader2 className="w-6 h-6 animate-spin text-[#2d4a23]" />
-                <span className="text-xs text-gray-500">Loading details...</span>
+                <span className="text-xs text-gray-500">
+                  Loading details...
+                </span>
               </div>
             ) : (
               <div className="py-5 space-y-4 text-xs">
@@ -518,14 +510,18 @@ export default function PendingSponsorsPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col gap-1">
-                    <span className="text-gray-400 font-medium">Email Address</span>
+                    <span className="text-gray-400 font-medium">
+                      Email Address
+                    </span>
                     <span className="font-semibold text-gray-800 break-all">
                       {selectedSponsor.email_address || "—"}
                     </span>
                   </div>
 
                   <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col gap-1">
-                    <span className="text-gray-400 font-medium">Website Link</span>
+                    <span className="text-gray-400 font-medium">
+                      Website Link
+                    </span>
                     {selectedSponsor.link ? (
                       <a
                         href={
@@ -547,7 +543,9 @@ export default function PendingSponsorsPage() {
                   </div>
 
                   <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col gap-1">
-                    <span className="text-gray-400 font-medium">Submitted On</span>
+                    <span className="text-gray-400 font-medium">
+                      Submitted On
+                    </span>
                     <span className="font-semibold text-gray-800">
                       {selectedSponsor.created_at
                         ? new Date(selectedSponsor.created_at).toLocaleString()
@@ -556,7 +554,9 @@ export default function PendingSponsorsPage() {
                   </div>
 
                   <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col gap-1">
-                    <span className="text-gray-400 font-medium">Sponsor ID</span>
+                    <span className="text-gray-400 font-medium">
+                      Sponsor ID
+                    </span>
                     <span className="font-mono text-[11px] text-gray-700 break-all select-all">
                       {getSponsorId(selectedSponsor) || "—"}
                     </span>
@@ -601,7 +601,6 @@ export default function PendingSponsorsPage() {
         </div>
       )}
 
-      {/* ===================== STATUS CONFIRMATION MODAL ===================== */}
       {statusConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-gray-100 p-6 text-center">
@@ -662,9 +661,14 @@ export default function PendingSponsorsPage() {
                     : "bg-rose-600 hover:bg-rose-700"
                 }`}
               >
-                {updatingStatus && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {updatingStatus && (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                )}
                 <span>
-                  Confirm {statusConfirmModal.targetStatus === "approved" ? "Approval" : "Rejection"}
+                  Confirm{" "}
+                  {statusConfirmModal.targetStatus === "approved"
+                    ? "Approval"
+                    : "Rejection"}
                 </span>
               </button>
             </div>

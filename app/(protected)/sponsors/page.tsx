@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Search,
   Plus,
@@ -11,9 +10,6 @@ import {
   Loader2,
   AlertCircle,
   X,
-  Check,
-  CheckCircle2,
-  XCircle,
   ExternalLink,
   Mail,
   Building2,
@@ -28,19 +24,12 @@ import {
   getSponsorById,
   createSponsor,
   updateSponsor,
-  updateSponsorStatus,
   deleteSponsor,
   SponsorItem,
   API_URL,
 } from "@/lib/api";
 
-function SponsorsContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const statusFilter = searchParams.get("status") || "all";
-
+export default function SponsorsPage() {
   const [sponsors, setSponsors] = useState<SponsorItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,13 +62,6 @@ function SponsorsContent() {
   const [sponsorToDelete, setSponsorToDelete] = useState<SponsorItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Status Action Confirmation State (Approve / Reject)
-  const [statusConfirmModal, setStatusConfirmModal] = useState<{
-    sponsor: SponsorItem;
-    targetStatus: "approved" | "rejected";
-  } | null>(null);
-  const [updatingStatus, setUpdatingStatus] = useState(false);
-
   // Helper to extract id from sponsor
   const getSponsorId = (item?: SponsorItem | null): string => {
     if (!item) return "";
@@ -100,16 +82,11 @@ function SponsorsContent() {
     return `${API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
-  // Fetch Sponsors List via Server-side API
+  // Fetch Approved Sponsors List via Server-side API
   const fetchSponsorsList = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getSponsors(
-        page,
-        limit,
-        searchQuery,
-        statusFilter === "all" ? undefined : statusFilter
-      );
+      const res = await getSponsors(page, limit, searchQuery, "approved");
       let list: SponsorItem[] = [];
 
       if (res && res.data) {
@@ -120,13 +97,13 @@ function SponsorsContent() {
             setTotalItems(
               res.pagination.totalItems ||
                 res.pagination.totaldata ||
-                res.data.length
+                res.data.length,
             );
           } else {
             setTotalPages(
               res.totalPages ||
                 Math.ceil((res.total || res.data.length) / limit) ||
-                1
+                1,
             );
             setTotalItems(res.total || res.data.length);
           }
@@ -138,13 +115,13 @@ function SponsorsContent() {
             setTotalItems(
               pag.totalItems ||
                 pag.totaldata ||
-                res.data.sponsors.length
+                res.data.sponsors.length,
             );
           } else {
             setTotalPages(
               res.totalPages ||
                 Math.ceil((res.total || res.data.sponsors.length) / limit) ||
-                1
+                1,
             );
             setTotalItems(res.total || res.data.sponsors.length);
           }
@@ -168,7 +145,7 @@ function SponsorsContent() {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, searchQuery, statusFilter]);
+  }, [page, limit, searchQuery]);
 
   // Debounced API-based search
   useEffect(() => {
@@ -177,19 +154,6 @@ function SponsorsContent() {
     }, 350);
     return () => clearTimeout(timer);
   }, [fetchSponsorsList]);
-
-  // Handle status filter change + URL update
-  const handleStatusFilterChange = (newStatus: string) => {
-    setPage(1);
-    const params = new URLSearchParams(searchParams.toString());
-    if (newStatus && newStatus !== "all") {
-      params.set("status", newStatus);
-    } else {
-      params.delete("status");
-    }
-    const query = params.toString();
-    router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false });
-  };
 
   // Open Create Sponsor Modal
   const handleOpenCreate = () => {
@@ -240,44 +204,6 @@ function SponsorsContent() {
       } finally {
         setViewLoading(false);
       }
-    }
-  };
-
-  // Handle Status Update Confirmation Open
-  const handleOpenStatusConfirm = (
-    sponsor: SponsorItem,
-    targetStatus: "approved" | "rejected"
-  ) => {
-    setStatusConfirmModal({ sponsor, targetStatus });
-  };
-
-  // Execute Status Update (Approve / Reject) via PUT /sponsors/{id}/status
-  const handleConfirmStatusUpdate = async () => {
-    if (!statusConfirmModal) return;
-    const { sponsor, targetStatus } = statusConfirmModal;
-    const id = getSponsorId(sponsor);
-    if (!id) {
-      toast.error("Invalid sponsor ID");
-      return;
-    }
-
-    setUpdatingStatus(true);
-    try {
-      await updateSponsorStatus(id, targetStatus);
-      toast.success(
-        `Sponsor successfully marked as ${targetStatus === "approved" ? "Approved" : "Rejected"}`
-      );
-      setStatusConfirmModal(null);
-      if (viewModalOpen && selectedSponsor && getSponsorId(selectedSponsor) === id) {
-        setSelectedSponsor((prev) => (prev ? { ...prev, status: targetStatus } : null));
-      }
-      fetchSponsorsList();
-    } catch (err: unknown) {
-      const error = err as Error;
-      console.error("Failed to update sponsor status:", error);
-      toast.error(error?.message || `Failed to update status to ${targetStatus}`);
-    } finally {
-      setUpdatingStatus(false);
     }
   };
 
@@ -366,44 +292,13 @@ function SponsorsContent() {
     }
   };
 
-  // Status Badge Helper
-  const renderStatusBadge = (status?: string) => {
-    const s = (status || "").toLowerCase();
-    if (s === "approved" || s === "active") {
-      return (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          Approved
-        </span>
-      );
-    }
-    if (s === "pending") {
-      return (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-          Pending
-        </span>
-      );
-    }
-    if (s === "rejected") {
-      return (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-          Rejected
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200">
-        {status || "Active"}
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-6">
       {/* ===================== FILTER & ACTION ROW ===================== */}
       <section className="bg-white rounded-[14px] p-4 sm:p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto flex-1">
           {/* API Search Input */}
-          <div className="relative w-full sm:max-w-xs">
+          <div className="relative w-full sm:max-w-md">
             <input
               type="text"
               value={searchQuery}
@@ -411,23 +306,11 @@ function SponsorsContent() {
                 setSearchQuery(e.target.value);
                 setPage(1);
               }}
-              placeholder="Search sponsors..."
+              placeholder="Search approved sponsors by name, email..."
               className="w-full h-[38px] pl-3.5 pr-9 border border-[#e4e4df] bg-white rounded-[6px] text-[#444] text-[13px] placeholder-gray-400 focus:outline-none focus:border-[#2d4a23]"
             />
             <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
-
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => handleStatusFilterChange(e.target.value)}
-            className="h-[38px] px-3 border border-[#e4e4df] bg-white rounded-[6px] text-[#444] text-[13px] focus:outline-none focus:border-[#2d4a23] cursor-pointer"
-          >
-            <option value="all">All Statuses</option>
-            <option value="approved">Approved</option>
-            <option value="pending">Pending</option>
-            <option value="rejected">Rejected</option>
-          </select>
         </div>
 
         {/* Add Sponsor Button */}
@@ -443,7 +326,7 @@ function SponsorsContent() {
       {/* ===================== TABLE CARD ===================== */}
       <section className="bg-white rounded-[14px] p-5 pb-3 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)]">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[720px]">
+          <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="border-b border-[#ececec]">
                 <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px] w-14">
@@ -461,10 +344,7 @@ function SponsorsContent() {
                 <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
                   Website
                 </th>
-                <th className="py-3.5 px-3 font-semibold text-[#111111] text-[13px]">
-                  Status
-                </th>
-                <th className="py-3.5 px-3 text-right font-semibold text-[#111111] text-[13px] w-44">
+                <th className="py-3.5 px-3 text-right font-semibold text-[#111111] text-[13px] w-36">
                   Actions
                 </th>
               </tr>
@@ -472,7 +352,7 @@ function SponsorsContent() {
             <tbody className="divide-y divide-[#f1f1ed] text-[13px]">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-[#7D848D]">
+                  <td colSpan={6} className="py-16 text-center text-[#7D848D]">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Loader2 className="w-6 h-6 animate-spin text-[#2d4a23]" />
                       <span className="text-[13px] font-medium text-[#7D848D]">
@@ -483,16 +363,16 @@ function SponsorsContent() {
                 </tr>
               ) : sponsors.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-[#7D848D]">
+                  <td colSpan={6} className="py-16 text-center text-[#7D848D]">
                     <div className="flex flex-col items-center justify-center gap-1.5">
                       <AlertCircle className="w-8 h-8 text-gray-300" />
                       <p className="text-[13px] font-semibold text-gray-700">
                         No sponsors found.
                       </p>
                       <p className="text-xs text-gray-400">
-                        {statusFilter === "pending"
-                          ? "There are currently no sponsors awaiting approval."
-                          : "Click \"Add Sponsor\" to create a new sponsor entry."}
+                        {searchQuery
+                          ? "Try a different search query."
+                          : 'Click "Add Sponsor" to create a new sponsor entry.'}
                       </p>
                     </div>
                   </td>
@@ -501,7 +381,6 @@ function SponsorsContent() {
                 sponsors.map((sponsor, idx) => {
                   const itemIndex = (page - 1) * limit + idx + 1;
                   const sponsorId = getSponsorId(sponsor);
-                  const isPending = sponsor.status?.toLowerCase() === "pending";
 
                   return (
                     <tr
@@ -528,11 +407,11 @@ function SponsorsContent() {
                             </div>
                           )}
                           <div className="min-w-0">
-                            <span className="font-semibold text-[#1f1f1f] text-[13.5px] block truncate max-w-[200px]">
+                            <span className="font-semibold text-[#1f1f1f] text-[13.5px] block truncate max-w-[220px]">
                               {sponsor.sponsor_name}
                             </span>
                             {sponsor.description && (
-                              <span className="text-xs text-gray-400 block truncate max-w-[220px]">
+                              <span className="text-xs text-gray-400 block truncate max-w-[240px]">
                                 {sponsor.description}
                               </span>
                             )}
@@ -580,7 +459,7 @@ function SponsorsContent() {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-xs text-[#2d4a23] hover:underline font-medium"
                           >
-                            <span className="truncate max-w-[140px]">
+                            <span className="truncate max-w-[150px]">
                               {sponsor.link.replace(/^https?:\/\//, "")}
                             </span>
                             <ExternalLink className="w-3 h-3 flex-shrink-0" />
@@ -590,34 +469,9 @@ function SponsorsContent() {
                         )}
                       </td>
 
-                      {/* Status */}
-                      <td className="py-3.5 px-3 align-middle whitespace-nowrap">
-                        {renderStatusBadge(sponsor.status)}
-                      </td>
-
                       {/* Actions */}
                       <td className="py-3.5 px-3 align-middle text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Quick Approve / Reject for Pending */}
-                          {isPending && (
-                            <>
-                              <button
-                                onClick={() => handleOpenStatusConfirm(sponsor, "approved")}
-                                title="Approve Sponsor"
-                                className="w-[30px] h-[30px] rounded-[7px] bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200 inline-flex items-center justify-center transition-colors cursor-pointer"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleOpenStatusConfirm(sponsor, "rejected")}
-                                title="Reject Sponsor"
-                                className="w-[30px] h-[30px] rounded-[7px] bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200 inline-flex items-center justify-center transition-colors cursor-pointer"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </>
-                          )}
-
                           {/* View details */}
                           <button
                             onClick={() => handleOpenView(sponsor)}
@@ -688,14 +542,13 @@ function SponsorsContent() {
                   <h3 className="text-base font-bold text-gray-900">
                     {selectedSponsor.sponsor_name}
                   </h3>
-                  <div className="mt-1 flex items-center gap-2">
-                    {renderStatusBadge(selectedSponsor.status)}
-                    {selectedSponsor.company_discount && (
+                  {selectedSponsor.company_discount && (
+                    <div className="mt-1">
                       <span className="text-xs text-gray-600 font-medium bg-gray-100 px-2 py-0.5 rounded-md">
                         {selectedSponsor.company_discount}
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <button
@@ -775,105 +628,12 @@ function SponsorsContent() {
               </div>
             )}
 
-            <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
-              {selectedSponsor.status?.toLowerCase() === "pending" ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenStatusConfirm(selectedSponsor, "approved")}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Approve</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenStatusConfirm(selectedSponsor, "rejected")}
-                    className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    <span>Reject</span>
-                  </button>
-                </div>
-              ) : (
-                <div />
-              )}
+            <div className="pt-4 border-t border-gray-100 flex justify-end">
               <button
                 onClick={() => setViewModalOpen(false)}
                 className="px-5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-gray-700 transition-all cursor-pointer"
               >
                 Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===================== STATUS CONFIRMATION MODAL ===================== */}
-      {statusConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-gray-100 p-6 text-center">
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${
-                statusConfirmModal.targetStatus === "approved"
-                  ? "bg-emerald-50 text-emerald-600"
-                  : "bg-rose-50 text-rose-600"
-              }`}
-            >
-              {statusConfirmModal.targetStatus === "approved" ? (
-                <CheckCircle2 className="w-6 h-6" />
-              ) : (
-                <XCircle className="w-6 h-6" />
-              )}
-            </div>
-
-            <h3 className="text-base font-bold text-gray-900 mb-1">
-              {statusConfirmModal.targetStatus === "approved"
-                ? "Approve Sponsor?"
-                : "Reject Sponsor?"}
-            </h3>
-
-            <p className="text-xs text-gray-500 mb-5 leading-relaxed">
-              Are you sure you want to mark{" "}
-              <span className="font-semibold text-gray-800">
-                {statusConfirmModal.sponsor.sponsor_name}
-              </span>{" "}
-              as{" "}
-              <span
-                className={`font-semibold ${
-                  statusConfirmModal.targetStatus === "approved"
-                    ? "text-emerald-700"
-                    : "text-rose-700"
-                }`}
-              >
-                {statusConfirmModal.targetStatus.toUpperCase()}
-              </span>
-              ?
-            </p>
-
-            <div className="flex items-center justify-center gap-2.5">
-              <button
-                type="button"
-                disabled={updatingStatus}
-                onClick={() => setStatusConfirmModal(null)}
-                className="px-4 py-2 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={updatingStatus}
-                onClick={handleConfirmStatusUpdate}
-                className={`px-5 py-2 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 transition-colors cursor-pointer ${
-                  statusConfirmModal.targetStatus === "approved"
-                    ? "bg-emerald-600 hover:bg-emerald-700"
-                    : "bg-rose-600 hover:bg-rose-700"
-                }`}
-              >
-                {updatingStatus && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>
-                  Confirm {statusConfirmModal.targetStatus === "approved" ? "Approval" : "Rejection"}
-                </span>
               </button>
             </div>
           </div>
@@ -1085,19 +845,5 @@ function SponsorsContent() {
         </div>
       )}
     </div>
-  );
-}
-
-export default function SponsorsPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-[300px]">
-          <Loader2 className="w-8 h-8 animate-spin text-[#2d4a23]" />
-        </div>
-      }
-    >
-      <SponsorsContent />
-    </Suspense>
   );
 }
