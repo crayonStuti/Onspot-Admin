@@ -571,15 +571,38 @@ export default function UnifiedSearch({
           const IconComponent =
             ENTITY_ICONS[group.type.toLowerCase()] || Search;
 
-          (group.results || []).forEach((item: AdminSearchResultItem) => {
+          (group.results || []).forEach((item: AdminSearchResultItem | any) => {
+            const rawTitle =
+              item.title ||
+              item.organisation ||
+              item.name ||
+              item.description ||
+              item.metadata?.organisation ||
+              "Database Record";
+
+            const rawSubtitle =
+              item.subtitle ||
+              [
+                item.agency_website || item.metadata?.agency_website,
+                item.state_name || item.state?.state_name || item.metadata?.state_name,
+              ]
+                .filter(Boolean)
+                .join(" • ") ||
+              undefined;
+
+            // Strip any markdown link syntax like [url](url) that might come from formatted subtitles
+            const cleanSubtitle = rawSubtitle
+              ? String(rawSubtitle).replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").trim()
+              : undefined;
+
             results.push({
-              id: `api-${item.type}-${item.id}`,
-              title: item.title,
-              subtitle: item.subtitle,
+              id: `api-${item.type || group.type}-${item.id}`,
+              title: rawTitle,
+              subtitle: cleanSubtitle,
               category: group.label,
-              href: item.route,
+              href: item.route || `/license-issuers?search=${encodeURIComponent(rawTitle)}`,
               icon: IconComponent,
-              badge: item.badge,
+              badge: item.badge || (group.type === "license_issuers" ? "ISSUER" : undefined),
               isApiResult: true,
             });
           });
@@ -920,18 +943,18 @@ export default function UnifiedSearch({
                             data-index={currentIndex}
                             onClick={() => handleSelect(item)}
                             onMouseEnter={() => setSelectedIndex(currentIndex)}
-                            className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-left transition-colors cursor-pointer ${
+                            className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-left transition-colors cursor-pointer group ${
                               isSelected
                                 ? "bg-[#f5efdc] text-[#1f1f1f]"
                                 : "text-[#333] hover:bg-gray-50"
                             }`}
                           >
-                            <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
                               <div
                                 className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                                   isSelected
                                     ? "bg-[#0E3E27] text-[#f5efdc]"
-                                    : item.category === "Quick Actions"
+                                    : item.category === "Quick Actions" || item.category === "License Issuers"
                                     ? "bg-[#0E3E27]/10 text-[#0E3E27]"
                                     : "bg-gray-100 text-gray-600"
                                 }`}
@@ -939,20 +962,22 @@ export default function UnifiedSearch({
                                 <Icon className="w-4 h-4" />
                               </div>
 
-                              <div className="min-w-0">
+                              <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <span className="text-[13px] font-medium text-gray-900 truncate">
                                     {item.title}
                                   </span>
                                   {item.badge && (
                                     <span
-                                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                                      className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-full shrink-0 tracking-wide uppercase ${
                                         item.badge === "Action" || item.badge === "Broadcast"
                                           ? "bg-[#0E3E27]/10 text-[#0E3E27]"
                                           : item.badge === "Review Queue" || item.badge === "Pending"
                                           ? "bg-amber-100 text-amber-800"
                                           : item.badge === "Active"
                                           ? "bg-emerald-100 text-emerald-800"
+                                          : item.badge === "ISSUER"
+                                          ? "bg-[#0E3E27]/10 text-[#0E3E27] border border-[#0E3E27]/20"
                                           : "bg-gray-100 text-gray-600"
                                       }`}
                                     >
@@ -961,7 +986,7 @@ export default function UnifiedSearch({
                                   )}
                                 </div>
                                 {item.subtitle && (
-                                  <p className="text-[11.5px] text-gray-500 truncate">
+                                  <p className="text-[11.5px] text-gray-500 truncate mt-0.5">
                                     {item.subtitle}
                                   </p>
                                 )}
@@ -969,14 +994,14 @@ export default function UnifiedSearch({
                             </div>
 
                             <div className="flex items-center gap-1.5 shrink-0 text-gray-400">
-                              <span className="text-[11px] font-mono text-gray-400 hidden sm:inline-block">
-                                {item.href}
+                              <span className="text-[10.5px] font-mono text-gray-400 hidden sm:inline-block max-w-[130px] truncate">
+                                {item.href.split("?")[0]}
                               </span>
                               <ArrowRight
                                 className={`w-3.5 h-3.5 transition-transform ${
                                   isSelected
                                     ? "translate-x-0.5 text-[#0E3E27]"
-                                    : "text-gray-300"
+                                    : "text-gray-300 group-hover:text-gray-500"
                                 }`}
                               />
                             </div>
