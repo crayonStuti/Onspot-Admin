@@ -242,7 +242,9 @@ export default function GPSActivityPage() {
         // Pagination
         if (res.data.pagination) {
           setTotalPages(res.data.pagination.totalPages || 1);
-          setTotalItems(res.data.pagination.totalItems ?? res.data.pins?.length ?? 0);
+          setTotalItems(
+            res.data.pagination.totalItems ?? res.data.pins?.length ?? 0,
+          );
         } else {
           setTotalPages(1);
           setTotalItems(res.data.pins?.length || 0);
@@ -504,7 +506,7 @@ export default function GPSActivityPage() {
           : typeof (topTagTypes as any)?.total_pins === "object" &&
               (topTagTypes as any)?.total_pins !== null
             ? ((topTagTypes as any).total_pins.count ?? totalItems)
-            : totalItems ?? 0;
+            : (totalItems ?? 0);
 
     if (
       !topTagTypes ||
@@ -836,12 +838,17 @@ export default function GPSActivityPage() {
             appearance: "none",
           }}
         >
-          <option value="">All Tag Types</option>
+          {/* <option value="">All Tag Types</option>
           {dynamicTagOptions.map((tag) => (
             <option key={tag} value={tag}>
               {tag}
             </option>
-          ))}
+          ))} */}
+
+          <option value="">All Tag Types</option>
+          <option value="hunting">Hunting</option>
+          <option value="fishing">Fishing</option>
+          <option value="other">Other</option>
         </select>
 
         {/* 3. User Filter */}
@@ -1468,7 +1475,8 @@ export default function GPSActivityPage() {
 
               {/* Center hole text */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-2 transition-all duration-200">
-                {hoveredTagIndex !== null && donutData.slices[hoveredTagIndex] ? (
+                {hoveredTagIndex !== null &&
+                donutData.slices[hoveredTagIndex] ? (
                   (() => {
                     const hSlice = donutData.slices[hoveredTagIndex];
                     return (
