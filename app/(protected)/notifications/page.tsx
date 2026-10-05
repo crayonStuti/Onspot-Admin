@@ -114,6 +114,26 @@ export default function NotificationsPage() {
   const [formDefaultType, setFormDefaultType] =
     useState<NotificationVisualType>("info");
 
+  // Open Broadcast Notification Modal from URL param (?action=create) or global search action
+  useEffect(() => {
+    const openCreateNotification = () => {
+      setFormModalMode("create");
+      setFormInitialData(null);
+      setFormDefaultType("info");
+      setFormModalOpen(true);
+    };
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("action") === "create" || params.get("action") === "new") {
+        openCreateNotification();
+      }
+    }
+
+    window.addEventListener("onspot:open-broadcast-notification", openCreateNotification);
+    return () => window.removeEventListener("onspot:open-broadcast-notification", openCreateNotification);
+  }, []);
+
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] =
     useState<NotificationItem | null>(null);

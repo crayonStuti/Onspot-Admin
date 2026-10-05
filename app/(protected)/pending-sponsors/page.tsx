@@ -133,6 +133,24 @@ export default function PendingSponsorsPage() {
     }
   }, [page, limit, searchQuery]);
 
+  // Ingest URL search parameter or filter event
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const searchParam = params.get("search");
+      if (searchParam) {
+        setSearchQuery(searchParam);
+      }
+    }
+    const handleFilter = (e: any) => {
+      if (e.detail?.search) {
+        setSearchQuery(e.detail.search);
+      }
+    };
+    window.addEventListener("onspot:filter-pending-sponsors", handleFilter);
+    return () => window.removeEventListener("onspot:filter-pending-sponsors", handleFilter);
+  }, []);
+
   // Debounce search query to trigger server-side API search
   useEffect(() => {
     const timer = setTimeout(() => {

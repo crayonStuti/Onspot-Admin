@@ -274,6 +274,24 @@ export default function GPSActivityPage() {
     dateRangeEnd,
   ]);
 
+  // Ingest URL search parameter or filter event
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const searchParam = params.get("search");
+      if (searchParam) {
+        setSearchQuery(searchParam);
+      }
+    }
+    const handleFilter = (e: any) => {
+      if (e.detail?.search) {
+        setSearchQuery(e.detail.search);
+      }
+    };
+    window.addEventListener("onspot:filter-gps", handleFilter);
+    return () => window.removeEventListener("onspot:filter-gps", handleFilter);
+  }, []);
+
   // Debounced search trigger
   useEffect(() => {
     const timer = setTimeout(() => {

@@ -133,6 +133,24 @@ export default function LicensesPage() {
   }, [page, limit, stateId, licenseType, uploadDate, searchQuery]);
 
 
+  // Ingest URL search parameter or filter event
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const searchParam = params.get("search");
+      if (searchParam) {
+        setSearchQuery(searchParam);
+      }
+    }
+    const handleFilter = (e: any) => {
+      if (e.detail?.search) {
+        setSearchQuery(e.detail.search);
+      }
+    };
+    window.addEventListener("onspot:filter-licenses", handleFilter);
+    return () => window.removeEventListener("onspot:filter-licenses", handleFilter);
+  }, []);
+
   // Debounced search trigger (calls backend API)
   useEffect(() => {
     const timer = setTimeout(() => {

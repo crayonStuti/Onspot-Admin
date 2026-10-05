@@ -57,6 +57,47 @@ export default function SponsorsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Open Add Sponsor Modal from URL param (?action=create) or global search action
+  useEffect(() => {
+    const openNewSponsorModal = () => {
+      setEditingSponsor(null);
+      setFormData({
+        sponsor_name: "",
+        email_address: "",
+        company_discount: "",
+        link: "",
+        description: "",
+      });
+      setImageFile(null);
+      setImagePreview(null);
+      setFormModalOpen(true);
+    };
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("action") === "create" || params.get("action") === "new") {
+        openNewSponsorModal();
+      }
+      const searchParam = params.get("search");
+      if (searchParam) {
+        setSearchQuery(searchParam);
+      }
+    }
+
+    const handleFilter = (e: any) => {
+      if (e.detail?.search) {
+        setSearchQuery(e.detail.search);
+      }
+    };
+
+    window.addEventListener("onspot:open-add-sponsor", openNewSponsorModal);
+    window.addEventListener("onspot:filter-sponsors", handleFilter);
+    return () => {
+      window.removeEventListener("onspot:open-add-sponsor", openNewSponsorModal);
+      window.removeEventListener("onspot:filter-sponsors", handleFilter);
+    };
+  }, []);
+
   // Delete Confirmation State
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [sponsorToDelete, setSponsorToDelete] = useState<SponsorItem | null>(null);

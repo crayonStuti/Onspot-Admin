@@ -134,6 +134,25 @@ export default function MembershipsPage() {
     fetchOverviewData();
   }, [fetchMembershipsList, fetchOverviewData]);
 
+  // Open Add Membership Modal from URL param (?action=create) or global search action
+  useEffect(() => {
+    const openNewPlanModal = () => {
+      setPlanToEdit(null);
+      setFormModalOpen(true);
+    };
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("action") === "create" || params.get("action") === "new") {
+        openNewPlanModal();
+      }
+    }
+
+    window.addEventListener("onspot:open-create-membership", openNewPlanModal);
+    return () => window.removeEventListener("onspot:open-create-membership", openNewPlanModal);
+  }, []);
+
+
   // View Plan Details
   const handleViewPlan = async (plan: MembershipItem) => {
     setSelectedPlan(plan);

@@ -72,25 +72,21 @@ export default function ResourceFormModal({
     rules: "",
   });
 
-  // Category Icon
   const [categoryIconFile, setCategoryIconFile] = useState<File | null>(null);
   const [categoryIconPreview, setCategoryIconPreview] = useState<string | null>(
     null,
   );
 
-  // PDF / Resource File States
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [existingFileUrl, setExistingFileUrl] = useState<string | null>(null);
   const [existingFileName, setExistingFileName] = useState<string | null>(null);
   const [removeExistingFile, setRemoveExistingFile] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load resource details when opening modal
   useEffect(() => {
     if (!isOpen) return;
 
     if (!initialData?.id) {
-      // Add mode: Reset everything to blank defaults
       setFormData({
         title: "",
         resource_type: "guide",
@@ -116,7 +112,6 @@ export default function ResourceFormModal({
       return;
     }
 
-    // Edit mode: Fetch full resource details from API
     let isCancelled = false;
     const fetchResourceDetails = async () => {
       setLoadingDetails(true);
@@ -204,18 +199,14 @@ export default function ResourceFormModal({
 
   if (!isOpen) return null;
 
-  // Mutual Exclusivity Conditions
-  // 1. Web Link provided => Disable PDF upload
   const hasUrl = Boolean(
     formData.resource_url && formData.resource_url.trim().length > 0,
   );
 
-  // 2. PDF provided (either newly selected or existing file in edit mode) => Disable Web Link
   const hasPdf = Boolean(
     resourceFile !== null || (existingFileUrl && !removeExistingFile),
   );
 
-  // Handle Form Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -237,7 +228,6 @@ export default function ResourceFormModal({
         payload.append("state_id", formData.state_id);
       }
 
-      // Handle mutual exclusivity for URL vs PDF
       if (hasUrl) {
         payload.append("resource_url", formData.resource_url.trim());
         if (removeExistingFile) {
@@ -259,7 +249,6 @@ export default function ResourceFormModal({
         payload.append("category_icon", categoryIconFile);
       }
 
-      // Handle Seasonal Information
       const isSeasonal =
         formData.category === "Season Dates" ||
         formData.resource_type === "seasonal" ||
@@ -308,7 +297,6 @@ export default function ResourceFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6">
-        {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-gray-100">
           <div>
             <h3 className="text-base font-bold text-gray-900">
@@ -334,7 +322,6 @@ export default function ResourceFormModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="py-4 space-y-4">
-            {/* Title */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">
                 Resource Title *
@@ -351,7 +338,6 @@ export default function ResourceFormModal({
               />
             </div>
 
-            {/* Type, State, Category in 3 cols */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -423,7 +409,6 @@ export default function ResourceFormModal({
               </div>
             </div>
 
-            {/* Resource Web Link (Disabled if PDF is provided) */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-semibold text-gray-700">
@@ -454,7 +439,6 @@ export default function ResourceFormModal({
                     : "border-gray-200 text-gray-800 focus:border-[#0E3E27]"
                 }`}
               />
-              {/* Notification when PDF is attached */}
               {hasPdf && (
                 <div className="mt-1.5 flex items-start gap-1.5 text-[11px] text-amber-800 bg-amber-50/90 border border-amber-200/90 rounded-lg p-2 leading-relaxed">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600 mt-0.5" />
@@ -467,7 +451,6 @@ export default function ResourceFormModal({
               )}
             </div>
 
-            {/* Content / Notes */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">
                 Description / Content
@@ -483,9 +466,7 @@ export default function ResourceFormModal({
               />
             </div>
 
-            {/* Category Icon & Resource File Uploads */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              {/* Category Icon */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
                   Category Icon
@@ -515,7 +496,6 @@ export default function ResourceFormModal({
                 </div>
               </div>
 
-              {/* Resource File / PDF Attachment (Disabled if URL is provided) */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-semibold text-gray-700">
@@ -529,7 +509,6 @@ export default function ResourceFormModal({
                   )}
                 </div>
 
-                {/* Show Existing File in Edit Mode */}
                 {isEditing && existingFileUrl && !removeExistingFile ? (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-2.5 flex items-center justify-between gap-2.5">
                     <div className="flex items-center gap-2 min-w-0">

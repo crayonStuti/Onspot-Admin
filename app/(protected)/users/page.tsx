@@ -108,6 +108,32 @@ export default function UsersPage() {
     return () => document.removeEventListener("click", handleOutsideClick);
   }, []);
 
+  // Open Add User Modal from URL param (?action=create) or populate ?search= filter
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("action") === "create" || params.get("action") === "new") {
+        setAddUserModal(true);
+      }
+      const searchParam = params.get("search");
+      if (searchParam) {
+        setSearchQuery(searchParam);
+      }
+    }
+    const handleOpen = () => setAddUserModal(true);
+    const handleFilter = (e: any) => {
+      if (e.detail?.search) {
+        setSearchQuery(e.detail.search);
+      }
+    };
+    window.addEventListener("onspot:open-create-user", handleOpen);
+    window.addEventListener("onspot:filter-users", handleFilter);
+    return () => {
+      window.removeEventListener("onspot:open-create-user", handleOpen);
+      window.removeEventListener("onspot:filter-users", handleFilter);
+    };
+  }, []);
+
   // Fetch Users
   const fetchUsersList = useCallback(async () => {
     setLoading(true);

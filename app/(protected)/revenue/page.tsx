@@ -19,12 +19,12 @@ import Pagination from "@/components/admin/Pagination";
 import { getRevenueOverview, RevenueOverviewData } from "@/lib/api";
 
 const DONUT_COLORS = [
-  "#2d4a23",
-  "#4285F4",
-  "#FBBC05",
-  "#9334ea",
-  "#06b6d4",
-  "#f97316",
+  "#3a5230", // Free
+  "#5da3f5", // Premium
+  "#d4c79a", // Basic
+  "#8b5cf6",
+  "#ec4899",
+  "#f59e0b",
 ];
 
 export default function RevenuePage() {
@@ -383,7 +383,7 @@ export default function RevenuePage() {
                 undefined
                   ? `${data.summary_cards.conversion_rate.rate_percentage}%`
                   : "—"}
-                {data?.summary_cards?.conversion_rate?.paid_users !==
+                {/* {data?.summary_cards?.conversion_rate?.paid_users !==
                   undefined &&
                   data?.summary_cards?.conversion_rate?.total_users !==
                     undefined && (
@@ -391,7 +391,7 @@ export default function RevenuePage() {
                       ({data.summary_cards.conversion_rate.paid_users} /{" "}
                       {data.summary_cards.conversion_rate.total_users} users)
                     </span>
-                  )}
+                  )} */}
               </div>
               <div
                 className={`text-[12px] font-medium inline-flex items-center gap-1 ${

@@ -1581,3 +1581,48 @@ export async function deleteNotification(id: string): Promise<any> {
     method: "DELETE",
   });
 }
+
+/* =========================================================================
+   ADMIN GLOBAL SEARCH API
+   ========================================================================= */
+
+export interface AdminSearchResultItem {
+  id: string;
+  type: string;
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  route: string;
+  metadata?: Record<string, any>;
+}
+
+export interface AdminSearchGroup {
+  type: string;
+  label: string;
+  total: number;
+  results: AdminSearchResultItem[];
+}
+
+export interface AdminSearchResponse {
+  message?: string;
+  data?: {
+    query: string;
+    total: number;
+    groups: AdminSearchGroup[];
+  };
+}
+
+export async function adminGlobalSearch(
+  query: string,
+  limit: number = 4,
+  type?: string
+): Promise<AdminSearchResponse> {
+  const params = new URLSearchParams({
+    search: query.trim(),
+    limit: String(limit),
+  });
+  if (type) params.append("type", type);
+  return await fetchApi<AdminSearchResponse>(`/admin/search?${params.toString()}`);
+}
+
+

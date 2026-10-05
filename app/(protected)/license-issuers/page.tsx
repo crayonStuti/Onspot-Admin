@@ -160,6 +160,35 @@ export default function LicenseIssuersPage() {
     setDialogOpen(true);
   };
 
+  // Ingest URL search parameter or filter events
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const searchParam = params.get("search");
+      if (searchParam) {
+        setSearchQuery(searchParam);
+      }
+      const actionParam = params.get("action");
+      if (actionParam === "create") {
+        handleOpenCreate();
+      }
+    }
+    const handleFilter = (e: any) => {
+      if (e.detail?.search) {
+        setSearchQuery(e.detail.search);
+      }
+    };
+    const handleOpenModal = () => {
+      handleOpenCreate();
+    };
+    window.addEventListener("onspot:filter-license-issuers", handleFilter);
+    window.addEventListener("onspot:open-create-license-issuer", handleOpenModal);
+    return () => {
+      window.removeEventListener("onspot:filter-license-issuers", handleFilter);
+      window.removeEventListener("onspot:open-create-license-issuer", handleOpenModal);
+    };
+  }, []);
+
   // Open Edit Dialog
   const handleOpenEdit = (issuer: LicenseIssuerItem) => {
     setEditingIssuer(issuer);

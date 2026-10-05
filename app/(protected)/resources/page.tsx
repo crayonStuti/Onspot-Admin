@@ -110,6 +110,38 @@ export default function ResourcesPage() {
     null,
   );
 
+  // Open Add Resource Modal from URL param (?action=create) or global search action
+  useEffect(() => {
+    const openNewResourceModal = () => {
+      setEditingResource(null);
+      setFormModalOpen(true);
+    };
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("action") === "create" || params.get("action") === "new") {
+        openNewResourceModal();
+      }
+      const searchParam = params.get("search");
+      if (searchParam) {
+        setSearchQuery(searchParam);
+      }
+    }
+
+    const handleFilter = (e: any) => {
+      if (e.detail?.search) {
+        setSearchQuery(e.detail.search);
+      }
+    };
+
+    window.addEventListener("onspot:open-upload-resource", openNewResourceModal);
+    window.addEventListener("onspot:filter-resources", handleFilter);
+    return () => {
+      window.removeEventListener("onspot:open-upload-resource", openNewResourceModal);
+      window.removeEventListener("onspot:filter-resources", handleFilter);
+    };
+  }, []);
+
   // Delete State
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [resourceToDelete, setResourceToDelete] = useState<ResourceItem | null>(

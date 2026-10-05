@@ -595,6 +595,14 @@ const DONUT_COLORS: Record<string, string> = {
   premium: "#5da3f5",
 };
 
+function getDonutColor(level?: string, name?: string, index: number = 0): string {
+  const str = `${level || ""} ${name || ""}`.toLowerCase();
+  if (str.includes("free")) return "#3a5230";
+  if (str.includes("basic") || str.includes("standard")) return "#d4c79a";
+  if (str.includes("premium") || str.includes("pro")) return "#5da3f5";
+  return DONUT_COLORS[level?.toLowerCase() || ""] || ["#3a5230", "#d4c79a", "#5da3f5"][index % 3];
+}
+
 function MembershipConversionCard({
   totalUsers = 0,
   breakdown = [],
@@ -604,12 +612,21 @@ function MembershipConversionCard({
 }: MembershipConversionProps) {
   const safeBreakdown = breakdown || [];
   let accumulated = 0;
-  const segments = safeBreakdown.map((item) => {
+  const segments = safeBreakdown.map((item, idx) => {
     const strokeDasharray = `${item.percentage} ${100 - item.percentage}`;
     const strokeDashoffset = -accumulated;
+    const offset = accumulated;
     accumulated += item.percentage;
-    const color = DONUT_COLORS[item.level?.toLowerCase()] || "#64748b";
-    return { ...item, color, strokeDasharray, strokeDashoffset };
+    const color = getDonutColor(item.level, item.name, idx);
+
+    // Calculate middle angle of this segment for in-slice text label
+    const midPct = offset + item.percentage / 2;
+    const angle = (midPct / 100) * 2 * Math.PI - Math.PI / 2;
+    const labelR = 70;
+    const lx = 100 + labelR * Math.cos(angle);
+    const ly = 100 + labelR * Math.sin(angle);
+
+    return { ...item, color, strokeDasharray, strokeDashoffset, lx, ly };
   });
 
   return (
@@ -702,11 +719,17 @@ function MembershipConversionCard({
             padding: "8px 0",
           }}
         >
-          {/* SVG Donut */}
+          {/* SVG Donut - Exact HTML 270x270 dimensions & radius 70 */}
           <div
-            style={{ width: "220px", height: "220px", position: "relative" }}
+            style={{ width: "270px", height: "270px", maxWidth: "100%", position: "relative" }}
           >
-            <svg width="220" height="220" viewBox="0 0 200 200">
+            <svg
+              id="chart-conversion"
+              width="270"
+              height="270"
+              viewBox="0 0 200 200"
+              style={{ maxWidth: "100%", height: "auto" }}
+            >
               <g transform="rotate(-90 100 100)">
                 {segments.map((seg) => (
                   <circle
@@ -724,6 +747,26 @@ function MembershipConversionCard({
                   />
                 ))}
               </g>
+
+              {/* Segment labels inside donut arcs (white text matching dashboard.html) */}
+              {segments.map((seg) => {
+                if (seg.percentage < 5) return null;
+                return (
+                  <text
+                    key={`lbl-${seg.level}`}
+                    x={seg.lx.toFixed(1)}
+                    y={(seg.ly + 4).toFixed(1)}
+                    textAnchor="middle"
+                    fontSize="11"
+                    fontWeight="700"
+                    fill="#ffffff"
+                    fontFamily="Segoe UI, Inter, sans-serif"
+                  >
+                    {seg.percentage}%
+                  </text>
+                );
+              })}
+
               {/* Center Total Count */}
               <text
                 x="100"
@@ -732,6 +775,7 @@ function MembershipConversionCard({
                 fontSize="20"
                 fontWeight="700"
                 fill="#1f1f1f"
+                fontFamily="Segoe UI, Inter, sans-serif"
               >
                 {totalUsers.toLocaleString()}
               </text>
@@ -741,6 +785,7 @@ function MembershipConversionCard({
                 textAnchor="middle"
                 fontSize="10"
                 fill="#888"
+                fontFamily="Segoe UI, Inter, sans-serif"
               >
                 Total Users
               </text>
@@ -758,9 +803,8 @@ function MembershipConversionCard({
               minWidth: "160px",
             }}
           >
-            {safeBreakdown.map((item) => {
-              const color =
-                DONUT_COLORS[item.level?.toLowerCase()] || "#64748b";
+            {safeBreakdown.map((item, idx) => {
+              const color = getDonutColor(item.level, item.name, idx);
               return (
                 <div
                   key={item.level}
