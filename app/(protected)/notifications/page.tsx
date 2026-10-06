@@ -130,8 +130,15 @@ export default function NotificationsPage() {
       }
     }
 
-    window.addEventListener("onspot:open-broadcast-notification", openCreateNotification);
-    return () => window.removeEventListener("onspot:open-broadcast-notification", openCreateNotification);
+    window.addEventListener(
+      "onspot:open-broadcast-notification",
+      openCreateNotification,
+    );
+    return () =>
+      window.removeEventListener(
+        "onspot:open-broadcast-notification",
+        openCreateNotification,
+      );
   }, []);
 
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
@@ -322,7 +329,13 @@ export default function NotificationsPage() {
             </span>
           </div>
           <div className="text-[28px] font-bold text-[#1f1f1f] my-1 leading-none">
-            {stats?.total_sent != null ? stats.total_sent : 0}
+            {loading ? (
+              <div className="h-7 w-16 bg-[#eef1ea] rounded animate-pulse my-0.5" />
+            ) : stats?.total_sent != null ? (
+              stats.total_sent.toLocaleString()
+            ) : (
+              0
+            )}
           </div>
           <div className="text-[12px] text-[#9a9a9a]">This Month</div>
         </div>
@@ -343,9 +356,13 @@ export default function NotificationsPage() {
             </span>
           </div>
           <div className="text-[28px] font-bold text-[#1f1f1f] my-1 leading-none">
-            {stats?.total_reach != null
-              ? stats.total_reach.toLocaleString()
-              : 0}
+            {loading ? (
+              <div className="h-7 w-20 bg-[#eef1ea] rounded animate-pulse my-0.5" />
+            ) : stats?.total_reach != null ? (
+              stats.total_reach.toLocaleString()
+            ) : (
+              0
+            )}
           </div>
           <div className="text-[12px] text-[#9a9a9a]">Users</div>
         </div>
@@ -363,7 +380,11 @@ export default function NotificationsPage() {
             </span>
           </div>
           <div className="text-[28px] font-bold text-[#1f1f1f] my-1 leading-none">
-            {stats?.avg_open_rate || "0%"}
+            {loading ? (
+              <div className="h-7 w-16 bg-[#eef1ea] rounded animate-pulse my-0.5" />
+            ) : (
+              stats?.avg_open_rate || "0%"
+            )}
           </div>
           <div className="text-[12px] text-[#9a9a9a]">This Month</div>
         </div>
@@ -387,7 +408,11 @@ export default function NotificationsPage() {
             </span>
           </div>
           <div className="text-[28px] font-bold text-[#1f1f1f] my-1 leading-none">
-            {stats?.avg_click_rate || "0%"}
+            {loading ? (
+              <div className="h-7 w-16 bg-[#eef1ea] rounded animate-pulse my-0.5" />
+            ) : (
+              stats?.avg_click_rate || "0%"
+            )}
           </div>
           <div className="text-[12px] text-[#9a9a9a]">This Month</div>
         </div>
@@ -758,114 +783,134 @@ export default function NotificationsPage() {
             <h3 className="text-[16px] font-bold text-[#1f1f1f] mb-5">
               Notification Performance overview
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {/* Total Opened */}
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="w-[46px] h-[46px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-[22px] h-[22px]"
-                  >
-                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[12.5px] text-[#8a8a8a] mb-0.5">
-                    Total Opened
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {[
+                  { label: "Total Opened", wVal: "w-16", wSub: "w-20" },
+                  { label: "Total Clicked", wVal: "w-14", wSub: "w-20" },
+                  { label: "Total Unopened", wVal: "w-16", wSub: "w-28" },
+                  { label: "Bounced", wVal: "w-12", wSub: "w-24" },
+                ].map((sk, idx) => (
+                  <div key={idx} className="flex items-start gap-3 min-w-0 animate-pulse">
+                    <div className="w-[46px] h-[46px] rounded-[10px] bg-[#eef1ea] flex-shrink-0" />
+                    <div className="min-w-0 flex-1 space-y-1.5 py-0.5">
+                      <div className="text-[12.5px] text-[#8a8a8a]">{sk.label}</div>
+                      <div className={`h-5 bg-[#e6e9e2] rounded ${sk.wVal}`} />
+                      <div className={`h-3 bg-[#e6e9e2] rounded ${sk.wSub} mt-1`} />
+                    </div>
                   </div>
-                  <div className="text-[20px] font-bold text-[#1f1f1f] leading-tight">
-                    {stats?.performance_overview?.total_opened != null
-                      ? stats.performance_overview.total_opened.toLocaleString()
-                      : "11,466"}
-                  </div>
-                  <div className="text-[11.5px] text-[#9a9a9a] mt-1 truncate">
-                    {stats?.performance_overview?.total_opened_percentage ||
-                      "48.6% of total reach"}
-                  </div>
-                </div>
+                ))}
               </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {/* Total Opened */}
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-[46px] h-[46px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-[22px] h-[22px]"
+                    >
+                      <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[12.5px] text-[#8a8a8a] mb-0.5">
+                      Total Opened
+                    </div>
+                    <div className="text-[20px] font-bold text-[#1f1f1f] leading-tight">
+                      {stats?.performance_overview?.total_opened != null
+                        ? stats.performance_overview.total_opened.toLocaleString()
+                        : "n/a"}
+                    </div>
+                    <div className="text-[11.5px] text-[#9a9a9a] mt-1 truncate">
+                      {stats?.performance_overview?.total_opened_percentage ||
+                        "n/a"}
+                    </div>
+                  </div>
+                </div>
 
-              {/* Total Clicked */}
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="w-[46px] h-[46px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-[22px] h-[22px]"
-                  >
-                    <path d="M7 2.5l12.2 11.7-5.6.5 3.05 6.2-2.7 1.3-3.05-6.2L7 20.3z" />
-                  </svg>
+                {/* Total Clicked */}
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-[46px] h-[46px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-[22px] h-[22px]"
+                    >
+                      <path d="M7 2.5l12.2 11.7-5.6.5 3.05 6.2-2.7 1.3-3.05-6.2L7 20.3z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[12.5px] text-[#8a8a8a] mb-0.5">
+                      Total Clicked
+                    </div>
+                    <div className="text-[20px] font-bold text-[#1f1f1f] leading-tight">
+                      {stats?.performance_overview?.total_clicked != null
+                        ? stats.performance_overview.total_clicked.toLocaleString()
+                        : "n/a"}
+                    </div>
+                    <div className="text-[11.5px] text-[#9a9a9a] mt-1 truncate">
+                      {stats?.performance_overview?.total_clicked_percentage ||
+                        "n/a"}
+                    </div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <div className="text-[12.5px] text-[#8a8a8a] mb-0.5">
-                    Total Clicked
-                  </div>
-                  <div className="text-[20px] font-bold text-[#1f1f1f] leading-tight">
-                    {stats?.performance_overview?.total_clicked != null
-                      ? stats.performance_overview.total_clicked.toLocaleString()
-                      : "11,466"}
-                  </div>
-                  <div className="text-[11.5px] text-[#9a9a9a] mt-1 truncate">
-                    {stats?.performance_overview?.total_clicked_percentage ||
-                      "48.6% of total reach"}
-                  </div>
-                </div>
-              </div>
 
-              {/* Total Unopened */}
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="w-[46px] h-[46px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-[22px] h-[22px]"
-                  >
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                  </svg>
+                {/* Total Unopened */}
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-[46px] h-[46px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-[22px] h-[22px]"
+                    >
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[12.5px] text-[#8a8a8a] mb-0.5">
+                      Total Unopened
+                    </div>
+                    <div className="text-[20px] font-bold text-[#1f1f1f] leading-tight">
+                      {stats?.performance_overview?.total_unopened != null
+                        ? stats.performance_overview.total_unopened.toLocaleString()
+                        : "0"}
+                    </div>
+                    <div className="text-[11.5px] text-[#9a9a9a] mt-1 truncate">
+                      {stats?.performance_overview?.total_unopened_percentage ||
+                        "0%"}
+                    </div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <div className="text-[12.5px] text-[#8a8a8a] mb-0.5">
-                    Total Unopened
-                  </div>
-                  <div className="text-[20px] font-bold text-[#1f1f1f] leading-tight">
-                    {stats?.performance_overview?.total_unopened != null
-                      ? stats.performance_overview.total_unopened.toLocaleString()
-                      : "12,094"}
-                  </div>
-                  <div className="text-[11.5px] text-[#9a9a9a] mt-1 truncate">
-                    {stats?.performance_overview?.total_unopened_percentage ||
-                      "51.4% of total reach"}
-                  </div>
-                </div>
-              </div>
 
-              {/* Bounced */}
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="w-[46px] h-[46px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-[22px] h-[22px]"
-                  >
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 16h-2v-2h2v2zm0-4h-2V9h2v5z" />
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[12.5px] text-[#8a8a8a] mb-0.5">
-                    Bounced
+                {/* Bounced */}
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-[46px] h-[46px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-[22px] h-[22px]"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 16h-2v-2h2v2zm0-4h-2V9h2v5z" />
+                    </svg>
                   </div>
-                  <div className="text-[20px] font-bold text-[#1f1f1f] leading-tight">
-                    {stats?.performance_overview?.bounced != null
-                      ? stats.performance_overview.bounced.toLocaleString()
-                      : "0"}
-                  </div>
-                  <div className="text-[11.5px] text-[#9a9a9a] mt-1 truncate">
-                    Failed deliveries
+                  <div className="min-w-0">
+                    <div className="text-[12.5px] text-[#8a8a8a] mb-0.5">
+                      Bounced
+                    </div>
+                    <div className="text-[20px] font-bold text-[#1f1f1f] leading-tight">
+                      {stats?.performance_overview?.bounced != null
+                        ? stats.performance_overview.bounced.toLocaleString()
+                        : "0"}
+                    </div>
+                    <div className="text-[11.5px] text-[#9a9a9a] mt-1 truncate">
+                      Failed deliveries
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
