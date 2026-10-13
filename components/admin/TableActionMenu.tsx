@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useId } from "react";
 import { createPortal } from "react-dom";
 
 export interface ActionMenuItem {
@@ -30,6 +30,7 @@ export default function TableActionMenu({
   align = "right",
   title = "More actions",
 }: TableActionMenuProps) {
+  const menuId = useId();
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{
     top?: number;
@@ -84,6 +85,14 @@ export default function TableActionMenu({
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isOpen) {
+      // Broadcast to close any other open action menu across the application
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("onspot:close-action-menus", {
+            detail: { id: menuId },
+          })
+        );
+      }
       updatePosition();
       setIsOpen(true);
     } else {
@@ -91,11 +100,19 @@ export default function TableActionMenu({
     }
   };
 
-  // Close on outside click, window resize, or scroll
+  // Close on outside click, window resize, scroll, or when another action menu opens
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleClickOutside = (e: MouseEvent) => {
+    // Close when another TableActionMenu opens
+    const handleCloseOthers = (e: Event) => {
+      const customEvent = e as CustomEvent<{ id?: string }>;
+      if (customEvent.detail?.id !== menuId) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
       if (
         triggerRef.current?.contains(target) ||
@@ -120,18 +137,24 @@ export default function TableActionMenu({
       }
     };
 
-    window.addEventListener("click", handleClickOutside);
+    window.addEventListener("onspot:close-action-menus", handleCloseOthers);
+    document.addEventListener("mousedown", handleClickOutside, true);
+    document.addEventListener("click", handleClickOutside, true);
+    document.addEventListener("touchstart", handleClickOutside, true);
     window.addEventListener("scroll", handleScroll, true);
     window.addEventListener("resize", updatePosition);
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener("click", handleClickOutside);
+      window.removeEventListener("onspot:close-action-menus", handleCloseOthers);
+      document.removeEventListener("mousedown", handleClickOutside, true);
+      document.removeEventListener("click", handleClickOutside, true);
+      document.removeEventListener("touchstart", handleClickOutside, true);
       window.removeEventListener("scroll", handleScroll, true);
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, updatePosition]);
+  }, [isOpen, menuId, updatePosition]);
 
   return (
     <>

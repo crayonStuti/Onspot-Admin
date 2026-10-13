@@ -1,7 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Upload, Loader2, Sparkles, Plus, Trash2 } from "lucide-react";
+import {
+  X,
+  Upload,
+  Loader2,
+  Sparkles,
+  Plus,
+  Trash2,
+  Check,
+  Shield,
+  Layers,
+  DollarSign,
+  Users,
+  Image as ImageIcon,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { createMembership, updateMembership, API_URL } from "@/lib/api";
 
@@ -44,23 +58,19 @@ interface MembershipFormModalProps {
   initialData?: MembershipItem | null;
 }
 
-// Default feature dictionary with types matching backend defaults
-const DEFAULT_FEATURES: Record<string, any> = {
-  front_end_pages: true,
-  license_wallet: "2 state",
-  gps_mapping_basic: true,
-  extended_mapping_friends: "1 friend",
-  dnr_library_access: false,
-  post_tagging: "1 state",
-  social_media_channels: "1 channel",
-  kids_included: "1",
-  ads_displayed: true,
-  license_expiry_alerts: false,
-  location_setting: true,
-  ai_assistant: false,
-};
+// Quick suggested presets for feature perks
+const SUGGESTED_FEATURES = [
+  "Unlimited friends",
+  "Priority support",
+  "Ad-free experience",
+  "Custom map markers",
+  "GPS mapping & navigation",
+  "License wallet alerts",
+  "DNR resource library access",
+  "High-res gallery uploads",
+];
 
-// Helper to determine if a value is boolean or boolean-string
+// Helper to determine if a value is boolean or boolean-string (kept for backward compatibility)
 export function isBooleanFeature(val: any): boolean {
   if (typeof val === "boolean") return true;
   if (typeof val === "string") {
@@ -70,7 +80,7 @@ export function isBooleanFeature(val: any): boolean {
   return false;
 }
 
-// Helper to coerce boolean/boolean-string to boolean
+// Helper to coerce boolean/boolean-string to boolean (kept for backward compatibility)
 export function toBooleanFeature(val: any): boolean {
   if (typeof val === "boolean") return val;
   if (typeof val === "string") {
@@ -91,6 +101,62 @@ function parseBool(val: any, fallback = false): boolean {
   return fallback;
 }
 
+// Parses feature payload into an array of strings (supporting array, JSON string array, or legacy dictionary)
+export function parseFeaturesToArray(featureData: any): string[] {
+  if (!featureData) return [];
+  if (Array.isArray(featureData)) {
+    return featureData
+      .map((item) =>
+        typeof item === "string" ? item.trim() : JSON.stringify(item),
+      )
+      .filter(Boolean);
+  }
+  if (typeof featureData === "string") {
+    try {
+      const parsed = JSON.parse(featureData);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((item) =>
+            typeof item === "string" ? item.trim() : JSON.stringify(item),
+          )
+          .filter(Boolean);
+      }
+      if (typeof parsed === "object" && parsed !== null) {
+        return objectToFeatureStrings(parsed);
+      }
+    } catch {
+      if (featureData.includes("\n")) {
+        return featureData
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+      return [featureData.trim()].filter(Boolean);
+    }
+  }
+  if (typeof featureData === "object" && featureData !== null) {
+    return objectToFeatureStrings(featureData);
+  }
+  return [];
+}
+
+function objectToFeatureStrings(obj: Record<string, any>): string[] {
+  const result: string[] = [];
+  for (const [key, val] of Object.entries(obj)) {
+    const formatted = key
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    if (val === true || val === "true") {
+      result.push(formatted);
+    } else if (val === false || val === "false") {
+      // skip disabled legacy toggles
+    } else if (val !== null && val !== undefined && String(val).trim()) {
+      result.push(`${formatted}: ${val}`);
+    }
+  }
+  return result;
+}
+
 export default function MembershipFormModal({
   isOpen,
   onClose,
@@ -99,31 +165,48 @@ export default function MembershipFormModal({
 }: MembershipFormModalProps) {
   const isEdit = Boolean(initialData);
 
-  // Main Form fields
+  // 1. Basic & Tier Info
   const [name, setName] = useState("");
+  const [level, setLevel] = useState("basic");
   const [description, setDescription] = useState("");
-  const [priceUsd, setPriceUsd] = useState("");
-  const [durationDays, setDurationDays] = useState("");
 
-  // New main fields (outside feature payload)
-  const [licenseReminders, setLicenseReminders] = useState(false);
-  const [galleryLimit, setGalleryLimit] = useState("20");
+  // 2. Pricing & Taxes
+  const [monthlyPrice, setMonthlyPrice] = useState("");
+  const [yearlyPrice, setYearlyPrice] = useState("");
+  const [taxes, setTaxes] = useState("");
+
+  // 3. Quotas & Limits
+  const [friendsLimit, setFriendsLimit] = useState("500");
   const [isFriendsUnlimited, setIsFriendsUnlimited] = useState(false);
-  const [friendsLimit, setFriendsLimit] = useState("6");
-  const [licensesLimit, setLicensesLimit] = useState("1");
+  const [licensesLimit, setLicensesLimit] = useState("10");
   const [isLicensesUnlimited, setIsLicensesUnlimited] = useState(false);
-  const [isSponsorshipFree, setIsSponsorshipFree] = useState(false);
-  const [mapActivity, setMapActivity] = useState(false);
+  const [galleryLimit, setGalleryLimit] = useState("100");
 
-  // Image Upload state
+  // 4. Core Privileges
+  const [licenseReminders, setLicenseReminders] = useState(true);
+  const [mapActivity, setMapActivity] = useState(true);
+  const [isSponsorshipFree, setIsSponsorshipFree] = useState(false);
+
+  // 5. Image & Preview
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Features state
-  const [features, setFeatures] = useState<Record<string, any>>(DEFAULT_FEATURES);
-  const [newKey, setNewKey] = useState("");
-  const [newValueType, setNewValueType] = useState<"boolean" | "text">("boolean");
+  // 6. Feature Perks List
+  const [features, setFeatures] = useState<string[]>([]);
+  const [newFeatureText, setNewFeatureText] = useState("");
+
   const [saving, setSaving] = useState(false);
+  const isFreeLevel = level === "free";
+
+  const handleLevelChange = (newLevel: string) => {
+    setLevel(newLevel);
+    if (newLevel === "free") {
+      setMonthlyPrice("0");
+      setYearlyPrice("0");
+      setTaxes("0");
+    }
+  };
 
   // Initialize or reset form state
   useEffect(() => {
@@ -132,141 +215,170 @@ export default function MembershipFormModal({
     if (initialData) {
       setName(initialData.name || "");
       setDescription(initialData.description || "");
-      const rawPrice =
-        initialData.price_usd !== undefined && initialData.price_usd !== null
-          ? initialData.price_usd
-          : initialData.monthly_price !== undefined && initialData.monthly_price !== null
-            ? initialData.monthly_price
-            : initialData.yearly_price !== undefined && initialData.yearly_price !== null
-              ? initialData.yearly_price
-              : "";
-      setPriceUsd(String(rawPrice));
-      setDurationDays(
-        initialData.duration_days !== undefined && initialData.duration_days !== null
-          ? String(initialData.duration_days)
-          : ""
-      );
 
-      // Main fields
-      setLicenseReminders(parseBool(initialData.license_reminders, false));
-      setGalleryLimit(
-        initialData.gallery_limit !== undefined && initialData.gallery_limit !== null
-          ? String(initialData.gallery_limit)
-          : "20"
-      );
+      // Level
+      const rawLevel = (initialData.level || "").toLowerCase().trim();
+      let detectedLevel = "basic";
+      if (["free", "basic", "premium"].includes(rawLevel)) {
+        detectedLevel = rawLevel;
+      } else {
+        // Fallback detect from name
+        const lname = (initialData.name || "").toLowerCase();
+        if (
+          lname.includes("premium") ||
+          lname.includes("gold") ||
+          lname.includes("pro")
+        ) {
+          detectedLevel = "premium";
+        } else if (lname.includes("free")) {
+          detectedLevel = "free";
+        } else {
+          detectedLevel = "basic";
+        }
+      }
+      setLevel(detectedLevel);
+
+      // Pricing & Taxes
+      if (detectedLevel === "free") {
+        setMonthlyPrice("0");
+        setYearlyPrice("0");
+        setTaxes("0");
+      } else {
+        const mPrice =
+          initialData.monthly_price !== undefined &&
+          initialData.monthly_price !== null
+            ? initialData.monthly_price
+            : initialData.price_usd !== undefined &&
+                initialData.price_usd !== null
+              ? initialData.price_usd
+              : "";
+        setMonthlyPrice(String(mPrice));
+
+        const yPrice =
+          initialData.yearly_price !== undefined &&
+          initialData.yearly_price !== null
+            ? initialData.yearly_price
+            : "";
+        setYearlyPrice(String(yPrice));
+
+        const taxVal =
+          initialData.taxes !== undefined && initialData.taxes !== null
+            ? initialData.taxes
+            : "";
+        setTaxes(String(taxVal));
+      }
+
+      // Quotas
       setIsFriendsUnlimited(parseBool(initialData.is_friends_unlimited, false));
       setFriendsLimit(
-        initialData.friends_limit !== undefined && initialData.friends_limit !== null
+        initialData.friends_limit !== undefined &&
+          initialData.friends_limit !== null
           ? String(initialData.friends_limit)
-          : "6"
+          : "500",
+      );
+
+      setIsLicensesUnlimited(
+        parseBool(initialData.is_licenses_unlimited, false),
       );
       setLicensesLimit(
-        initialData.licenses_limit !== undefined && initialData.licenses_limit !== null
+        initialData.licenses_limit !== undefined &&
+          initialData.licenses_limit !== null
           ? String(initialData.licenses_limit)
-          : "1"
+          : "10",
       );
-      setIsLicensesUnlimited(parseBool(initialData.is_licenses_unlimited, false));
+
+      setGalleryLimit(
+        initialData.gallery_limit !== undefined &&
+          initialData.gallery_limit !== null
+          ? String(initialData.gallery_limit)
+          : "100",
+      );
+
+      // Privileges
+      setLicenseReminders(parseBool(initialData.license_reminders, true));
+      setMapActivity(parseBool(initialData.map_activity, true));
       setIsSponsorshipFree(parseBool(initialData.is_sponsorship_free, false));
-      setMapActivity(parseBool(initialData.map_activity, false));
 
       // Image
       setImageFile(null);
       if (initialData.image) {
+        setImageUrl(initialData.image);
         setImagePreview(
           initialData.image.startsWith("http")
             ? initialData.image
-            : `${API_URL}${initialData.image.startsWith("/") ? "" : "/"}${initialData.image}`
+            : `${API_URL}${initialData.image.startsWith("/") ? "" : "/"}${initialData.image}`,
         );
       } else {
+        setImageUrl("");
         setImagePreview(null);
       }
 
-      // Parse feature
-      let parsedFeat: Record<string, any> = {};
-      if (initialData.feature) {
-        try {
-          parsedFeat =
-            typeof initialData.feature === "string"
-              ? JSON.parse(initialData.feature)
-              : initialData.feature;
-        } catch (e) {
-          console.warn("Failed to parse features:", e);
-        }
-      }
-
-      const merged: Record<string, any> = { ...DEFAULT_FEATURES };
-      Object.entries(parsedFeat).forEach(([k, val]) => {
-        if (val === "true" || val === true) {
-          merged[k] = true;
-        } else if (val === "false" || val === false) {
-          merged[k] = false;
-        } else {
-          merged[k] = val;
-        }
-      });
-      setFeatures(merged);
+      // Feature perks
+      const parsed = parseFeaturesToArray(initialData.feature);
+      setFeatures(
+        parsed.length > 0 ? parsed : ["Unlimited friends", "Priority support"],
+      );
     } else {
       // Create fresh default form
       setName("");
+      setLevel("basic");
       setDescription("");
-      setPriceUsd("");
-      setDurationDays("");
-      setLicenseReminders(false);
-      setGalleryLimit("20");
+      setMonthlyPrice("");
+      setYearlyPrice("");
+      setTaxes("");
+      setFriendsLimit("500");
       setIsFriendsUnlimited(false);
-      setFriendsLimit("6");
-      setLicensesLimit("1");
+      setLicensesLimit("10");
       setIsLicensesUnlimited(false);
+      setGalleryLimit("100");
+      setLicenseReminders(true);
+      setMapActivity(true);
       setIsSponsorshipFree(false);
-      setMapActivity(false);
       setImageFile(null);
+      setImageUrl("");
       setImagePreview(null);
-      setFeatures({ ...DEFAULT_FEATURES });
+      setFeatures([
+        "Unlimited friends",
+        "Priority support",
+        "Ad-free experience",
+        "Custom map markers",
+      ]);
     }
-    setNewKey("");
+    setNewFeatureText("");
   }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
-  const handleFeatureToggle = (key: string, checked: boolean) => {
-    setFeatures((prev) => ({
-      ...prev,
-      [key]: checked,
-    }));
+  // Features manipulation
+  const handleAddFeature = (textToAdd?: string) => {
+    const feat = (textToAdd !== undefined ? textToAdd : newFeatureText).trim();
+    if (!feat) {
+      toast.error("Please enter a feature perk");
+      return;
+    }
+    if (features.some((f) => f.toLowerCase() === feat.toLowerCase())) {
+      toast.error("This feature is already added");
+      return;
+    }
+    setFeatures((prev) => [...prev, feat]);
+    if (textToAdd === undefined) {
+      setNewFeatureText("");
+    }
   };
 
-  const handleFeatureTextChange = (key: string, value: string) => {
-    setFeatures((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+  const handleRemoveFeature = (index: number) => {
+    setFeatures((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleRemoveFeature = (key: string) => {
+  const handleUpdateFeatureText = (index: number, val: string) => {
     setFeatures((prev) => {
-      const copy = { ...prev };
-      delete copy[key];
-      return copy;
+      const next = [...prev];
+      next[index] = val;
+      return next;
     });
   };
 
-  const handleAddFeature = () => {
-    const trimmed = newKey.trim().toLowerCase().replace(/\s+/g, "_");
-    if (!trimmed) {
-      toast.error("Please enter a feature name");
-      return;
-    }
-    if (features[trimmed] !== undefined) {
-      toast.error("This feature key already exists");
-      return;
-    }
-    setFeatures((prev) => ({
-      ...prev,
-      [trimmed]: newValueType === "boolean" ? true : "",
-    }));
-    setNewKey("");
-  };
-
+  // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -274,49 +386,92 @@ export default function MembershipFormModal({
       toast.error("Plan Name is required");
       return;
     }
-    if (priceUsd === "" || priceUsd === null) {
-      toast.error("Price (USD) is required");
+
+    if (!isEdit && !level.trim()) {
+      toast.error("Plan Level is required");
       return;
     }
 
+    const effectiveMonthlyPrice = isFreeLevel ? "0" : monthlyPrice;
+    const effectiveYearlyPrice = isFreeLevel ? "0" : yearlyPrice;
+    const effectiveTaxes = isFreeLevel ? "0" : taxes;
+
+    if (effectiveMonthlyPrice === "" || effectiveMonthlyPrice === null) {
+      toast.error("Monthly Price is required (enter 0 for Free)");
+      return;
+    }
+
+    const featureList = features.map((f) => f.trim()).filter(Boolean);
+
     setSaving(true);
     try {
-      const payload = new FormData();
-      payload.append("name", name.trim());
-      payload.append("description", description.trim());
-      payload.append("price_usd", priceUsd);
-      if (durationDays) {
-        payload.append("duration_days", durationDays);
-      }
-
-      // Main parameters above features
-      payload.append("license_reminders", String(licenseReminders));
-      payload.append("gallery_limit", String(galleryLimit || "0"));
-      payload.append("is_friends_unlimited", String(isFriendsUnlimited));
-      payload.append(
-        "friends_limit",
-        isFriendsUnlimited ? "0" : String(friendsLimit || "0")
-      );
-      payload.append("licenses_limit", String(licensesLimit || "0"));
-      payload.append("is_licenses_unlimited", String(isLicensesUnlimited));
-      payload.append("is_sponsorship_free", String(isSponsorshipFree));
-      payload.append("map_activity", String(mapActivity));
-
-      // Plan Feature Toggles & values
-      Object.entries(features).forEach(([key, val]) => {
-        payload.append(`feature[${key}]`, String(val));
-      });
-
       if (imageFile) {
-        payload.append("image", imageFile);
-      }
+        // Multipart/form-data payload when image file is uploaded
+        const formData = new FormData();
+        formData.append("name", name.trim());
+        if (!isEdit) {
+          formData.append("level", level.toLowerCase().trim());
+        }
+        formData.append("description", description.trim());
+        formData.append("monthly_price", String(Number(effectiveMonthlyPrice) || 0));
+        formData.append("yearly_price", String(Number(effectiveYearlyPrice) || 0));
+        formData.append("taxes", String(Number(effectiveTaxes) || 0));
+        formData.append("price_usd", String(Number(effectiveMonthlyPrice) || 0));
+        formData.append("feature", JSON.stringify(featureList));
+        formData.append("image", imageFile);
+        formData.append(
+          "friends_limit",
+          isFriendsUnlimited ? "0" : String(Number(friendsLimit) || 0),
+        );
+        formData.append("is_friends_unlimited", String(isFriendsUnlimited));
+        formData.append("gallery_limit", String(Number(galleryLimit) || 0));
+        formData.append("license_reminders", String(licenseReminders));
+        formData.append(
+          "licenses_limit",
+          isLicensesUnlimited ? "0" : String(Number(licensesLimit) || 0),
+        );
+        formData.append("is_licenses_unlimited", String(isLicensesUnlimited));
+        formData.append("map_activity", String(mapActivity));
+        formData.append("is_sponsorship_free", String(isSponsorshipFree));
 
-      if (isEdit && initialData?.id) {
-        await updateMembership(initialData.id, payload);
-        toast.success("Membership plan updated successfully");
+        if (isEdit && initialData?.id) {
+          await updateMembership(initialData.id, formData);
+          toast.success("Membership plan updated successfully");
+        } else {
+          await createMembership(formData);
+          toast.success("Membership plan created successfully");
+        }
       } else {
-        await createMembership(payload);
-        toast.success("Membership plan created successfully");
+        // Standard JSON payload matching the requested API schema
+        const jsonBody: Record<string, any> = {
+          name: name.trim(),
+          ...(!isEdit ? { level: level.toLowerCase().trim() } : {}),
+          description: description.trim(),
+          monthly_price: Number(effectiveMonthlyPrice) || 0,
+          yearly_price: Number(effectiveYearlyPrice) || 0,
+          taxes: Number(effectiveTaxes) || 0,
+          feature: featureList,
+          friends_limit: isFriendsUnlimited ? 0 : Number(friendsLimit) || 0,
+          is_friends_unlimited: isFriendsUnlimited,
+          gallery_limit: Number(galleryLimit) || 0,
+          license_reminders: licenseReminders,
+          licenses_limit: isLicensesUnlimited ? 0 : Number(licensesLimit) || 0,
+          is_licenses_unlimited: isLicensesUnlimited,
+          map_activity: mapActivity,
+          is_sponsorship_free: isSponsorshipFree,
+        };
+
+        if (imageUrl) {
+          jsonBody.image = imageUrl;
+        }
+
+        if (isEdit && initialData?.id) {
+          await updateMembership(initialData.id, jsonBody);
+          toast.success("Membership plan updated successfully");
+        } else {
+          await createMembership(jsonBody);
+          toast.success("Membership plan created successfully");
+        }
       }
 
       onSuccess();
@@ -330,17 +485,22 @@ export default function MembershipFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/55 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl border border-gray-100 overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#fbfbf9]/60 flex-shrink-0">
-          <div>
-            <h3 className="text-base font-bold text-gray-900 tracking-tight">
-              {isEdit ? "Edit Membership Plan" : "Create New Membership Plan"}
-            </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Configure plan pricing, limits, privileges, and feature toggles
-            </p>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[#fbfbf9]/80 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#0E3E27]/10 text-[#0E3E27] flex items-center justify-center">
+              <Shield className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900 tracking-tight">
+                {isEdit ? "Edit Membership Plan" : "Create New Membership Plan"}
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Configure tier level, pricing, quotas, limits, and feature perks
+              </p>
+            </div>
           </div>
           <button
             type="button"
@@ -357,26 +517,60 @@ export default function MembershipFormModal({
           onSubmit={handleSubmit}
           className="flex-1 overflow-y-auto p-6 space-y-6 text-xs text-gray-700"
         >
-          {/* Section 1: Basic Information */}
+          {/* Section 1: General Details & Level Selection */}
           <div className="space-y-4">
-            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-1.5 h-3.5 bg-[#0E3E27] rounded-full" />
-              General Details
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-1.5 h-3.5 bg-[#0E3E27] rounded-full" />
+                Plan Details & Tier Level
+              </h4>
+            </div>
 
-            {/* Plan Name */}
-            <div>
-              <label className="block font-semibold text-gray-700 mb-1">
-                Plan Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Pro Plan, Basic Tier, VIP Angler"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full h-10 px-3.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:border-[#0E3E27] focus:ring-1 focus:ring-[#0E3E27] bg-white transition-all shadow-xs"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Plan Name */}
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">
+                  Plan Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Gold Tier, Pro Angler, Free Tier"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full h-10 px-3.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:border-[#0E3E27] focus:ring-1 focus:ring-[#0E3E27] bg-white transition-all shadow-xs"
+                />
+              </div>
+
+              {/* Level Selection */}
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1 flex items-center justify-between">
+                  <span>
+                    Plan Level <span className="text-red-500">*</span>
+                  </span>
+                  {isEdit && (
+                    <span className="text-[10.5px] text-gray-400 font-normal">
+                      (Tier level is locked)
+                    </span>
+                  )}
+                </label>
+                <div className="relative">
+                  <select
+                    disabled={isEdit}
+                    value={level}
+                    onChange={(e) => handleLevelChange(e.target.value)}
+                    className={`w-full h-10 px-3.5 pr-8 rounded-xl border text-xs text-gray-900 capitalize shadow-xs transition-all ${
+                      isEdit
+                        ? "bg-gray-100/90 text-gray-500 border-gray-200 cursor-not-allowed select-none"
+                        : "bg-white border-gray-200 focus:outline-none focus:border-[#0E3E27] focus:ring-1 focus:ring-[#0E3E27] cursor-pointer"
+                    }`}
+                  >
+                    <option value="free">🌿 Free Tier (free)</option>
+                    <option value="basic">⭐ Basic Tier (basic)</option>
+                    <option value="premium">👑 Premium Tier (premium)</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             {/* Description */}
@@ -386,18 +580,33 @@ export default function MembershipFormModal({
               </label>
               <textarea
                 rows={2}
-                placeholder="Brief summary of who this plan is best suited for..."
+                placeholder="Full access plan with premium perks and priority support..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full p-3 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:border-[#0E3E27] focus:ring-1 focus:ring-[#0E3E27] bg-white transition-all shadow-xs"
               />
             </div>
+          </div>
 
-            {/* Price & Duration */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {/* Section 2: Pricing & Taxes */}
+          <div className="space-y-3.5 pt-3 border-t border-gray-100">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-1.5 h-3.5 bg-[#0E3E27] rounded-full" />
+                Pricing & Billing
+              </h4>
+              {isFreeLevel && (
+                <span className="text-[11px] font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                  Free tier pricing is locked to $0
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              {/* Monthly Price */}
               <div>
                 <label className="block font-semibold text-gray-700 mb-1">
-                  Price (USD) <span className="text-red-500">*</span>
+                  Monthly Price (USD) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
@@ -408,108 +617,156 @@ export default function MembershipFormModal({
                     step="0.01"
                     min="0"
                     required
-                    placeholder="0.00 (Enter 0 for free)"
-                    value={priceUsd}
-                    onChange={(e) => setPriceUsd(e.target.value)}
-                    className="w-full h-10 pl-7 pr-3 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:border-[#0E3E27] focus:ring-1 focus:ring-[#0E3E27] bg-white transition-all shadow-xs"
+                    disabled={isFreeLevel}
+                    placeholder="19.99 (0 for free)"
+                    value={isFreeLevel ? "0" : monthlyPrice}
+                    onChange={(e) => setMonthlyPrice(e.target.value)}
+                    className={`w-full h-10 pl-7 pr-3 rounded-xl border text-xs text-gray-900 shadow-xs transition-all ${
+                      isFreeLevel
+                        ? "bg-gray-100/90 text-gray-500 border-gray-200 cursor-not-allowed select-none"
+                        : "bg-white border-gray-200 focus:outline-none focus:border-[#0E3E27] focus:ring-1 focus:ring-[#0E3E27]"
+                    }`}
                   />
                 </div>
+                <span className="text-[10.5px] text-gray-400 mt-0.5 block">
+                  {isFreeLevel ? "Locked at $0 for Free Tier" : "Recurring monthly fee"}
+                </span>
               </div>
+
+              {/* Yearly Price */}
               <div>
                 <label className="block font-semibold text-gray-700 mb-1">
-                  Duration (Days)
+                  Yearly Price (USD)
                 </label>
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="30 (leave blank for Forever)"
-                  value={durationDays}
-                  onChange={(e) => setDurationDays(e.target.value)}
-                  className="w-full h-10 px-3.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:border-[#0E3E27] focus:ring-1 focus:ring-[#0E3E27] bg-white transition-all shadow-xs"
-                />
-              </div>
-            </div>
-
-            {/* Icon / Image Upload */}
-            <div>
-              <label className="block font-semibold text-gray-700 mb-1">
-                Plan Icon / Badge Image
-              </label>
-              <div className="flex items-center gap-3 p-3 bg-gray-50/70 border border-dashed border-gray-300 rounded-xl">
-                {imagePreview ? (
-                  <div className="w-12 h-12 rounded-xl border border-gray-200 overflow-hidden p-1 flex-shrink-0 bg-white shadow-xs">
-                    <img
-                      src={imagePreview}
-                      alt="Plan preview"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 rounded-xl border border-gray-200 flex items-center justify-center flex-shrink-0 bg-white text-gray-400">
-                    <Upload className="w-5 h-5 text-gray-400" />
-                  </div>
-                )}
-                <div className="flex-1">
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
+                    $
+                  </span>
                   <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] || null;
-                      setImageFile(file);
-                      if (file) setImagePreview(URL.createObjectURL(file));
-                    }}
-                    className="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-white file:text-[#0E3E27] file:border-gray-200 file:border hover:file:bg-gray-50 cursor-pointer"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    disabled={isFreeLevel}
+                    placeholder="199.99 (0 for free)"
+                    value={isFreeLevel ? "0" : yearlyPrice}
+                    onChange={(e) => setYearlyPrice(e.target.value)}
+                    className={`w-full h-10 pl-7 pr-3 rounded-xl border text-xs text-gray-900 shadow-xs transition-all ${
+                      isFreeLevel
+                        ? "bg-gray-100/90 text-gray-500 border-gray-200 cursor-not-allowed select-none"
+                        : "bg-white border-gray-200 focus:outline-none focus:border-[#0E3E27] focus:ring-1 focus:ring-[#0E3E27]"
+                    }`}
                   />
-                  <p className="text-[11px] text-gray-400 mt-1">
-                    PNG, SVG or JPEG recommended. Transparent background works best.
-                  </p>
                 </div>
+                <span className="text-[10.5px] text-gray-400 mt-0.5 block">
+                  {isFreeLevel ? "Locked at $0 for Free Tier" : "Annual billing amount"}
+                </span>
+              </div>
+
+              {/* Taxes */}
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">
+                  Taxes (USD)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    disabled={isFreeLevel}
+                    placeholder="1.50 (0 if none)"
+                    value={isFreeLevel ? "0" : taxes}
+                    onChange={(e) => setTaxes(e.target.value)}
+                    className={`w-full h-10 pl-7 pr-3 rounded-xl border text-xs text-gray-900 shadow-xs transition-all ${
+                      isFreeLevel
+                        ? "bg-gray-100/90 text-gray-500 border-gray-200 cursor-not-allowed select-none"
+                        : "bg-white border-gray-200 focus:outline-none focus:border-[#0E3E27] focus:ring-1 focus:ring-[#0E3E27]"
+                    }`}
+                  />
+                </div>
+                <span className="text-[10.5px] text-gray-400 mt-0.5 block">
+                  {isFreeLevel ? "Locked at $0 for Free Tier" : "Applicable tax fee"}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Section 2: Quotas & Limits (Main fields above feature) */}
-          <div className="space-y-3.5 pt-2 border-t border-gray-100">
+          {/* Section 3: Plan Badge / Image */}
+          <div className="space-y-2 pt-3 border-t border-gray-100">
+            <label className="block font-semibold text-gray-700 mb-1">
+              Plan Badge / Icon Image
+            </label>
+            <div className="flex items-center gap-3.5 p-3.5 bg-gray-50/70 border border-dashed border-gray-300 rounded-xl">
+              {imagePreview ? (
+                <div className="w-14 h-14 rounded-xl border border-gray-200 overflow-hidden p-1 flex-shrink-0 bg-white shadow-xs relative group">
+                  <img
+                    src={imagePreview}
+                    alt="Badge preview"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="w-14 h-14 rounded-xl border border-gray-200 flex items-center justify-center flex-shrink-0 bg-white text-gray-400">
+                  <ImageIcon className="w-6 h-6 text-gray-400" />
+                </div>
+              )}
+              <div className="flex-1">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setImageFile(file);
+                    if (file) {
+                      setImagePreview(URL.createObjectURL(file));
+                    }
+                  }}
+                  className="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-white file:text-[#0E3E27] file:border-gray-200 file:border hover:file:bg-gray-50 cursor-pointer"
+                />
+                <p className="text-[11px] text-gray-400 mt-1">
+                  PNG, SVG, WebP or JPEG. Max 15MB. Transparent badge works
+                  best.
+                </p>
+                {imageUrl && !imageFile && (
+                  <p className="text-[11px] text-emerald-700 mt-0.5 truncate max-w-sm">
+                    Current badge: {imageUrl}
+                  </p>
+                )}
+              </div>
+              {imagePreview && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageFile(null);
+                    setImageUrl("");
+                    setImagePreview(null);
+                  }}
+                  className="text-xs text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                  title="Remove image"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Section 4: Quotas & Limits */}
+          <div className="space-y-3.5 pt-3 border-t border-gray-100">
             <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-1.5 h-3.5 bg-[#0E3E27] rounded-full" />
               Quotas & Limits
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Licenses Limit */}
-              <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-200 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="font-semibold text-gray-800 text-xs">
-                    Licenses Limit
-                  </label>
-                  <label className="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isLicensesUnlimited}
-                      onChange={(e) => setIsLicensesUnlimited(e.target.checked)}
-                      className="w-3.5 h-3.5 rounded text-[#0E3E27] accent-[#0E3E27] cursor-pointer"
-                    />
-                    <span>Unlimited</span>
-                  </label>
-                </div>
-                <input
-                  type="number"
-                  min="0"
-                  disabled={isLicensesUnlimited}
-                  value={isLicensesUnlimited ? "" : licensesLimit}
-                  onChange={(e) => setLicensesLimit(e.target.value)}
-                  placeholder={isLicensesUnlimited ? "Unlimited" : "e.g. 1"}
-                  className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-400 focus:outline-none focus:border-[#0E3E27]"
-                />
-              </div>
-
               {/* Friends Limit */}
               <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-200 space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="font-semibold text-gray-800 text-xs">
                     Friends Limit
                   </label>
-                  <label className="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer">
+                  <label className="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={isFriendsUnlimited}
@@ -525,7 +782,34 @@ export default function MembershipFormModal({
                   disabled={isFriendsUnlimited}
                   value={isFriendsUnlimited ? "" : friendsLimit}
                   onChange={(e) => setFriendsLimit(e.target.value)}
-                  placeholder={isFriendsUnlimited ? "Unlimited" : "e.g. 6"}
+                  placeholder={isFriendsUnlimited ? "Unlimited" : "e.g. 500"}
+                  className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-400 focus:outline-none focus:border-[#0E3E27]"
+                />
+              </div>
+
+              {/* Licenses Limit */}
+              <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-gray-800 text-xs">
+                    Licenses Limit
+                  </label>
+                  <label className="flex items-center gap-1.5 text-[11px] text-gray-600 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isLicensesUnlimited}
+                      onChange={(e) => setIsLicensesUnlimited(e.target.checked)}
+                      className="w-3.5 h-3.5 rounded text-[#0E3E27] accent-[#0E3E27] cursor-pointer"
+                    />
+                    <span>Unlimited</span>
+                  </label>
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  disabled={isLicensesUnlimited}
+                  value={isLicensesUnlimited ? "" : licensesLimit}
+                  onChange={(e) => setLicensesLimit(e.target.value)}
+                  placeholder={isLicensesUnlimited ? "Unlimited" : "e.g. 10"}
                   className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-900 bg-white disabled:bg-gray-100 disabled:text-gray-400 focus:outline-none focus:border-[#0E3E27]"
                 />
               </div>
@@ -533,30 +817,33 @@ export default function MembershipFormModal({
               {/* Gallery Limit */}
               <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-200 space-y-2">
                 <label className="block font-semibold text-gray-800 text-xs">
-                  Gallery Limit
+                  Gallery Photo Limit
                 </label>
                 <input
                   type="number"
                   min="0"
                   value={galleryLimit}
                   onChange={(e) => setGalleryLimit(e.target.value)}
-                  placeholder="e.g. 20"
+                  placeholder="e.g. 100"
                   className="w-full h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-900 bg-white focus:outline-none focus:border-[#0E3E27]"
                 />
+                <span className="text-[10px] text-gray-400 block">
+                  Max photo uploads
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Section 3: Core Privileges (Main fields above feature) */}
-          <div className="space-y-3 pt-2 border-t border-gray-100">
+          {/* Section 5: Core Privileges & Toggles */}
+          <div className="space-y-3 pt-3 border-t border-gray-100">
             <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-1.5 h-3.5 bg-[#0E3E27] rounded-full" />
-              Core Privileges
+              Core Privileges & Toggles
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* License Reminders */}
-              <label className="flex items-center justify-between p-3 bg-gray-50/80 hover:bg-gray-100/70 transition-colors rounded-xl border border-gray-200 cursor-pointer">
+              <label className="flex items-center justify-between p-3 bg-gray-50/80 hover:bg-gray-100/70 transition-colors rounded-xl border border-gray-200 cursor-pointer select-none">
                 <div>
                   <div className="font-semibold text-gray-800 text-xs">
                     License Reminders
@@ -573,8 +860,26 @@ export default function MembershipFormModal({
                 />
               </label>
 
+              {/* Map Activity */}
+              <label className="flex items-center justify-between p-3 bg-gray-50/80 hover:bg-gray-100/70 transition-colors rounded-xl border border-gray-200 cursor-pointer select-none">
+                <div>
+                  <div className="font-semibold text-gray-800 text-xs">
+                    Map Activity
+                  </div>
+                  <div className="text-[10.5px] text-gray-500">
+                    GPS map pin activity
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={mapActivity}
+                  onChange={(e) => setMapActivity(e.target.checked)}
+                  className="w-4 h-4 rounded text-[#0E3E27] accent-[#0E3E27] cursor-pointer"
+                />
+              </label>
+
               {/* Sponsorship Free */}
-              <label className="flex items-center justify-between p-3 bg-gray-50/80 hover:bg-gray-100/70 transition-colors rounded-xl border border-gray-200 cursor-pointer">
+              <label className="flex items-center justify-between p-3 bg-gray-50/80 hover:bg-gray-100/70 transition-colors rounded-xl border border-gray-200 cursor-pointer select-none">
                 <div>
                   <div className="font-semibold text-gray-800 text-xs">
                     Sponsorship Free
@@ -590,135 +895,118 @@ export default function MembershipFormModal({
                   className="w-4 h-4 rounded text-[#0E3E27] accent-[#0E3E27] cursor-pointer"
                 />
               </label>
-
-              {/* Map Activity */}
-              <label className="flex items-center justify-between p-3 bg-gray-50/80 hover:bg-gray-100/70 transition-colors rounded-xl border border-gray-200 cursor-pointer">
-                <div>
-                  <div className="font-semibold text-gray-800 text-xs">
-                    Map Activity
-                  </div>
-                  <div className="text-[10.5px] text-gray-500">
-                    GPS map pin activities
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={mapActivity}
-                  onChange={(e) => setMapActivity(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#0E3E27] accent-[#0E3E27] cursor-pointer"
-                />
-              </label>
             </div>
           </div>
 
-          {/* Section 4: Plan Feature Toggles & Values */}
-          <div className="space-y-3 pt-2 border-t border-gray-100">
+          {/* Section 6: Feature Perks List (Array of Strings) */}
+          <div className="space-y-3 pt-3 border-t border-gray-100">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
                 <span className="w-1.5 h-3.5 bg-[#0E3E27] rounded-full" />
-                Plan Feature Toggles
+                Feature Perks ({features.length})
               </h4>
               <span className="text-[11px] text-gray-400">
-                {Object.keys(features).length} configured features
+                Included benefits shown on pricing table
               </span>
             </div>
 
-            {/* Features Container */}
-            <div className="space-y-2 max-h-60 overflow-y-auto p-3.5 bg-gray-50/80 rounded-xl border border-gray-200">
-              {Object.entries(features).map(([k, val]) => {
-                const isBool = isBooleanFeature(val);
-                const isChecked = toBooleanFeature(val);
-
-                return (
+            {/* List of Features */}
+            <div className="space-y-2 max-h-56 overflow-y-auto p-3 bg-gray-50/80 rounded-xl border border-gray-200">
+              {features.length === 0 ? (
+                <div className="text-center py-4 text-gray-400 italic text-[11.5px]">
+                  No perks added yet. Type below or click the suggested presets.
+                </div>
+              ) : (
+                features.map((feat, idx) => (
                   <div
-                    key={k}
-                    className="flex items-center justify-between py-1.5 px-2 bg-white rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                    key={idx}
+                    className="flex items-center gap-2 py-1.5 px-2.5 bg-white rounded-lg border border-gray-200 shadow-2xs hover:border-gray-300 transition-colors"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="capitalize font-medium text-gray-800 text-xs">
-                        {k.replace(/_/g, " ")}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      {isBool ? (
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <span className="text-[11px] font-semibold text-gray-500 min-w-8 text-right">
-                            {isChecked ? "Yes" : "No"}
-                          </span>
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) =>
-                              handleFeatureToggle(k, e.target.checked)
-                            }
-                            className="w-4 h-4 rounded text-[#0E3E27] accent-[#0E3E27] cursor-pointer"
-                          />
-                        </label>
-                      ) : (
-                        <input
-                          type="text"
-                          value={String(val ?? "")}
-                          onChange={(e) =>
-                            handleFeatureTextChange(k, e.target.value)
-                          }
-                          className="h-7 w-32 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-800 bg-white focus:outline-none focus:border-[#0E3E27]"
-                        />
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFeature(k)}
-                        title="Remove feature"
-                        className="text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#0E3E27] flex-shrink-0" />
+                    <input
+                      type="text"
+                      value={feat}
+                      onChange={(e) =>
+                        handleUpdateFeatureText(idx, e.target.value)
+                      }
+                      className="flex-1 text-xs text-gray-800 bg-transparent focus:outline-none focus:border-b focus:border-[#0E3E27]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFeature(idx)}
+                      title="Remove feature perk"
+                      className="text-gray-400 hover:text-red-500 p-1 rounded-md hover:bg-red-50 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
 
-            {/* Add Custom Feature Row */}
-            <div className="flex items-center gap-2 p-2 bg-gray-50/80 rounded-xl border border-gray-200">
+            {/* Add Custom Perk Input */}
+            <div className="flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Add custom feature (e.g. emergency_sos)"
-                value={newKey}
-                onChange={(e) => setNewKey(e.target.value)}
+                placeholder="Type a feature perk (e.g. Unlimited friends, Priority support) and press Enter"
+                value={newFeatureText}
+                onChange={(e) => setNewFeatureText(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     handleAddFeature();
                   }
                 }}
-                className="flex-1 h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-800 bg-white focus:outline-none focus:border-[#0E3E27]"
+                className="flex-1 h-9 px-3 rounded-xl border border-gray-200 text-xs text-gray-800 bg-white focus:outline-none focus:border-[#0E3E27] focus:ring-1 focus:ring-[#0E3E27]"
               />
-              <select
-                value={newValueType}
-                onChange={(e) =>
-                  setNewValueType(e.target.value as "boolean" | "text")
-                }
-                className="h-8 px-2 rounded-lg border border-gray-200 text-xs text-gray-700 bg-white focus:outline-none"
-              >
-                <option value="boolean">Toggle (Yes/No)</option>
-                <option value="text">Custom Text</option>
-              </select>
               <button
                 type="button"
-                onClick={handleAddFeature}
-                className="h-8 px-3 rounded-lg bg-gray-200 hover:bg-[#0E3E27] hover:text-white text-gray-700 text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                onClick={() => handleAddFeature()}
+                className="h-9 px-3.5 rounded-xl bg-[#0E3E27] hover:bg-[#092c1b] text-white text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Add</span>
+                <span>Add Perk</span>
               </button>
+            </div>
+
+            {/* Suggested Preset Pills */}
+            <div className="pt-1">
+              <span className="text-[11px] font-semibold text-gray-500 block mb-1.5">
+                Suggested feature presets (click to add):
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {SUGGESTED_FEATURES.map((preset) => {
+                  const alreadyAdded = features.some(
+                    (f) => f.toLowerCase() === preset.toLowerCase(),
+                  );
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      disabled={alreadyAdded}
+                      onClick={() => handleAddFeature(preset)}
+                      className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                        alreadyAdded
+                          ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                          : "bg-white text-gray-700 border-gray-200 hover:border-[#0E3E27] hover:text-[#0E3E27] hover:bg-emerald-50/40"
+                      }`}
+                    >
+                      {alreadyAdded ? (
+                        <Check className="w-3 h-3 text-emerald-600" />
+                      ) : (
+                        <Plus className="w-3 h-3" />
+                      )}
+                      <span>{preset}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </form>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-[#fbfbf9]/60 flex-shrink-0">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-[#fbfbf9]/80 flex-shrink-0">
           <button
             type="button"
             onClick={onClose}

@@ -12,6 +12,7 @@ import {
   CreditCard,
   Plus,
   UserMinus,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -26,6 +27,7 @@ import MembershipFormModal, {
   MembershipItem,
   isBooleanFeature,
   toBooleanFeature,
+  parseFeaturesToArray,
 } from "@/components/memberships/MembershipFormModal";
 
 export default function MembershipsPage() {
@@ -606,8 +608,7 @@ export default function MembershipsPage() {
                 </tr>
               ) : (
                 memberships.map((plan) => {
-                  const features = parsePlanFeatures(plan.feature);
-                  const featureEntries = Object.entries(features);
+                  const featureList = parseFeaturesToArray(plan.feature);
                   const monthlyPriceNum = Number(
                     plan.monthly_price ?? plan.price_usd ?? 0,
                   );
@@ -635,10 +636,15 @@ export default function MembershipsPage() {
                             {getPlanIcon(plan)}
                           </div>
                           <div>
-                            <div className="flex items-center gap-2.5 mb-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <span className="text-[16px] font-semibold text-[#1f1f1f] capitalize">
                                 {plan.name}
                               </span>
+                              {plan.level && (
+                                <span className="px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-gray-100 text-gray-700 capitalize border border-gray-200">
+                                  {plan.level}
+                                </span>
+                              )}
                               <span className="inline-flex items-center gap-1.5 text-[13px] text-[#34A853] font-medium">
                                 <span className="w-[7px] h-[7px] rounded-full bg-[#2f9e44]" />
                                 Active
@@ -672,48 +678,37 @@ export default function MembershipsPage() {
 
                       {/* 3. Features Included */}
                       <td className="py-5 px-3 align-top">
-                        {featureEntries.length > 0 ? (
-                          <div className="flex flex-col gap-2 max-w-sm">
-                            {featureEntries
-                              .slice(0, 4)
-                              .map(([key, val], idx) => {
-                                const isBool = isBooleanFeature(val);
-                                const boolVal = toBooleanFeature(val);
-                                return (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center gap-2 text-[11px] text-[#888]"
+                        {featureList.length > 0 ? (
+                          <div className="flex flex-col gap-1.5 max-w-sm">
+                            {featureList.slice(0, 4).map((feat, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-2 text-[11.5px] text-[#555]"
+                              >
+                                <span className="text-[#34A853] flex-shrink-0">
+                                  <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    className="w-3.5 h-3.5"
                                   >
-                                    <span
-                                      className={`flex-shrink-0 ${
-                                        isBool && !boolVal
-                                          ? "text-gray-300"
-                                          : "text-[#4a6b3f]"
-                                      }`}
-                                    >
-                                      <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2.5"
-                                        className="w-3.5 h-3.5"
-                                      >
-                                        <polyline points="20 6 9 17 4 12" />
-                                      </svg>
-                                    </span>
-                                    <span className="capitalize">
-                                      {key.replace(/_/g, " ")}
-                                      {!isBool && `: ${String(val)}`}
-                                      {isBool && !boolVal && " (Disabled)"}
-                                    </span>
-                                  </div>
-                                );
-                              })}
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                </span>
+                                <span>{feat}</span>
+                              </div>
+                            ))}
+                            {featureList.length > 4 && (
+                              <span className="text-[10px] text-gray-400 font-medium pl-5.5">
+                                +{featureList.length - 4} more perks
+                              </span>
+                            )}
                           </div>
                         ) : (
-                          <div className="flex flex-col gap-2 text-[11px] text-[#888]">
+                          <div className="flex flex-col gap-1.5 text-[11.5px] text-[#888]">
                             <div className="flex items-center gap-2">
-                              <span className="text-[#4a6b3f]">
+                              <span className="text-[#34A853]">
                                 <svg
                                   viewBox="0 0 24 24"
                                   fill="none"
@@ -725,20 +720,6 @@ export default function MembershipsPage() {
                                 </svg>
                               </span>
                               Access to basic resources
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[#4a6b3f]">
-                                <svg
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  className="w-3.5 h-3.5"
-                                >
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                              </span>
-                              Community posts access
                             </div>
                           </div>
                         )}
@@ -1118,6 +1099,16 @@ export default function MembershipsPage() {
             </div>
 
             <div className="py-5 space-y-6">
+              {/* Title & Level Header */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+                  Tier Level:
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-[#0E3E27] capitalize">
+                  {selectedPlan.level || "basic"} tier
+                </span>
+              </div>
+
               {/* Description */}
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">
@@ -1129,32 +1120,31 @@ export default function MembershipsPage() {
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-gray-50/70 border border-gray-100 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-4 rounded-xl bg-gray-50/70 border border-gray-100 text-xs">
                 <div>
-                  <span className="text-gray-400 block font-medium">Price</span>
+                  <span className="text-gray-400 block font-medium">Monthly Price</span>
                   <span className="font-bold text-sm text-[#0E3E27]">
                     {Number(
                       selectedPlan.monthly_price ?? selectedPlan.price_usd ?? 0,
-                    ) === 0 && Number(selectedPlan.yearly_price ?? 0) === 0
+                    ) === 0
                       ? "Free"
-                      : selectedPlan.monthly_price !== undefined
-                        ? `$${Number(selectedPlan.monthly_price).toFixed(2)}/mo`
-                        : `$${selectedPlan.price_usd}`}
+                      : `$${Number(selectedPlan.monthly_price ?? selectedPlan.price_usd).toFixed(2)}/mo`}
                   </span>
-                  {Number(selectedPlan.yearly_price ?? 0) > 0 && (
-                    <span className="block text-[11px] text-[#7D848D]">
-                      ${Number(selectedPlan.yearly_price).toFixed(2)}/yr
-                    </span>
-                  )}
                 </div>
                 <div>
-                  <span className="text-gray-400 block font-medium">
-                    Duration
-                  </span>
+                  <span className="text-gray-400 block font-medium">Yearly Price</span>
                   <span className="font-bold text-sm text-gray-800">
-                    {selectedPlan.duration_days
-                      ? `${selectedPlan.duration_days} Days`
-                      : "Forever"}
+                    {Number(selectedPlan.yearly_price ?? 0) > 0
+                      ? `$${Number(selectedPlan.yearly_price).toFixed(2)}/yr`
+                      : "—"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block font-medium">Taxes</span>
+                  <span className="font-bold text-sm text-gray-800">
+                    {Number(selectedPlan.taxes ?? 0) > 0
+                      ? `$${Number(selectedPlan.taxes).toFixed(2)}`
+                      : "$0.00"}
                   </span>
                 </div>
                 <div>
@@ -1267,44 +1257,29 @@ export default function MembershipsPage() {
                   Privileges & Included Features
                 </h4>
                 {(() => {
-                  const feats = parsePlanFeatures(selectedPlan.feature);
-                  const entries = Object.entries(feats);
+                  const featureList = parseFeaturesToArray(selectedPlan.feature);
 
-                  if (entries.length === 0) {
+                  if (featureList.length === 0) {
                     return (
                       <p className="text-xs text-gray-400 italic">
-                        No custom features set for this tier.
+                        No custom features configured for this tier.
                       </p>
                     );
                   }
 
                   return (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {entries.map(([key, val], idx) => {
-                        const isBool = isBooleanFeature(val);
-                        const boolVal = toBooleanFeature(val);
-                        return (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 text-xs"
-                          >
-                            <span className="font-medium text-gray-700 capitalize">
-                              {key.replace(/_/g, " ")}
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                                isBool
-                                  ? boolVal
-                                    ? "bg-emerald-100 text-emerald-800"
-                                    : "bg-red-100 text-red-700"
-                                  : "bg-blue-50 text-blue-700"
-                              }`}
-                            >
-                              {isBool ? (boolVal ? "YES" : "NO") : String(val)}
-                            </span>
-                          </div>
-                        );
-                      })}
+                      {featureList.map((feat, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2.5 p-3 rounded-xl bg-gray-50 border border-gray-100 text-xs"
+                        >
+                          <span className="w-5 h-5 rounded-full bg-emerald-100 text-[#0E3E27] flex items-center justify-center flex-shrink-0">
+                            <Check className="w-3.5 h-3.5" />
+                          </span>
+                          <span className="font-medium text-gray-800">{feat}</span>
+                        </div>
+                      ))}
                     </div>
                   );
                 })()}

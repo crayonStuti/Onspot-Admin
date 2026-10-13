@@ -72,6 +72,7 @@ export default function GPSActivityPage() {
     ActivityOverviewPoint[]
   >([]);
   const [topStates, setTopStates] = useState<TopStateByPins[]>([]);
+  const [showAllStates, setShowAllStates] = useState(false);
   const [topTagTypes, setTopTagTypes] = useState<TopTagTypesData | null>(null);
   const [hoveredTagIndex, setHoveredTagIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1397,50 +1398,54 @@ export default function GPSActivityPage() {
                 No state activity data available.
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
-                {topStates.slice(0, 6).map((st, sIdx) => {
-                  const pct = Math.min(
-                    Math.round((st.pin_count / maxStateCount) * 100),
-                    100,
-                  );
-                  return (
-                    <div
-                      key={st.state_id || sIdx}
-                      className="grid grid-cols-[85px_1fr] items-center gap-3"
-                    >
-                      <span
-                        className="text-[#7D848D] text-[13px] truncate"
-                        title={st.state_name}
+              <div
+                className={`flex flex-col gap-3 ${
+                  showAllStates ? "max-h-[300px] overflow-y-auto pr-1" : ""
+                }`}
+              >
+                {(showAllStates ? topStates : topStates.slice(0, 6)).map(
+                  (st, sIdx) => {
+                    const pct = Math.min(
+                      Math.round((st.pin_count / maxStateCount) * 100),
+                      100,
+                    );
+                    return (
+                      <div
+                        key={st.state_id || sIdx}
+                        className="grid grid-cols-[85px_1fr] items-center gap-3"
                       >
-                        {st.state_name}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden">
-                          <div
-                            className="bg-[#2d4a23] h-full rounded-full transition-all duration-500"
-                            style={{ width: `${Math.max(pct, 6)}%` }}
-                          />
-                        </div>
-                        <span className="text-[11px] font-medium text-gray-400 w-5 text-right">
-                          {st.pin_count}
+                        <span
+                          className="text-[#7D848D] text-[13px] truncate"
+                          title={st.state_name}
+                        >
+                          {st.state_name}
                         </span>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden">
+                            <div
+                              className="bg-[#2d4a23] h-full rounded-full transition-all duration-500"
+                              style={{ width: `${Math.max(pct, 6)}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] font-medium text-gray-400 w-5 text-right">
+                            {st.pin_count}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  },
+                )}
               </div>
             )}
 
-            <button
-              onClick={() => {
-                setSelectedState("");
-                setPage(1);
-                fetchPinsList();
-              }}
-              className="w-full text-center mt-3.5 pt-3 border-t border-[#ececec] text-[#0E3E27] font-medium text-[13px] hover:underline cursor-pointer transition-colors block"
-            >
-              View All States
-            </button>
+            {!showAllStates && topStates.length > 6 && (
+              <button
+                onClick={() => setShowAllStates(true)}
+                className="w-full text-center mt-3.5 pt-3 border-t border-[#ececec] text-[#0E3E27] font-medium text-[13px] hover:underline cursor-pointer transition-colors block"
+              >
+                View All States
+              </button>
+            )}
           </div>
 
           {/* 3. Top Tag Types Panel */}
@@ -1608,8 +1613,14 @@ export default function GPSActivityPage() {
 
       {/* ===================== VIEW PIN DETAILS MODAL ===================== */}
       {viewModalOpen && selectedPin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6">
+        <div
+          onClick={() => setViewModalOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6"
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
@@ -1764,8 +1775,19 @@ export default function GPSActivityPage() {
 
       {/* ===================== DELETE CONFIRMATION MODAL ===================== */}
       {deleteConfirmOpen && pinToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-gray-100 space-y-4">
+        <div
+          onClick={() => {
+            if (!deleting) {
+              setDeleteConfirmOpen(false);
+              setPinToDelete(null);
+            }
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-gray-100 space-y-4"
+          >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
                 <Trash2 className="w-5 h-5" />

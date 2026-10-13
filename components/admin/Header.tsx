@@ -86,7 +86,7 @@ export default function Header({
     <header className="mb-5 sm:mb-8 pt-2 w-full min-w-0">
       <div className="flex items-center justify-between gap-3 sm:gap-6 w-full">
         {/* Page Title & Mobile Menu Button */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
           <button
             onClick={onMenuClick}
             className="p-1.5 sm:p-2 rounded-xl text-gray-600 hover:bg-gray-100 lg:hidden cursor-pointer shrink-0"
@@ -94,7 +94,7 @@ export default function Header({
           >
             <Menu className="w-5 h-5" />
           </button>
-          <h1 className="text-[17px] sm:text-[22px] md:text-[24px] font-bold text-[#1f1f1f] tracking-tight whitespace-nowrap">
+          <h1 className="text-[16px] sm:text-[22px] md:text-[24px] font-bold text-[#1f1f1f] tracking-tight truncate max-w-[140px] sm:max-w-none">
             {title}
           </h1>
         </div>
@@ -105,7 +105,7 @@ export default function Header({
         </div>
 
         {/* Top Right Action Icons & Profile */}
-        <div className="flex items-center gap-2 sm:gap-3.5 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3.5 shrink-0">
           {/* Mobile Search Toggle Button */}
           <button
             onClick={() => setIsMobileSearchOpen((prev) => !prev)}
@@ -116,11 +116,11 @@ export default function Header({
             <Search className="w-4 h-4 text-[#2d4a23]" />
           </button>
 
-          {/* Settings round button */}
+          {/* Settings round button - hidden on mobile since it is in the mobile sidebar */}
           <Link
             href="/settings"
             title="Settings"
-            className="w-[34px] h-[34px] sm:w-[42px] sm:h-[42px] rounded-full bg-[#f5efdc] flex items-center justify-center hover:bg-[#eae2c9] transition-colors cursor-pointer shrink-0"
+            className="hidden sm:flex w-[34px] h-[34px] sm:w-[42px] sm:h-[42px] rounded-full bg-[#f5efdc] items-center justify-center hover:bg-[#eae2c9] transition-colors cursor-pointer shrink-0"
           >
             <img
               src="/images/setting-icon.png"

@@ -60,8 +60,6 @@ export default function UsersPage() {
   const [states, setStates] = useState<StateItem[]>([]);
   const [loadingStates, setLoadingStates] = useState(false);
 
-  // Row dropdown active state
-  const [openMenuUserId, setOpenMenuUserId] = useState<string | null>(null);
 
   // View User Details Modal
   const [viewUserModal, setViewUserModal] = useState(false);
@@ -96,17 +94,6 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState<UserItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Close row actions menu on click outside
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest(".act-menu-wrap")) {
-        setOpenMenuUserId(null);
-      }
-    };
-    document.addEventListener("click", handleOutsideClick);
-    return () => document.removeEventListener("click", handleOutsideClick);
-  }, []);
 
   // Open Add User Modal from URL param (?action=create) or populate ?search= filter
   useEffect(() => {
@@ -1056,8 +1043,14 @@ export default function UsersPage() {
 
       {/* ===================== VIEW USER DETAILS DRAWER / MODAL ===================== */}
       {viewUserModal && selectedUserDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6 space-y-5">
+        <div
+          onClick={() => setViewUserModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6 space-y-5"
+          >
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-emerald-50 text-[#2d4a23] font-bold text-lg flex items-center justify-center flex-shrink-0 border border-emerald-100 overflow-hidden relative">
@@ -1347,8 +1340,19 @@ export default function UsersPage() {
 
       {/* ===================== DELETE CONFIRMATION DIALOG ===================== */}
       {deleteConfirmOpen && userToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-gray-100 p-6">
+        <div
+          onClick={() => {
+            if (!deleting) {
+              setDeleteConfirmOpen(false);
+              setUserToDelete(null);
+            }
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-gray-100 p-6"
+          >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
                 <Trash2 className="w-5 h-5" />

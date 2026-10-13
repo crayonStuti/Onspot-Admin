@@ -31,6 +31,16 @@ interface AddUserModalProps {
   loadingStates: boolean;
 }
 
+const INITIAL_ADD_FORM = {
+  first_name: "",
+  last_name: "",
+  email: "",
+  password: "",
+  role: "user",
+  status: "active",
+  state_id: "",
+};
+
 export function AddUserModal({
   isOpen,
   onClose,
@@ -38,18 +48,21 @@ export function AddUserModal({
   states,
   loadingStates,
 }: AddUserModalProps) {
-  const [addForm, setAddForm] = useState({
-    first_name: "",
-    last_name: "",
-    email: "",
-    password: "",
-    role: "user",
-    status: "active",
-    state_id: "",
-  });
+  const [addForm, setAddForm] = useState(INITIAL_ADD_FORM);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [addSaving, setAddSaving] = useState(false);
   const [addErrors, setAddErrors] = useState<Record<string, string>>({});
+
+  const resetForm = () => {
+    setAddForm(INITIAL_ADD_FORM);
+    setAddErrors({});
+    setPasswordVisible(false);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -107,9 +120,10 @@ export function AddUserModal({
       }
 
       const res = await registerUser(payload);
-      console.log(res);
+      //console.log(res);
       toast.success("User created successfully");
       onSuccess();
+      resetForm();
       onClose();
     } catch (err: any) {
       console.error("Create user error:", err);
@@ -120,8 +134,14 @@ export function AddUserModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6 space-y-6">
+    <div
+      onClick={handleClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6 space-y-6"
+      >
         <div className="flex items-center justify-between pb-4 border-b border-gray-100">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#2d4a23] flex items-center justify-center">
@@ -138,7 +158,7 @@ export function AddUserModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -344,7 +364,7 @@ export function AddUserModal({
           <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-gray-700 cursor-pointer"
             >
               Cancel
