@@ -183,7 +183,7 @@ export default function NotificationsPage() {
         limit,
         target_audience: targetAudienceParam,
         send_type: channelFilter || undefined,
-        status: statusFilter || undefined,
+        status: activeTab === "admin" ? undefined : statusFilter || undefined,
         state_id:
           activeTab === "all_users" &&
           audienceFilter === "state_wise" &&
@@ -437,64 +437,54 @@ export default function NotificationsPage() {
 
       {/* Filter Row */}
       <div className="bg-white rounded-[14px] p-4 border border-[#ececec] shadow-[0_2px_8px_rgba(60,60,60,0.04)] flex flex-wrap items-center gap-3">
-        {/* Filter 1: Target Audience */}
-        <select
-          disabled={activeTab === "admin"}
-          value={activeTab === "admin" ? "admin" : audienceFilter}
-          onChange={(e) => {
-            const val = e.target.value;
-            setAudienceFilter(val);
-            if (val !== "state_wise") {
-              setStateFilter("");
-            }
-            setPage(1);
-          }}
-          className={`h-10 px-3 bg-white border border-[#e2e2dc] rounded-[8px] text-[13px] focus:outline-none focus:border-[#014421] min-w-[150px] transition-colors ${
-            activeTab === "admin"
-              ? "bg-[#f8f8f6] text-[#8e8e88] cursor-not-allowed border-[#e8e8e2]"
-              : "text-[#2c2c2c]"
-          }`}
-        >
-          {activeTab === "admin" ? (
-            <option value="admin">Audience: Admin</option>
-          ) : (
-            <>
-              <option value="">All Audiences</option>
-              <option value="all_users">All Users</option>
-              <option value="premium">Premium Users</option>
-              <option value="state_wise">State-wise</option>
-            </>
-          )}
-        </select>
+        {/* Filter 1: Target Audience (Hidden in admin tab) */}
+        {activeTab !== "admin" && (
+          <select
+            value={audienceFilter}
+            onChange={(e) => {
+              const val = e.target.value;
+              setAudienceFilter(val);
+              if (val !== "state_wise") {
+                setStateFilter("");
+              }
+              setPage(1);
+            }}
+            className="h-10 px-3 bg-white border border-[#e2e2dc] rounded-[8px] text-[13px] text-[#2c2c2c] focus:outline-none focus:border-[#014421] min-w-[150px]"
+          >
+            <option value="">All Audiences</option>
+            <option value="all_users">All Users</option>
+            <option value="premium">Premium Users</option>
+            <option value="state_wise">State-wise</option>
+          </select>
+        )}
 
-        {/* Filter 2: State Filter (Shown by default on list) */}
-        <select
-          disabled={activeTab === "admin"}
-          value={stateFilter}
-          onChange={(e) => {
-            const val = e.target.value;
-            setStateFilter(val);
-            if (val) {
-              // If user selects a state first, auto-switch audience to state_wise
-              setAudienceFilter("state_wise");
-            }
-            setPage(1);
-          }}
-          className={`h-10 px-3 border rounded-[8px] text-[13px] focus:outline-none focus:border-[#014421] min-w-[170px] transition-colors ${
-            activeTab === "admin"
-              ? "bg-[#f8f8f6] text-[#8e8e88] cursor-not-allowed border-[#e8e8e2]"
-              : audienceFilter === "state_wise" || stateFilter
-              ? "bg-emerald-50/60 border-emerald-300 text-emerald-950 font-medium"
-              : "bg-white border-[#e2e2dc] text-[#2c2c2c]"
-          }`}
-        >
-          <option value="">All States</option>
-          {states.map((st) => (
-            <option key={st.state_id} value={st.state_id}>
-              {st.state_name} ({st.state_code})
-            </option>
-          ))}
-        </select>
+        {/* Filter 2: State Filter (Hidden in admin tab) */}
+        {activeTab !== "admin" && (
+          <select
+            value={stateFilter}
+            onChange={(e) => {
+              const val = e.target.value;
+              setStateFilter(val);
+              if (val) {
+                // If user selects a state first, auto-switch audience to state_wise
+                setAudienceFilter("state_wise");
+              }
+              setPage(1);
+            }}
+            className={`h-10 px-3 border rounded-[8px] text-[13px] focus:outline-none focus:border-[#014421] min-w-[170px] transition-colors ${
+              audienceFilter === "state_wise" || stateFilter
+                ? "bg-emerald-50/60 border-emerald-300 text-emerald-950 font-medium"
+                : "bg-white border-[#e2e2dc] text-[#2c2c2c]"
+            }`}
+          >
+            <option value="">All States</option>
+            {states.map((st) => (
+              <option key={st.state_id} value={st.state_id}>
+                {st.state_name} ({st.state_code})
+              </option>
+            ))}
+          </select>
+        )}
 
         {/* Filter 3: Channel */}
         <select
@@ -511,19 +501,21 @@ export default function NotificationsPage() {
           <option value="email">Email</option>
         </select>
 
-        {/* Filter 4: Status */}
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
-          className="h-10 px-3 bg-white border border-[#e2e2dc] rounded-[8px] text-[13px] text-[#2c2c2c] focus:outline-none focus:border-[#014421] min-w-[130px]"
-        >
-          <option value="">All Status</option>
-          <option value="sent">Sent</option>
-          <option value="draft">Draft</option>
-        </select>
+        {/* Filter 4: Status (Hidden in admin tab) */}
+        {activeTab !== "admin" && (
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            className="h-10 px-3 bg-white border border-[#e2e2dc] rounded-[8px] text-[13px] text-[#2c2c2c] focus:outline-none focus:border-[#014421] min-w-[130px]"
+          >
+            <option value="">All Status</option>
+            <option value="sent">Sent</option>
+            <option value="draft">Draft</option>
+          </select>
+        )}
 
         {/* Filter 5: Date Range */}
         <select
@@ -612,8 +604,12 @@ export default function NotificationsPage() {
                     <th className="py-3.5 px-4">Type</th>
                     <th className="py-3.5 px-4">Channel</th>
                     <th className="py-3.5 px-4">Date Sent</th>
-                    <th className="py-3.5 px-4">Open Rate</th>
-                    <th className="py-3.5 px-4">Status</th>
+                    {activeTab !== "admin" && (
+                      <th className="py-3.5 px-4">Open Rate</th>
+                    )}
+                    {activeTab !== "admin" && (
+                      <th className="py-3.5 px-4">Status</th>
+                    )}
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -621,7 +617,7 @@ export default function NotificationsPage() {
                   {loading ? (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={activeTab === "admin" ? 6 : 8}
                         className="py-20 text-center text-[#717171]"
                       >
                         <div className="flex flex-col items-center justify-center gap-2">
@@ -633,7 +629,7 @@ export default function NotificationsPage() {
                   ) : notifications.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={activeTab === "admin" ? 6 : 8}
                         className="py-16 text-center text-[#8e8e88]"
                       >
                         <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
@@ -753,37 +749,41 @@ export default function NotificationsPage() {
                             {formatSentDate(item.created_at)}
                           </td>
 
-                          {/* Open Rate with visual bar */}
-                          <td className="py-3.5 px-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-[#1f1f1f] text-[12.5px]">
-                                {item.open_rate || `${rateNum.toFixed(1)}%`}
-                              </span>
-                              <div className="w-14 h-1.5 bg-[#ebebe6] rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-[#014421] rounded-full"
-                                  style={{
-                                    width: `${Math.min(100, Math.max(0, rateNum))}%`,
-                                  }}
-                                />
+                          {/* Open Rate with visual bar (Hidden in admin tab) */}
+                          {activeTab !== "admin" && (
+                            <td className="py-3.5 px-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-[#1f1f1f] text-[12.5px]">
+                                  {item.open_rate || `${rateNum.toFixed(1)}%`}
+                                </span>
+                                <div className="w-14 h-1.5 bg-[#ebebe6] rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-[#014421] rounded-full"
+                                    style={{
+                                      width: `${Math.min(100, Math.max(0, rateNum))}%`,
+                                    }}
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          </td>
+                            </td>
+                          )}
 
-                          {/* Status */}
-                          <td className="py-3.5 px-4 whitespace-nowrap">
-                            {item.status === "draft" ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11.5px] font-medium rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                Draft
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11.5px] font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                Sent
-                              </span>
-                            )}
-                          </td>
+                          {/* Status (Hidden in admin tab) */}
+                          {activeTab !== "admin" && (
+                            <td className="py-3.5 px-4 whitespace-nowrap">
+                              {item.status === "draft" ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11.5px] font-medium rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                  Draft
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11.5px] font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  Sent
+                                </span>
+                              )}
+                            </td>
+                          )}
 
                           {/* Actions */}
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
