@@ -1427,7 +1427,7 @@ export async function getRevenueOverview(
    ========================================================================= */
 
 export type NotificationVisualType = "info" | "error" | "congratulation" | "warning" | "offer";
-export type NotificationTargetAudience = "all_users" | "premium" | "state_wise";
+export type NotificationTargetAudience = "all_users" | "premium" | "state_wise" | "admin";
 export type NotificationDateRange = "last_7_days" | "last_30_days" | "last_90_days";
 export type NotificationSendType = "both" | "push" | "email";
 export type NotificationStatus = "sent" | "draft";

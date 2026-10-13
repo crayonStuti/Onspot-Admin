@@ -96,6 +96,9 @@ export default function NotificationsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  // Tab State: 'all_users' | 'admin'
+  const [activeTab, setActiveTab] = useState<"all_users" | "admin">("all_users");
+
   // Filters State
   const [audienceFilter, setAudienceFilter] = useState("");
   const [stateFilter, setStateFilter] = useState("");
@@ -172,14 +175,19 @@ export default function NotificationsPage() {
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
+      const targetAudienceParam =
+        activeTab === "admin" ? "admin" : audienceFilter || undefined;
+
       const res = await getAdminNotifications({
         page,
         limit,
-        target_audience: audienceFilter || undefined,
+        target_audience: targetAudienceParam,
         send_type: channelFilter || undefined,
         status: statusFilter || undefined,
         state_id:
-          audienceFilter === "state_wise" && stateFilter
+          activeTab === "all_users" &&
+          audienceFilter === "state_wise" &&
+          stateFilter
             ? stateFilter
             : undefined,
         date_range: dateFilter || undefined,
@@ -207,6 +215,7 @@ export default function NotificationsPage() {
   }, [
     page,
     limit,
+    activeTab,
     audienceFilter,
     stateFilter,
     channelFilter,
@@ -220,7 +229,13 @@ export default function NotificationsPage() {
   }, [fetchNotifications]);
 
   // Handlers
+  const handleTabChange = (tab: "all_users" | "admin") => {
+    setActiveTab(tab);
+    setPage(1);
+  };
+
   const handleResetFilters = () => {
+    setActiveTab("all_users");
     setAudienceFilter("");
     setStateFilter("");
     setChannelFilter("");
@@ -284,35 +299,37 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Create New Notification Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => handleOpenCreateModal("info")}
-          className="h-10 px-[18px] bg-[#1f3d18] hover:bg-[#172e12] text-white border-none rounded-[6px] font-semibold text-[13px] inline-flex items-center gap-2 cursor-pointer transition-colors shadow-xs"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="w-[15px] h-[15px]"
+      {activeTab !== "admin" && (
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => handleOpenCreateModal("info")}
+            className="h-10 px-[18px] bg-[#1f3d18] hover:bg-[#172e12] text-white border-none rounded-[6px] font-semibold text-[13px] inline-flex items-center gap-2 cursor-pointer transition-colors shadow-xs"
           >
-            <circle cx="12" cy="12" r="9" />
-            <line x1="12" y1="8" x2="12" y2="16" />
-            <line x1="8" y1="12" x2="16" y2="12" />
-          </svg>
-          <span>Create new notification</span>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="w-[15px] h-[15px]"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
-      </div>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="w-[15px] h-[15px]"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+            <span>Create new notification</span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="w-[15px] h-[15px]"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Stats Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -422,7 +439,8 @@ export default function NotificationsPage() {
       <div className="bg-white rounded-[14px] p-4 border border-[#ececec] shadow-[0_2px_8px_rgba(60,60,60,0.04)] flex flex-wrap items-center gap-3">
         {/* Filter 1: Target Audience */}
         <select
-          value={audienceFilter}
+          disabled={activeTab === "admin"}
+          value={activeTab === "admin" ? "admin" : audienceFilter}
           onChange={(e) => {
             const val = e.target.value;
             setAudienceFilter(val);
@@ -431,16 +449,27 @@ export default function NotificationsPage() {
             }
             setPage(1);
           }}
-          className="h-10 px-3 bg-white border border-[#e2e2dc] rounded-[8px] text-[13px] text-[#2c2c2c] focus:outline-none focus:border-[#014421] min-w-[150px]"
+          className={`h-10 px-3 bg-white border border-[#e2e2dc] rounded-[8px] text-[13px] focus:outline-none focus:border-[#014421] min-w-[150px] transition-colors ${
+            activeTab === "admin"
+              ? "bg-[#f8f8f6] text-[#8e8e88] cursor-not-allowed border-[#e8e8e2]"
+              : "text-[#2c2c2c]"
+          }`}
         >
-          <option value="">All Audiences</option>
-          <option value="all_users">All Users</option>
-          <option value="premium">Premium Users</option>
-          <option value="state_wise">State-wise</option>
+          {activeTab === "admin" ? (
+            <option value="admin">Audience: Admin</option>
+          ) : (
+            <>
+              <option value="">All Audiences</option>
+              <option value="all_users">All Users</option>
+              <option value="premium">Premium Users</option>
+              <option value="state_wise">State-wise</option>
+            </>
+          )}
         </select>
 
         {/* Filter 2: State Filter (Shown by default on list) */}
         <select
+          disabled={activeTab === "admin"}
           value={stateFilter}
           onChange={(e) => {
             const val = e.target.value;
@@ -452,7 +481,9 @@ export default function NotificationsPage() {
             setPage(1);
           }}
           className={`h-10 px-3 border rounded-[8px] text-[13px] focus:outline-none focus:border-[#014421] min-w-[170px] transition-colors ${
-            audienceFilter === "state_wise" || stateFilter
+            activeTab === "admin"
+              ? "bg-[#f8f8f6] text-[#8e8e88] cursor-not-allowed border-[#e8e8e2]"
+              : audienceFilter === "state_wise" || stateFilter
               ? "bg-emerald-50/60 border-emerald-300 text-emerald-950 font-medium"
               : "bg-white border-[#e2e2dc] text-[#2c2c2c]"
           }`}
@@ -544,6 +575,34 @@ export default function NotificationsPage() {
         <div className="lg:col-span-8 space-y-6">
           {/* Table Card */}
           <div className="bg-white rounded-[14px] border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.06),0_2px_6px_rgba(60,60,60,0.04)] overflow-hidden">
+            {/* Tabs Header: All Users & Admin */}
+            <div className="border-b border-[#ececec] px-5 bg-white flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("all_users")}
+                  className={`py-3.5 px-1 text-[13.5px] font-semibold transition-all relative border-b-2 cursor-pointer inline-flex items-center gap-2 ${
+                    activeTab === "all_users"
+                      ? "border-[#014421] text-[#014421]"
+                      : "border-transparent text-[#717171] hover:text-[#1f1f1f]"
+                  }`}
+                >
+                  <span>All Users</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("admin")}
+                  className={`py-3.5 px-1 text-[13.5px] font-semibold transition-all relative border-b-2 cursor-pointer inline-flex items-center gap-2 ${
+                    activeTab === "admin"
+                      ? "border-[#014421] text-[#014421]"
+                      : "border-transparent text-[#717171] hover:text-[#1f1f1f]"
+                  }`}
+                >
+                  <span>Admin</span>
+                </button>
+              </div>
+            </div>
+
             <div className="overflow-x-auto min-h-[360px]">
               <table className="w-full text-left border-collapse text-[13px]">
                 <thead>
@@ -583,17 +642,20 @@ export default function NotificationsPage() {
                             No notifications found
                           </p>
                           <p className="text-[12px] text-[#717171]">
-                            No notifications match your chosen filters. Try
-                            adjusting your search or broadcast a new message.
+                            {activeTab === "admin"
+                              ? "No admin notifications found matching your chosen filters."
+                              : "No notifications match your chosen filters. Try adjusting your search or broadcast a new message."}
                           </p>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenCreateModal("info")}
-                            className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12.5px] font-medium text-white bg-[#014421] rounded-[7px]"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Create Notification</span>
-                          </button>
+                          {activeTab !== "admin" && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenCreateModal("info")}
+                              className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12.5px] font-medium text-white bg-[#014421] rounded-[7px]"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Create Notification</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -647,6 +709,11 @@ export default function NotificationsPage() {
                                     ? stateName
                                     : `State: ${stateName}`
                                   : "State: California"}
+                              </span>
+                            )}
+                            {item.target_audience === "admin" && (
+                              <span className="inline-block px-[11px] py-[3px] rounded-[6px] text-[11.5px] font-medium border border-[#fed7aa] bg-[#fff7ed] text-[#c2410c]">
+                                Admin
                               </span>
                             )}
                           </td>
@@ -720,7 +787,18 @@ export default function NotificationsPage() {
 
                           {/* Actions */}
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                            {item.status?.toLowerCase() === "draft" ? (
+                            {activeTab === "admin" ||
+                            item.target_audience === "admin" ? (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenViewModal(item)}
+                                title="View Details"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-[#e2e2dc] rounded-[7px] bg-white text-[#333] hover:bg-[#eef5ed] hover:text-[#014421] hover:border-[#b8e0c2] text-[12px] font-medium transition-colors cursor-pointer shadow-2xs"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-[#014421]" />
+                                <span>View</span>
+                              </button>
+                            ) : item.status?.toLowerCase() === "draft" ? (
                               <div className="flex items-center justify-end gap-1.5">
                                 <button
                                   type="button"
@@ -917,58 +995,60 @@ export default function NotificationsPage() {
         {/* Right Section (Guide & Fast Actions) */}
         <div className="lg:col-span-4 space-y-6">
           {/* Card 1: Send New Notifications */}
-          <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.06),0_2px_6px_rgba(60,60,60,0.04)]">
-            <h3 className="text-[16px] font-bold text-[#1f1f1f] mb-4">
-              Send New Notifications
-            </h3>
-            <div className="flex flex-col gap-4">
-              <div
-                onClick={() => handleOpenCreateModal("info")}
-                className="flex items-center gap-3.5 p-1.5 -m-1.5 rounded-[10px] hover:bg-[#faf7ec] transition-colors cursor-pointer group"
-              >
-                <div className="w-[54px] h-[54px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-[26px] h-[26px]"
-                  >
-                    <path d="M2 21l21-9L2 3v7l15 2-15 2z" />
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[14px] font-semibold text-[#1f1f1f] mb-0.5">
-                    Push Notification
+          {activeTab !== "admin" && (
+            <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.06),0_2px_6px_rgba(60,60,60,0.04)]">
+              <h3 className="text-[16px] font-bold text-[#1f1f1f] mb-4">
+                Send New Notifications
+              </h3>
+              <div className="flex flex-col gap-4">
+                <div
+                  onClick={() => handleOpenCreateModal("info")}
+                  className="flex items-center gap-3.5 p-1.5 -m-1.5 rounded-[10px] hover:bg-[#faf7ec] transition-colors cursor-pointer group"
+                >
+                  <div className="w-[54px] h-[54px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-[26px] h-[26px]"
+                    >
+                      <path d="M2 21l21-9L2 3v7l15 2-15 2z" />
+                    </svg>
                   </div>
-                  <div className="text-[12px] text-[#999] leading-[1.4]">
-                    Send instant notifications to users on their devices
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-semibold text-[#1f1f1f] mb-0.5">
+                      Push Notification
+                    </div>
+                    <div className="text-[12px] text-[#999] leading-[1.4]">
+                      Send instant notifications to users on their devices
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div
-                onClick={() => handleOpenCreateModal("offer")}
-                className="flex items-center gap-3.5 p-1.5 -m-1.5 rounded-[10px] hover:bg-[#faf7ec] transition-colors cursor-pointer group"
-              >
-                <div className="w-[54px] h-[54px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-[26px] h-[26px]"
-                  >
-                    <path d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v.4l-10 6-10-6V6zm0 2.8l10 6 10-6V18a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.8z" />
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[14px] font-semibold text-[#1f1f1f] mb-0.5">
-                    Email Notification
+                <div
+                  onClick={() => handleOpenCreateModal("offer")}
+                  className="flex items-center gap-3.5 p-1.5 -m-1.5 rounded-[10px] hover:bg-[#faf7ec] transition-colors cursor-pointer group"
+                >
+                  <div className="w-[54px] h-[54px] rounded-[10px] bg-[#eef1ea] text-[#2d4a23] flex items-center justify-center flex-shrink-0">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-[26px] h-[26px]"
+                    >
+                      <path d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v.4l-10 6-10-6V6zm0 2.8l10 6 10-6V18a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.8z" />
+                    </svg>
                   </div>
-                  <div className="text-[12px] text-[#999] leading-[1.4]">
-                    Send email announcement to users.
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-semibold text-[#1f1f1f] mb-0.5">
+                      Email Notification
+                    </div>
+                    <div className="text-[12px] text-[#999] leading-[1.4]">
+                      Send email announcement to users.
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Card 2: Why Send Notifications */}
           <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.06),0_2px_6px_rgba(60,60,60,0.04)]">
@@ -1069,8 +1149,18 @@ export default function NotificationsPage() {
         isOpen={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
         notification={selectedNotification}
-        onDuplicate={(item) => handleOpenDuplicateModal(item)}
-        onEdit={(item) => handleOpenEditModal(item)}
+        onDuplicate={
+          activeTab === "admin" ||
+          selectedNotification?.target_audience === "admin"
+            ? undefined
+            : (item) => handleOpenDuplicateModal(item)
+        }
+        onEdit={
+          activeTab === "admin" ||
+          selectedNotification?.target_audience === "admin"
+            ? undefined
+            : (item) => handleOpenEditModal(item)
+        }
       />
 
       {/* Delete Confirmation Modal */}

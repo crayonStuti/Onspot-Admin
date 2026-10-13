@@ -158,6 +158,11 @@ export default function NotificationDetailsModal({
                     : "State-wise"}
                 </span>
               )}
+              {notification.target_audience === "admin" && (
+                <span className="inline-block px-[11px] py-[3px] rounded-[6px] text-[11.5px] font-medium border border-[#fed7aa] bg-[#fff7ed] text-[#c2410c]">
+                  Admin
+                </span>
+              )}
               {notification.send_type && (
                 <span className="inline-block px-[11px] py-[3px] rounded-[6px] text-[11.5px] font-medium border border-gray-200 bg-gray-100 text-gray-700 capitalize">
                   Channel: {notification.send_type}
