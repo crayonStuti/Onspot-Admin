@@ -91,7 +91,7 @@ export default function ResourceFormModal({
         title: "",
         resource_type: "guide",
         resource_url: "",
-        category: "General",
+        category: "DNR Website",
         content: "",
         state_id: defaultStateId || "",
         is_published: true,
@@ -155,7 +155,7 @@ export default function ResourceFormModal({
           title: resource.title || "",
           resource_type: resource.resource_type || "guide",
           resource_url: resource.resource_url || "",
-          category: resource.category || "General",
+          category: resource.category || "DNR Website",
           content: resource.content || "",
           state_id: String(resource.state_id || resource.state?.state_id || ""),
           is_published:
