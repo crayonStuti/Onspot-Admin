@@ -26,6 +26,20 @@ export function ResetPasswordModal({
 
   if (!isOpen || !user) return null;
 
+  const resetForm = () => {
+    setPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+    setSendEmailNotification(true);
+  };
+
+  const handleClose = () => {
+    if (submitting) return;
+
+    resetForm();
+    onClose();
+  };
+
   const userDisplayName =
     `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
     user.display_name ||
@@ -96,9 +110,7 @@ export function ResetPasswordModal({
     try {
       await changeUserPassword(user.id, password);
 
-      toast.success(
-        `Password reset successfully for ${userDisplayName}.`,
-      );
+      toast.success(`Password reset successfully for ${userDisplayName}.`);
       setPassword("");
       setConfirmPassword("");
       onSuccess();
@@ -114,7 +126,7 @@ export function ResetPasswordModal({
 
   return (
     <div
-      onClick={onClose}
+      onClick={handleClose}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
     >
       <div
@@ -140,7 +152,7 @@ export function ResetPasswordModal({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -206,7 +218,7 @@ export function ResetPasswordModal({
             />
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer pt-1">
+          {/* <label className="flex items-center gap-2 cursor-pointer pt-1">
             <input
               type="checkbox"
               checked={sendEmailNotification}
@@ -216,13 +228,13 @@ export function ResetPasswordModal({
             <span className="text-xs text-[#4a4a4a]">
               Send email notification with login instructions
             </span>
-          </label>
+          </label> */}
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#ececec]">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={submitting}
               className="px-4 py-2 rounded-lg border border-[#e4e4df] bg-white hover:bg-[#f7f7f2] text-xs font-semibold text-[#4a4a4a] transition-colors cursor-pointer"
             >

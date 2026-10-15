@@ -532,10 +532,10 @@ export default function UsersPage() {
       </section>
 
       {/* ===================== DIVISION-SEC: USERS TABLE + MAP (matching HTML) ===================== */}
-      <section className="flex flex-col xl:flex-row items-stretch gap-6 w-full min-w-0">
-        {/* Table Card (matching HTML .table-card) */}
-        <div className="flex-1 xl:w-[76%] w-full min-w-0 bg-white rounded-[14px] p-4 sm:p-6 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] flex flex-col justify-between overflow-hidden">
-          <div>
+      <section className="flex flex-col xl:flex-row items-start gap-6 w-full min-w-0">
+        {/* Table Column (matching HTML .table-card) */}
+        <div className="flex-1 xl:w-[76%] w-full min-w-0 flex flex-col space-y-4">
+          <div className="bg-white rounded-[14px] p-4 sm:p-6 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] overflow-hidden">
             {/* Panel Head */}
             <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 mb-2 border-b border-[#ececec]">
               <h3 className="font-semibold text-[#1f1f1f] text-[15px]">
@@ -606,7 +606,7 @@ export default function UsersPage() {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto min-h-[440px] pb-12 w-full max-w-full">
+            <div className="overflow-x-auto min-h-[440px] pb-3 w-full max-w-full">
               <table className="w-full min-w-[720px] text-left border-collapse text-[13px]">
                 <thead>
                   <tr className="border-b border-[#ececec]">

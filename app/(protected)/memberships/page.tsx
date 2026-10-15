@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import {
   Eye,
   Edit2,
@@ -155,30 +156,136 @@ export default function MembershipsPage() {
   }, []);
 
 
-  // View Plan Details
-  const handleViewPlan = async (plan: MembershipItem) => {
-    setSelectedPlan(plan);
-    setViewModal(true);
-    setViewLoading(true);
+  // Open Plan Detail Modal by Plan Object or ID/Search string
+  const openPlanDetail = useCallback(
+    async (planOrId: MembershipItem | string, fallbackName?: string) => {
+      let targetPlan: MembershipItem | null = null;
 
-    try {
-      const res = await getMembershipById(plan.id);
-      const data = res.membership || res.data || res;
-      setSelectedPlan({
-        ...plan,
-        ...data,
-        totalUsers:
-          plan.subscriber_count ??
-          plan.totalUsers ??
-          (plan as any)?.total_users ??
-          0,
-      });
-    } catch (err: any) {
-      console.warn("Error fetching membership details:", err);
-    } finally {
-      setViewLoading(false);
-    }
+      if (typeof planOrId === "object" && planOrId !== null) {
+        targetPlan = planOrId;
+      } else {
+        const idOrSearch = String(planOrId).trim();
+        targetPlan =
+          memberships.find(
+            (m) =>
+              m.id === idOrSearch ||
+              m.name?.toLowerCase() === idOrSearch.toLowerCase() ||
+              m.level?.toLowerCase() === idOrSearch.toLowerCase(),
+          ) || null;
+
+        if (!targetPlan) {
+          targetPlan = {
+            id: idOrSearch,
+            name: fallbackName || idOrSearch,
+            level: "basic",
+            monthly_price: 0,
+            yearly_price: 0,
+          } as MembershipItem;
+        }
+      }
+
+      setSelectedPlan(targetPlan);
+      setViewModal(true);
+      setViewLoading(true);
+
+      try {
+        const res = await getMembershipById(targetPlan.id);
+        const data = res.membership || res.data || res;
+        setSelectedPlan((prev) => ({
+          ...(prev || targetPlan),
+          ...data,
+          totalUsers:
+            (prev as any)?.subscriber_count ??
+            data?.subscriber_count ??
+            data?.totalUsers ??
+            data?.total_users ??
+            0,
+        }));
+      } catch (err: any) {
+        console.warn("Error fetching membership details:", err);
+      } finally {
+        setViewLoading(false);
+      }
+    },
+    [memberships],
+  );
+
+  // View Plan Details
+  const handleViewPlan = (plan: MembershipItem) => {
+    openPlanDetail(plan);
   };
+
+  // Auto-open plan detail if ?id= or ?search= is in URL on load
+  const hasAutoOpenedFromUrl = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || hasAutoOpenedFromUrl.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const idParam =
+      params.get("id") ||
+      params.get("planId") ||
+      params.get("membershipId");
+    const searchParam = params.get("search");
+
+    if (idParam) {
+      hasAutoOpenedFromUrl.current = true;
+      openPlanDetail(idParam, searchParam || undefined);
+    } else if (searchParam && memberships.length > 0) {
+      const match = memberships.find(
+        (m) =>
+          m.id?.toLowerCase() === searchParam.toLowerCase() ||
+          m.name?.toLowerCase() === searchParam.toLowerCase() ||
+          m.level?.toLowerCase() === searchParam.toLowerCase() ||
+          m.name?.toLowerCase().includes(searchParam.toLowerCase()),
+      );
+      if (match) {
+        hasAutoOpenedFromUrl.current = true;
+        openPlanDetail(match);
+      }
+    }
+  }, [memberships, openPlanDetail]);
+
+  // Listen for custom search selection events while already on the page
+  useEffect(() => {
+    const handleOpenDetailEvent = (e: any) => {
+      const { id, search, plan } = e.detail || {};
+      if (plan) {
+        openPlanDetail(plan);
+      } else if (id) {
+        openPlanDetail(id, search);
+      } else if (search) {
+        const match = memberships.find(
+          (m) =>
+            m.name?.toLowerCase() === search.toLowerCase() ||
+            m.level?.toLowerCase() === search.toLowerCase() ||
+            m.name?.toLowerCase().includes(search.toLowerCase()),
+        );
+        if (match) {
+          openPlanDetail(match);
+        } else {
+          openPlanDetail(search);
+        }
+      }
+    };
+
+    window.addEventListener(
+      "onspot:open-membership-detail",
+      handleOpenDetailEvent,
+    );
+    window.addEventListener("onspot:filter-memberships", handleOpenDetailEvent);
+
+    return () => {
+      window.removeEventListener(
+        "onspot:open-membership-detail",
+        handleOpenDetailEvent,
+      );
+      window.removeEventListener(
+        "onspot:filter-memberships",
+        handleOpenDetailEvent,
+      );
+    };
+  }, [memberships, openPlanDetail]);
 
   // Open Create Plan Modal
   const handleOpenCreate = () => {
@@ -325,26 +432,24 @@ export default function MembershipsPage() {
         ? plan.image
         : `${API_URL}${plan.image.startsWith("/") ? "" : "/"}${plan.image}`;
       return (
-        <img
+        <Image
           src={src}
           alt={plan.name}
+          width={28}
+          height={28}
           className="w-7 h-7 object-contain"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
         />
       );
     }
     const lname = (plan.name || plan.level || "").toLowerCase();
     if (lname.includes("premium")) {
       return (
-        <img
+        <Image
           src="/images/premium-icon.png"
           alt="Premium"
+          width={28}
+          height={28}
           className="w-7 h-7 object-contain"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/images/member_leaf.png";
-          }}
         />
       );
     }
@@ -363,9 +468,11 @@ export default function MembershipsPage() {
       );
     }
     return (
-      <img
+      <Image
         src="/images/member_leaf.png"
         alt="Free"
+        width={28}
+        height={28}
         className="w-7 h-7 object-contain"
       />
     );
@@ -390,15 +497,13 @@ export default function MembershipsPage() {
                 <span className="text-[#7D848D] text-[12.5px] font-medium">
                   Total Subscribers
                 </span>
-                <span className="w-8 h-8 rounded-full bg-[#f1f5ee] flex items-center justify-center text-[#2d4a23]">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-                  </svg>
-                </span>
+                <Image
+                  src="/images/membership/total-subscribers.png"
+                  alt="Total Subscribers"
+                  width={30}
+                  height={30}
+                  className="object-contain"
+                />
               </div>
               <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
                 {overviewLoading && !summary
@@ -418,15 +523,13 @@ export default function MembershipsPage() {
                 <span className="text-[#7D848D] text-[12.5px] font-medium">
                   Monthly Recurring Revenue
                 </span>
-                <span className="w-8 h-8 rounded-full bg-[#eef7ee] flex items-center justify-center text-[#1e6b34]">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.39 2.83-3.12 3.16z" />
-                  </svg>
-                </span>
+                <Image
+                  src="/images/membership/monthly-recurring-revenue.png"
+                  alt="Monthly Recurring Revenue"
+                  width={30}
+                  height={30}
+                  className="object-contain"
+                />
               </div>
               <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
                 {overviewLoading && !summary
@@ -450,15 +553,13 @@ export default function MembershipsPage() {
                 <span className="text-[#7D848D] text-[12.5px] font-medium">
                   Annual Recurring Revenue
                 </span>
-                <span className="w-8 h-8 rounded-full bg-[#eef7ee] flex items-center justify-center text-[#1e6b34]">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                  </svg>
-                </span>
+                <Image
+                  src="/images/membership/annualy-recurring-revenue.png"
+                  alt="Annual Recurring Revenue"
+                  width={30}
+                  height={30}
+                  className="object-contain"
+                />
               </div>
               <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
                 {overviewLoading && !summary
@@ -482,16 +583,13 @@ export default function MembershipsPage() {
                 <span className="text-[#7D848D] text-[12.5px] font-medium">
                   Premium Members
                 </span>
-                <span className="w-8 h-8 rounded-full bg-[#fdf5e6] flex items-center justify-center">
-                  <img
-                    src="/images/premium-member.png"
-                    alt=""
-                    className="w-5 h-5 object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                </span>
+                <Image
+                  src="/images/premium-member.png"
+                  alt="Premium Members"
+                  width={30}
+                  height={30}
+                  className="object-contain"
+                />
               </div>
               <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
                 {overviewLoading && !summary
@@ -511,15 +609,19 @@ export default function MembershipsPage() {
                 <span className="text-[#7D848D] text-[12.5px] font-medium">
                   Churn Rate
                 </span>
-                <span className="w-8 h-8 rounded-full bg-[#fbebeb] flex items-center justify-center text-[#e03131]">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path d="M16 18l2.29-2.29-4.88-4.88-4 4L2 7.41 3.41 6l6 6 4-4 6.3 6.29L22 12v6h-6z" />
-                  </svg>
-                </span>
+                <Image
+                  src={
+                    churnRate?.trend === "down" ||
+                    churnRate?.trend === "loss" ||
+                    (typeof churnRate?.weekly_change === "number" && churnRate.weekly_change < 0)
+                      ? "/images/membership/loss.png"
+                      : "/images/membership/profit.png"
+                  }
+                  alt="Churn Rate"
+                  width={30}
+                  height={30}
+                  className="object-contain"
+                />
               </div>
               <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
                 {overviewLoading && !summary
@@ -1074,8 +1176,14 @@ export default function MembershipsPage() {
 
       {/* ===================== VIEW DETAILS MODAL ===================== */}
       {viewModal && selectedPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6">
+        <div
+          onClick={() => setViewModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6"
+          >
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#0E3E27] flex items-center justify-center font-bold text-lg">
@@ -1321,8 +1429,16 @@ export default function MembershipsPage() {
 
       {/* ===================== DELETE CONFIRMATION DIALOG ===================== */}
       {deleteConfirmOpen && planToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-gray-100 p-6">
+        <div
+          onClick={() => {
+            if (!deleting) setDeleteConfirmOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-gray-100 p-6"
+          >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
                 <Trash2 className="w-5 h-5" />

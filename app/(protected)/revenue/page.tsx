@@ -1,22 +1,28 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
-  CreditCard,
   Calendar,
   Award,
-  Crown,
   Percent,
   ChevronRight,
   AlertCircle,
   Layers,
   FileText,
   Sliders,
+  RotateCcw,
+  Search,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
-import { getRevenueOverview, RevenueOverviewData } from "@/lib/api";
+import {
+  getRevenueOverview,
+  getPaymentMethods,
+  RevenueOverviewData,
+} from "@/lib/api";
 
 const DONUT_COLORS = [
   "#3a5230", // Free
@@ -33,20 +39,167 @@ export default function RevenuePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
+  const [period, setPeriod] = useState<string>("");
+  const [plan, setPlan] = useState<string>("");
+  const [paymentType, setPaymentType] = useState<string>("");
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+  const [revenueType, setRevenueType] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch payment methods on mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMethods = async () => {
+      try {
+        const response = await getPaymentMethods();
+        if (isMounted && response?.data && Array.isArray(response.data)) {
+          // Hide "Free / Trial" option
+          const filtered = response.data.filter(
+            (m) => m && m.toLowerCase().trim() !== "free / trial"
+          );
+          setPaymentMethods(filtered);
+        }
+      } catch (err) {
+        console.error("Failed to load payment methods:", err);
+      }
+    };
+    fetchMethods();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Debounce search query to prevent frequent API calls while typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Ingest URL search parameters on initial mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const p = params.get("period");
+      const pl = params.get("plan");
+      const pt = params.get("payment_type");
+      const s = params.get("search");
+      const rt = params.get("revenue_type");
+      if (p) setPeriod(p);
+      if (pl) setPlan(pl);
+      if (pt) setPaymentType(pt);
+      if (s) {
+        setSearchQuery(s);
+        setDebouncedSearch(s);
+      }
+      if (rt) setRevenueType(rt);
+    }
+  }, []);
+
+  // Sync state if browser back/forward buttons are pressed
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        setPeriod(params.get("period") || "");
+        setPlan(params.get("plan") || "");
+        setPaymentType(params.get("payment_type") || "");
+        const s = params.get("search") || "";
+        setSearchQuery(s);
+        setDebouncedSearch(s);
+        setRevenueType(params.get("revenue_type") || "");
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const updateUrlParams = (
+    newPeriod: string,
+    newPlan: string,
+    newPaymentType: string,
+    newSearch?: string,
+    newRevenueType?: string,
+  ) => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (newPeriod) {
+        params.set("period", newPeriod);
+      } else {
+        params.delete("period");
+      }
+      if (newPlan) {
+        params.set("plan", newPlan);
+      } else {
+        params.delete("plan");
+      }
+      if (newPaymentType) {
+        params.set("payment_type", newPaymentType);
+      } else {
+        params.delete("payment_type");
+      }
+      const s = newSearch !== undefined ? newSearch : debouncedSearch;
+      if (s && s.trim()) {
+        params.set("search", s.trim());
+      } else {
+        params.delete("search");
+      }
+      const rt = newRevenueType !== undefined ? newRevenueType : revenueType;
+      if (rt) {
+        params.set("revenue_type", rt);
+      } else {
+        params.delete("revenue_type");
+      }
+      params.delete("page");
+      const qs = params.toString();
+      const newUrl = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
+      window.history.replaceState(null, "", newUrl);
+    }
+  };
+
   const loadData = useCallback(
-    async (isManualRefresh = false, targetPage?: number) => {
+    async (
+      isManualRefresh = false,
+      targetPage?: number,
+      targetPeriod?: string,
+      targetPlan?: string,
+      targetPaymentType?: string,
+      targetSearch?: string,
+      targetRevenueType?: string,
+    ) => {
       const activePage = targetPage ?? page;
+      const activePeriod = targetPeriod !== undefined ? targetPeriod : period;
+      const activePlan = targetPlan !== undefined ? targetPlan : plan;
+      const activePaymentType =
+        targetPaymentType !== undefined ? targetPaymentType : paymentType;
+      const activeSearch =
+        targetSearch !== undefined ? targetSearch : debouncedSearch;
+      const activeRevenueType =
+        targetRevenueType !== undefined ? targetRevenueType : revenueType;
+
       if (isManualRefresh) {
         setRefreshing(true);
-      } else if (!data) {
+      } else {
         setLoading(true);
       }
       setError(null);
 
       try {
-        const response = await getRevenueOverview({ page: activePage, limit });
+        const response = await getRevenueOverview({
+          page: activePage,
+          limit,
+          period: activePeriod || undefined,
+          plan: activePlan || undefined,
+          payment_type: activePaymentType || undefined,
+          search:
+            activeSearch && activeSearch.trim()
+              ? activeSearch.trim()
+              : undefined,
+          revenue_type: activeRevenueType || undefined,
+        });
         if (response && response.data) {
           setData(response.data);
           if (isManualRefresh) {
@@ -67,12 +220,58 @@ export default function RevenuePage() {
         setRefreshing(false);
       }
     },
-    [page, limit, data],
+    [page, limit, period, plan, paymentType, debouncedSearch, revenueType],
   );
 
   useEffect(() => {
-    loadData(false, page);
-  }, [page]);
+    loadData(false, page, period, plan, paymentType, debouncedSearch, revenueType);
+  }, [page, period, plan, paymentType, debouncedSearch, revenueType]);
+
+  const handlePeriodChange = (newPeriod: string) => {
+    setPeriod(newPeriod);
+    setPage(1);
+    updateUrlParams(newPeriod, plan, paymentType, debouncedSearch, revenueType);
+  };
+
+  const handlePlanChange = (newPlan: string) => {
+    setPlan(newPlan);
+    setPage(1);
+    updateUrlParams(period, newPlan, paymentType, debouncedSearch, revenueType);
+  };
+
+  const handlePaymentTypeChange = (newPaymentType: string) => {
+    setPaymentType(newPaymentType);
+    setPage(1);
+    updateUrlParams(period, plan, newPaymentType, debouncedSearch, revenueType);
+  };
+
+  const handleResetFilters = () => {
+    setPeriod("");
+    setPlan("");
+    setPaymentType("");
+    setPage(1);
+    updateUrlParams("", "", "", debouncedSearch, revenueType);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setPage(1);
+    updateUrlParams(period, plan, paymentType, val, revenueType);
+  };
+
+  const handleRevenueTypeChange = (newType: string) => {
+    setRevenueType(newType);
+    setPage(1);
+    updateUrlParams(period, plan, paymentType, debouncedSearch, newType);
+  };
+
+  const handleResetTransactionFilters = () => {
+    setSearchQuery("");
+    setDebouncedSearch("");
+    setRevenueType("");
+    setPage(1);
+    updateUrlParams(period, plan, paymentType, "", "");
+  };
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -141,8 +340,28 @@ export default function RevenuePage() {
     };
   }, [data?.revenue_by_plan]);
 
+  const availablePlans = useMemo(() => {
+    const list: { label: string; value: string }[] = [
+      { label: "Basic", value: "basic" },
+      { label: "Premium", value: "premium" },
+      { label: "Free", value: "free" },
+    ];
+    if (data?.revenue_by_plan?.breakdown) {
+      data.revenue_by_plan.breakdown.forEach((item) => {
+        const val = (item.name || "").toLowerCase().trim();
+        if (val && !list.some((p) => p.value === val)) {
+          list.push({
+            label: item.name.charAt(0).toUpperCase() + item.name.slice(1),
+            value: val,
+          });
+        }
+      });
+    }
+    return list;
+  }, [data?.revenue_by_plan]);
+
   const monthChartData = useMemo(() => {
-    const list = data?.revenue_by_month || [];
+    const list = data?.revenue_timeline || data?.revenue_by_month || [];
     if (!list || list.length === 0) return null;
 
     const W = 420;
@@ -154,7 +373,10 @@ export default function RevenuePage() {
     const cw = W - pL - pR;
     const ch = H - pT - pB;
 
-    const revenues = list.map((item) => Number(item.revenue) || 0);
+    const revenues = list.map(
+      (item: any) =>
+        Number(item.revenue ?? item.amount ?? item.total ?? 0) || 0,
+    );
     const rawMax = Math.max(...revenues, 0);
 
     // Compute dynamic, beautiful headroom
@@ -210,16 +432,63 @@ export default function RevenuePage() {
       return { y, lbl, val: v };
     });
 
-    const points = list.map((item, i) => {
+    const points = list.map((item: any, i: number) => {
       const count = list.length;
       const x = pL + (count > 1 ? (i / (count - 1)) * cw : cw / 2);
-      const rev = Number(item.revenue) || 0;
+      const rev = Number(item.revenue ?? item.amount ?? item.total ?? 0) || 0;
       const y =
         pT + ch - (max > 0 ? Math.min(1, Math.max(0, rev / max)) * ch : 0);
+
+      const rawMonth =
+        item.month || item.date || item.label || item.name || item.period || "";
+      let monthDisplay = String(rawMonth || "");
+      if (monthDisplay.includes("T")) {
+        try {
+          const d = new Date(monthDisplay);
+          if (!isNaN(d.getTime())) {
+            monthDisplay =
+              period === "7_days" || period === "30_days"
+                ? d.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })
+                : d.toLocaleDateString("en-US", { month: "short" });
+          }
+        } catch {}
+      } else if (monthDisplay.includes("-") && monthDisplay.length <= 10) {
+        try {
+          const parts = monthDisplay.split("-");
+          if (parts.length >= 3) {
+            const d = new Date(
+              Number(parts[0]),
+              Number(parts[1]) - 1,
+              Number(parts[2]),
+            );
+            if (!isNaN(d.getTime())) {
+              monthDisplay =
+                period === "7_days" || period === "30_days"
+                  ? d.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : d.toLocaleDateString("en-US", { month: "short" });
+            }
+          } else if (parts.length === 2) {
+            const d = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+            if (!isNaN(d.getTime())) {
+              monthDisplay = d.toLocaleDateString("en-US", { month: "short" });
+            }
+          }
+        } catch {}
+      } else {
+        monthDisplay = monthDisplay.split(" ")[0] || "";
+      }
+
       return {
         x,
         y,
-        month: item.month,
+        month: monthDisplay || `P${i + 1}`,
+        rawMonth,
         revenue: rev,
         formattedValue: formatPointValue(rev),
       };
@@ -251,7 +520,30 @@ export default function RevenuePage() {
       linePath,
       areaPath,
     };
-  }, [data?.revenue_by_month]);
+  }, [data?.revenue_timeline, data?.revenue_by_month, period]);
+
+  const timelineTitle = useMemo(() => {
+    if (period === "7_days" || period === "30_days") {
+      return "Revenue by Day";
+    }
+    if (period === "90") {
+      return "Revenue by Month";
+    }
+    // If no period is explicitly selected, check if data represents days or months
+    const list = data?.revenue_timeline || data?.revenue_by_month;
+    if (list && list.length > 0) {
+      const first = list[0] as any;
+      const raw = String(first?.date || first?.month || first?.label || "");
+      if (
+        /^\d{4}-\d{2}-\d{2}/.test(raw) ||
+        /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)/i.test(raw) ||
+        list.length > 12
+      ) {
+        return "Revenue by Day";
+      }
+    }
+    return "Revenue by Month";
+  }, [period, data?.revenue_timeline, data?.revenue_by_month]);
 
   const transactions = data?.transactions?.data || [];
   const pagination = data?.transactions?.pagination || {
@@ -285,9 +577,13 @@ export default function RevenuePage() {
             <span className="text-[#7D848D] text-[13px] font-medium">
               Subscription Revenue
             </span>
-            <span className="w-7 h-7 flex items-center justify-center text-[#2d4a23]">
-              <Crown className="w-5 h-5" />
-            </span>
+            <Image
+              src="/images/revenue/subscription-revenue.png"
+              alt="Subscription Revenue"
+              width={30}
+              height={30}
+              className="object-contain"
+            />
           </div>
           {loading && !data ? (
             <div className="space-y-2 py-2">
@@ -326,9 +622,13 @@ export default function RevenuePage() {
             <span className="text-[#7D848D] text-[13px] font-medium">
               Monthly Revenue
             </span>
-            <span className="w-7 h-7 flex items-center justify-center text-[#2d4a23]">
-              <CreditCard className="w-5 h-5" />
-            </span>
+            <Image
+              src="/images/revenue/monthly-revenue.png"
+              alt="Monthly Revenue"
+              width={30}
+              height={30}
+              className="object-contain"
+            />
           </div>
           {loading && !data ? (
             <div className="space-y-2 py-2">
@@ -415,6 +715,90 @@ export default function RevenuePage() {
         </div>
       </section>
 
+      {/* ===================== FILTER ROW ===================== */}
+      <section className="filter-row flex items-center flex-wrap gap-3.5">
+        {/* Period Filter */}
+        <div className="relative min-w-[170px]">
+          <select
+            id="filter-period"
+            value={period}
+            onChange={(e) => handlePeriodChange(e.target.value)}
+            disabled={loading && !refreshing}
+            className="w-full h-[38px] pl-3.5 pr-9 border border-[#e4e4df] rounded-[8px] bg-white text-[13px] text-[#4a4a4a] hover:border-[#cfcfca] focus:border-[#2D4A23] outline-none transition-colors cursor-pointer appearance-none shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+            style={{
+              backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>")`,
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 12px center",
+            }}
+          >
+            <option value="">All Periods</option>
+            <option value="7_days">Last 7 Days</option>
+            <option value="30_days">Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+          </select>
+        </div>
+
+        {/* Plan Filter */}
+        <div className="relative min-w-[170px]">
+          <select
+            id="filter-plan"
+            value={plan}
+            onChange={(e) => handlePlanChange(e.target.value)}
+            disabled={loading && !refreshing}
+            className="w-full h-[38px] pl-3.5 pr-9 border border-[#e4e4df] rounded-[8px] bg-white text-[13px] text-[#4a4a4a] hover:border-[#cfcfca] focus:border-[#2D4A23] outline-none transition-colors cursor-pointer appearance-none shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+            style={{
+              backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>")`,
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 12px center",
+            }}
+          >
+            <option value="">All Plans</option>
+            {availablePlans.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label.toLowerCase().includes("plan")
+                  ? p.label
+                  : `${p.label} Plan`}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Payment Method Filter */}
+        <div className="relative min-w-[170px]">
+          <select
+            id="filter-payment-method"
+            value={paymentType}
+            onChange={(e) => handlePaymentTypeChange(e.target.value)}
+            disabled={loading && !refreshing}
+            className="w-full h-[38px] pl-3.5 pr-9 border border-[#e4e4df] rounded-[8px] bg-white text-[13px] text-[#4a4a4a] hover:border-[#cfcfca] focus:border-[#2D4A23] outline-none transition-colors cursor-pointer appearance-none shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+            style={{
+              backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>")`,
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 12px center",
+            }}
+          >
+            <option value="">All Payment Methods</option>
+            {paymentMethods.map((method) => (
+              <option key={method} value={method}>
+                {method}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Reset button if filter active */}
+        {(period || plan || paymentType) && (
+          <button
+            onClick={handleResetFilters}
+            className="h-[38px] px-3.5 flex items-center gap-1.5 text-[12.5px] font-medium text-[#7D848D] hover:text-[#1f1f1f] bg-white border border-[#e4e4df] hover:border-[#cfcfca] rounded-[8px] transition-colors cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+            title="Reset filters"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </button>
+        )}
+      </section>
+
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start w-full min-w-0">
         <div className="xl:col-span-8 space-y-6 w-full min-w-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full min-w-0">
@@ -497,9 +881,22 @@ export default function RevenuePage() {
             </div>
 
             <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.08),0_2px_6px_rgba(60,60,60,0.04)] flex flex-col justify-between">
-              <h3 className="text-[15px] font-semibold text-[#1f1f1f] pb-3 mb-4 border-b border-[#ececec]">
-                Revenue by Month
-              </h3>
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#ececec] gap-2">
+                <h3 className="text-[15px] font-semibold text-[#1f1f1f]">
+                  {timelineTitle}
+                </h3>
+                {period && (
+                  <span className="text-[11.5px] font-medium text-[#7D848D] bg-[#F7F8F9] border border-[#ececec] px-2 py-0.5 rounded-[6px]">
+                    {period === "7_days"
+                      ? "Last 7 Days"
+                      : period === "30_days"
+                        ? "Last 30 Days"
+                        : period === "90"
+                          ? "Last 90 Days"
+                          : period}
+                  </span>
+                )}
+              </div>
 
               {loading && !data ? (
                 <div className="h-[220px] flex items-center justify-center">
@@ -507,7 +904,7 @@ export default function RevenuePage() {
                 </div>
               ) : !monthChartData ? (
                 <div className="h-[220px] flex items-center justify-center text-xs text-[#7D848D]">
-                  No monthly revenue data available
+                  No {timelineTitle.toLowerCase()} data available
                 </div>
               ) : (
                 <div className="w-full relative min-h-[220px] overflow-hidden">
@@ -623,7 +1020,7 @@ export default function RevenuePage() {
                           x={p.x.toFixed(1)}
                           y={monthChartData.H - 8}
                         >
-                          {p.month.split(" ")[0]}
+                          {p.month}
                         </text>
                       ))}
                     </g>
@@ -635,13 +1032,74 @@ export default function RevenuePage() {
 
           {/* Transactions Table Section */}
           <section className="bg-white rounded-[14px] p-4 sm:p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.08),0_2px_6px_rgba(60,60,60,0.04)] w-full min-w-0 overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-[#ececec] gap-2">
-              <h3 className="text-[15px] font-semibold text-[#1f1f1f]">
-                Recent Revenue Transactions
-              </h3>
-              <span className="text-xs text-[#7D848D]">
-                Total {pagination.totalItems.toLocaleString()} records
-              </span>
+            <div className="flex flex-col gap-3 pb-3 mb-4 border-b border-[#ececec]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-[15px] font-semibold text-[#1f1f1f]">
+                    Recent Revenue Transactions
+                  </h3>
+                </div>
+                <span className="text-xs text-[#7D848D]">
+                  Total {pagination.totalItems.toLocaleString()} records
+                </span>
+              </div>
+
+              {/* Search & Revenue Type Filter controls */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+                {/* Search Input with user email / name label */}
+                <div className="relative flex-1 min-w-[240px]">
+                  <Search className="w-4 h-4 text-[#8e8e8e] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    placeholder="Search by user email or name..."
+                    className="w-full h-[38px] pl-9 pr-8 border border-[#e4e4df] rounded-[8px] bg-white text-[13px] text-[#4a4a4a] placeholder-[#8e8e8e] hover:border-[#cfcfca] focus:border-[#2D4A23] outline-none transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => handleSearchChange("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8e8e8e] hover:text-[#4a4a4a] p-0.5 cursor-pointer"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Revenue Type select */}
+                <div className="relative min-w-[170px]">
+                  <select
+                    id="filter-revenue-type"
+                    value={revenueType}
+                    onChange={(e) => handleRevenueTypeChange(e.target.value)}
+                    disabled={loading && !refreshing}
+                    className="w-full h-[38px] pl-3.5 pr-9 border border-[#e4e4df] rounded-[8px] bg-white text-[13px] text-[#4a4a4a] hover:border-[#cfcfca] focus:border-[#2D4A23] outline-none transition-colors cursor-pointer appearance-none shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>")`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 12px center",
+                    }}
+                  >
+                    <option value="">All Revenue Types</option>
+                    <option value="subscription">Subscription</option>
+                    <option value="sponsorship">Sponsorship</option>
+                  </select>
+                </div>
+
+                {/* Reset Search / Type Filters */}
+                {(searchQuery || revenueType) && (
+                  <button
+                    onClick={handleResetTransactionFilters}
+                    className="h-[38px] px-3 flex items-center gap-1.5 text-[12px] font-medium text-[#7D848D] hover:text-[#1f1f1f] bg-white border border-[#e4e4df] hover:border-[#cfcfca] rounded-[8px] transition-colors cursor-pointer whitespace-nowrap shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+                    title="Clear transaction filters"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Clear</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="overflow-x-auto w-full max-w-full">
@@ -779,20 +1237,20 @@ export default function RevenuePage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Pagination Controls */}
-            {pagination && pagination.totalPages > 1 && (
-              <Pagination
-                currentPage={pagination.currentPage || page}
-                totalPages={pagination.totalPages || 1}
-                totalItems={pagination.totalItems || transactions.length}
-                pageSize={pagination.itemsPerPage || limit}
-                itemLabel="transactions"
-                onPageChange={handlePageChange}
-                loading={loading}
-              />
-            )}
           </section>
+
+          {/* Pagination Controls */}
+          {pagination && pagination.totalPages > 1 && (
+            <Pagination
+              currentPage={pagination.currentPage || page}
+              totalPages={pagination.totalPages || 1}
+              totalItems={pagination.totalItems || transactions.length}
+              pageSize={pagination.itemsPerPage || limit}
+              itemLabel="transactions"
+              onPageChange={handlePageChange}
+              loading={loading}
+            />
+          )}
         </div>
 
         {/* ================= RIGHT SECTION (xl:col-span-4) ================= */}

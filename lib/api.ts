@@ -1392,13 +1392,27 @@ export interface RevenueTransactionsData {
   pagination?: RevenueTransactionsPagination;
 }
 
+export interface RevenueTimelineItem {
+  month?: string;
+  date?: string;
+  label?: string;
+  name?: string;
+  period?: string;
+  revenue?: number;
+  amount?: number;
+  total?: number;
+  [key: string]: any;
+}
+
 export interface RevenueOverviewData {
   summary_cards?: RevenueSummaryCards;
   revenue_by_plan?: RevenueByPlanData;
   revenue_by_month?: RevenueByMonthItem[];
+  revenue_timeline?: (RevenueByMonthItem | RevenueTimelineItem)[];
   top_performing_plan?: RevenueTopPerformingPlan;
   highest_revenue_day?: RevenueHighestRevenueDay;
   transactions?: RevenueTransactionsData;
+  [key: string]: any;
 }
 
 export interface RevenueOverviewResponse {
@@ -1409,6 +1423,20 @@ export interface RevenueOverviewResponse {
 export interface RevenueOverviewParams {
   page?: number;
   limit?: number;
+  period?: string;
+  plan?: string;
+  payment_type?: string;
+  search?: string;
+  revenue_type?: string;
+}
+
+export interface PaymentMethodsResponse {
+  message: string;
+  data: string[];
+}
+
+export async function getPaymentMethods(): Promise<PaymentMethodsResponse> {
+  return await fetchApi<PaymentMethodsResponse>("/admin/revenue/payment-methods");
 }
 
 export async function getRevenueOverview(
@@ -1417,6 +1445,13 @@ export async function getRevenueOverview(
   const query = new URLSearchParams();
   if (params.page) query.append("page", String(params.page));
   if (params.limit) query.append("limit", String(params.limit));
+  if (params.period) query.append("period", params.period);
+  if (params.plan) query.append("plan", params.plan);
+  if (params.payment_type) query.append("payment_type", params.payment_type);
+  if (params.search && params.search.trim()) {
+    query.append("search", params.search.trim());
+  }
+  if (params.revenue_type) query.append("revenue_type", params.revenue_type);
 
   const qs = query.toString();
   return await fetchApi<RevenueOverviewResponse>(`/admin/revenue/overview${qs ? `?${qs}` : ""}`);

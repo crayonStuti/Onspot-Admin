@@ -55,7 +55,7 @@ export default function ResourcesPage() {
   const [selectedVisibility, setSelectedVisibility] = useState("");
   const [selectedTimeframe, setSelectedTimeframe] = useState("");
   const [selectedActivity, setSelectedActivity] = useState("");
-  const [sortBy, setSortBy] = useState<string>("created_at");
+  const [sortBy, setSortBy] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
 
   const [statesList, setStatesList] = useState<any[]>([]);
@@ -134,10 +134,16 @@ export default function ResourcesPage() {
       }
     };
 
-    window.addEventListener("onspot:open-upload-resource", openNewResourceModal);
+    window.addEventListener(
+      "onspot:open-upload-resource",
+      openNewResourceModal,
+    );
     window.addEventListener("onspot:filter-resources", handleFilter);
     return () => {
-      window.removeEventListener("onspot:open-upload-resource", openNewResourceModal);
+      window.removeEventListener(
+        "onspot:open-upload-resource",
+        openNewResourceModal,
+      );
       window.removeEventListener("onspot:filter-resources", handleFilter);
     };
   }, []);
@@ -275,8 +281,8 @@ export default function ResourcesPage() {
         last_updated: selectedTimeframe,
         timeframe: selectedTimeframe,
         activity: selectedActivity,
-        sortBy,
-        sortOrder,
+        sortBy: sortBy || undefined,
+        sortOrder: sortBy ? sortOrder : undefined,
       });
 
       if (res && res.data) {
@@ -355,7 +361,7 @@ export default function ResourcesPage() {
   };
 
   const renderSortIcon = (field: string) => {
-    if (sortBy !== field) {
+    if (!sortBy || sortBy !== field) {
       return (
         <ArrowUpDown className="w-3.5 h-3.5 text-[#b0b0a8] opacity-60 group-hover:opacity-100" />
       );
@@ -795,7 +801,7 @@ export default function ResourcesPage() {
               <option value="">All Visibility</option>
               <option value="Published">Published</option>
               <option value="Archived">Archived</option>
-              <option value="Need Updated">Need Updated</option>
+              {/* <option value="Need Updated">Need Updated</option> */}
             </select>
 
             {/* Filter Last Updated */}
@@ -849,12 +855,12 @@ export default function ResourcesPage() {
                 <thead>
                   <tr className="border-b border-[#ececec]">
                     <th
-                      onClick={() => handleSort("created_at")}
+                      onClick={() => handleSort("title")}
                       className="py-4 px-2 font-semibold text-[#111111] text-[13px] cursor-pointer select-none group"
                     >
                       <div className="inline-flex items-center gap-1.5">
                         <span>Resource Title</span>
-                        {renderSortIcon("created_at")}
+                        {renderSortIcon("title")}
                       </div>
                     </th>
                     <th className="py-4 px-2 font-semibold text-[#111111] text-[13px]">
@@ -971,7 +977,7 @@ export default function ResourcesPage() {
                             <div className="font-medium text-[#1f1f1f] text-[13.5px] max-w-sm truncate">
                               {item.title}
                             </div>
-                            <div className="text-[12px] text-[#a0a0a0] mt-0.5 max-w-sm truncate">
+                            <div className="text-[12px] text-[#a0a0a0] mt-0.5 max-w-75 truncate">
                               {item.description ||
                                 item.resource_url ||
                                 "Official deer seasons dates, bag limits and rules."}
@@ -1584,8 +1590,14 @@ export default function ResourcesPage() {
 
       {/* ===================== VIEW DETAILS MODAL ===================== */}
       {viewModal && selectedResource && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6">
+        <div
+          onClick={() => setViewModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6"
+          >
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#0E3E27] flex items-center justify-center flex-shrink-0 p-1.5 border border-emerald-100">
@@ -1752,8 +1764,16 @@ export default function ResourcesPage() {
 
       {/* ===================== DELETE CONFIRMATION DIALOG ===================== */}
       {deleteConfirmOpen && resourceToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-gray-100 p-6">
+        <div
+          onClick={() => {
+            if (!deleting) setDeleteConfirmOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-gray-100 p-6"
+          >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
                 <Trash2 className="w-5 h-5" />

@@ -41,8 +41,16 @@ export default function DeleteNotificationModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[2px] animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-white rounded-[16px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-[#ececec] overflow-hidden p-6">
+    <div
+      onClick={() => {
+        if (!deleting) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[2px] animate-in fade-in duration-200"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md bg-white rounded-[16px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-[#ececec] overflow-hidden p-6"
+      >
         <div className="flex items-start gap-4">
           <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0">
             <AlertTriangle className="w-5 h-5" />

@@ -467,8 +467,14 @@ export default function PendingSponsorsPage() {
       />
 
       {viewModalOpen && selectedSponsor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 p-6">
+        <div
+          onClick={() => setViewModalOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-lg shadow-2xl border border-gray-100 p-6"
+          >
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 {selectedSponsor.image ? (
@@ -620,8 +626,16 @@ export default function PendingSponsorsPage() {
       )}
 
       {statusConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-gray-100 p-6 text-center">
+        <div
+          onClick={() => {
+            if (!updatingStatus) setStatusConfirmModal(null);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-sm shadow-2xl border border-gray-100 p-6 text-center"
+          >
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${
                 statusConfirmModal.targetStatus === "approved"

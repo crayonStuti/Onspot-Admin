@@ -48,6 +48,7 @@ export type SearchCategory =
 
 export interface SearchItem {
   id: string;
+  rawId?: string;
   title: string;
   subtitle?: string;
   category: SearchCategory;
@@ -58,9 +59,14 @@ export interface SearchItem {
   isApiResult?: boolean;
 }
 
-const ENTITY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const ENTITY_ICONS: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   users: Users,
   user: Users,
+  memberships: CreditCard,
+  membership: CreditCard,
   sponsors: Handshake,
   sponsor: Handshake,
   resources: FolderKanban,
@@ -110,7 +116,12 @@ const STATIC_ACTIONS: SearchItem[] = [
     href: "/users",
     icon: Settings,
     badge: "Security",
-    keywords: ["reset password", "change user password", "forgot password", "user password"],
+    keywords: [
+      "reset password",
+      "change user password",
+      "forgot password",
+      "user password",
+    ],
   },
   {
     id: "action-suspend-user",
@@ -120,14 +131,21 @@ const STATIC_ACTIONS: SearchItem[] = [
     href: "/users",
     icon: Users,
     badge: "Moderation",
-    keywords: ["suspend user", "ban user", "deactivate user", "block user", "disable user"],
+    keywords: [
+      "suspend user",
+      "ban user",
+      "deactivate user",
+      "block user",
+      "disable user",
+    ],
   },
 
   // --- Sponsor Actions ---
   {
     id: "action-review-pending-sponsors",
     title: "Review Pending Sponsors",
-    subtitle: "Evaluate, approve, or reject pending partner sponsor applications",
+    subtitle:
+      "Evaluate, approve, or reject pending partner sponsor applications",
     category: "Quick Actions",
     href: "/pending-sponsors",
     icon: Clock,
@@ -146,7 +164,8 @@ const STATIC_ACTIONS: SearchItem[] = [
   {
     id: "action-add-sponsor",
     title: "Add New Sponsor Partner",
-    subtitle: "Create and publish a new brand partnership or enterprise sponsor",
+    subtitle:
+      "Create and publish a new brand partnership or enterprise sponsor",
     category: "Quick Actions",
     href: "/sponsors?action=create",
     icon: Handshake,
@@ -209,7 +228,8 @@ const STATIC_ACTIONS: SearchItem[] = [
   {
     id: "action-view-revenue",
     title: "View Revenue & Monetization",
-    subtitle: "Inspect transactions, payout history, earnings, and monthly subscriptions",
+    subtitle:
+      "Inspect transactions, payout history, earnings, and monthly subscriptions",
     category: "Quick Actions",
     href: "/revenue",
     icon: DollarSign,
@@ -243,7 +263,8 @@ const STATIC_ACTIONS: SearchItem[] = [
   {
     id: "action-create-membership",
     title: "Create Membership Tier / Plan",
-    subtitle: "Define new pricing plan, perks, recurring billing, and access levels",
+    subtitle:
+      "Define new pricing plan, perks, recurring billing, and access levels",
     category: "Quick Actions",
     href: "/memberships?action=create",
     icon: PlusCircle,
@@ -263,7 +284,8 @@ const STATIC_ACTIONS: SearchItem[] = [
   {
     id: "action-add-license-issuer",
     title: "Add License Issuer Organization",
-    subtitle: "Register official state agency, wildlife department, or issuing authority",
+    subtitle:
+      "Register official state agency, wildlife department, or issuing authority",
     category: "Quick Actions",
     href: "/license-issuers?action=create",
     icon: PlusCircle,
@@ -284,7 +306,8 @@ const STATIC_ACTIONS: SearchItem[] = [
   {
     id: "action-review-reports",
     title: "Review Moderation Reports",
-    subtitle: "Investigate flagged user reports, safety violations, and community abuse",
+    subtitle:
+      "Investigate flagged user reports, safety violations, and community abuse",
     category: "Quick Actions",
     href: "/reports",
     icon: FileBarChart,
@@ -301,12 +324,20 @@ const STATIC_ACTIONS: SearchItem[] = [
   {
     id: "action-inspect-gps",
     title: "Inspect GPS Field Tagging Map",
-    subtitle: "Track live map coordinates, field pins, and GPS location activity",
+    subtitle:
+      "Track live map coordinates, field pins, and GPS location activity",
     category: "Quick Actions",
     href: "/gps",
     icon: Navigation,
     badge: "Map",
-    keywords: ["track gps", "field tags", "interactive map", "track pins", "coordinates", "pins"],
+    keywords: [
+      "track gps",
+      "field tags",
+      "interactive map",
+      "track pins",
+      "coordinates",
+      "pins",
+    ],
   },
   {
     id: "action-monitor-ai",
@@ -316,17 +347,31 @@ const STATIC_ACTIONS: SearchItem[] = [
     href: "/ai",
     icon: Bot,
     badge: "AI",
-    keywords: ["monitor ai", "ai assistant", "chat logs", "prompts", "token consumption", "ai bot"],
+    keywords: [
+      "monitor ai",
+      "ai assistant",
+      "chat logs",
+      "prompts",
+      "token consumption",
+      "ai bot",
+    ],
   },
   {
     id: "action-admin-settings",
     title: "Admin System Settings",
-    subtitle: "Configure admin profile, authentication, security, and preferences",
+    subtitle:
+      "Configure admin profile, authentication, security, and preferences",
     category: "Quick Actions",
     href: "/settings",
     icon: Settings,
     badge: "Config",
-    keywords: ["system settings", "change password", "profile settings", "admin settings", "security"],
+    keywords: [
+      "system settings",
+      "change password",
+      "profile settings",
+      "admin settings",
+      "security",
+    ],
   },
 ];
 
@@ -365,7 +410,13 @@ const STATIC_PAGES: SearchItem[] = [
     category: "Pages",
     href: "/licenses",
     icon: Award,
-    keywords: ["credentials", "permits", "wallet", "certifications", "licenses"],
+    keywords: [
+      "credentials",
+      "permits",
+      "wallet",
+      "certifications",
+      "licenses",
+    ],
   },
   {
     id: "page-license-issuers",
@@ -392,7 +443,14 @@ const STATIC_PAGES: SearchItem[] = [
     category: "Pages",
     href: "/resources",
     icon: FolderKanban,
-    keywords: ["files", "documents", "downloads", "guides", "pdfs", "resources"],
+    keywords: [
+      "files",
+      "documents",
+      "downloads",
+      "guides",
+      "pdfs",
+      "resources",
+    ],
   },
   {
     id: "page-gps",
@@ -419,7 +477,14 @@ const STATIC_PAGES: SearchItem[] = [
     category: "Pages",
     href: "/revenue",
     icon: DollarSign,
-    keywords: ["money", "billing", "finance", "earnings", "monetization", "revenue"],
+    keywords: [
+      "money",
+      "billing",
+      "finance",
+      "earnings",
+      "monetization",
+      "revenue",
+    ],
   },
   {
     id: "page-reports",
@@ -437,7 +502,13 @@ const STATIC_PAGES: SearchItem[] = [
     category: "Pages",
     href: "/leaderboard",
     icon: Trophy,
-    keywords: ["rankings", "scores", "top users", "gamification", "leaderboard"],
+    keywords: [
+      "rankings",
+      "scores",
+      "top users",
+      "gamification",
+      "leaderboard",
+    ],
   },
   {
     id: "page-community",
@@ -446,7 +517,14 @@ const STATIC_PAGES: SearchItem[] = [
     category: "Pages",
     href: "/community",
     icon: MessageSquare,
-    keywords: ["feed", "posts", "social", "comments", "discussions", "community"],
+    keywords: [
+      "feed",
+      "posts",
+      "social",
+      "comments",
+      "discussions",
+      "community",
+    ],
   },
   {
     id: "page-sponsors",
@@ -465,7 +543,13 @@ const STATIC_PAGES: SearchItem[] = [
     href: "/pending-sponsors",
     icon: Clock,
     badge: "Action Required",
-    keywords: ["approval", "review", "new sponsors", "queue", "pending sponsors"],
+    keywords: [
+      "approval",
+      "review",
+      "new sponsors",
+      "queue",
+      "pending sponsors",
+    ],
   },
   {
     id: "page-notifications",
@@ -474,7 +558,13 @@ const STATIC_PAGES: SearchItem[] = [
     category: "Pages",
     href: "/notifications",
     icon: Bell,
-    keywords: ["alerts", "broadcasts", "messages", "announcements", "notifications"],
+    keywords: [
+      "alerts",
+      "broadcasts",
+      "messages",
+      "announcements",
+      "notifications",
+    ],
   },
   {
     id: "page-settings",
@@ -483,7 +573,14 @@ const STATIC_PAGES: SearchItem[] = [
     category: "Pages",
     href: "/settings",
     icon: Settings,
-    keywords: ["configuration", "profile", "password", "security", "preferences", "settings"],
+    keywords: [
+      "configuration",
+      "profile",
+      "password",
+      "security",
+      "preferences",
+      "settings",
+    ],
   },
 ];
 
@@ -519,10 +616,10 @@ export default function UnifiedSearch({
         STATIC_ACTIONS[0], // Create User
         STATIC_ACTIONS[3], // Review Pending Sponsors
         STATIC_ACTIONS[5], // Upload Resource
-        STATIC_PAGES[0],   // Dashboard
-        STATIC_PAGES[1],   // Users
-        STATIC_PAGES[13],  // Sponsors
-        STATIC_PAGES[15],  // Notifications
+        STATIC_PAGES[0], // Dashboard
+        STATIC_PAGES[1], // Users
+        STATIC_PAGES[13], // Sponsors
+        STATIC_PAGES[15], // Notifications
       ];
     }
 
@@ -532,7 +629,7 @@ export default function UnifiedSearch({
       const matchCategory = item.category.toLowerCase().includes(trimmed);
       const matchHref = item.href.toLowerCase().includes(trimmed);
       const matchKeywords = item.keywords?.some((k) =>
-        k.toLowerCase().includes(trimmed)
+        k.toLowerCase().includes(trimmed),
       );
 
       return (
@@ -584,7 +681,9 @@ export default function UnifiedSearch({
               item.subtitle ||
               [
                 item.agency_website || item.metadata?.agency_website,
-                item.state_name || item.state?.state_name || item.metadata?.state_name,
+                item.state_name ||
+                  item.state?.state_name ||
+                  item.metadata?.state_name,
               ]
                 .filter(Boolean)
                 .join(" • ") ||
@@ -592,17 +691,44 @@ export default function UnifiedSearch({
 
             // Strip any markdown link syntax like [url](url) that might come from formatted subtitles
             const cleanSubtitle = rawSubtitle
-              ? String(rawSubtitle).replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").trim()
+              ? String(rawSubtitle)
+                  .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+                  .trim()
               : undefined;
+
+            let itemHref = item.route;
+            const isMembership =
+              group.type?.toLowerCase() === "memberships" ||
+              item.type?.toLowerCase() === "membership";
+
+            if (isMembership && item.id) {
+              // Ensure route includes id so memberships page can auto-open detail modal
+              if (itemHref) {
+                if (!itemHref.includes("id=")) {
+                  itemHref += `${itemHref.includes("?") ? "&" : "?"}id=${encodeURIComponent(item.id)}`;
+                }
+              } else {
+                itemHref = `/memberships?id=${encodeURIComponent(item.id)}&search=${encodeURIComponent(rawTitle)}`;
+              }
+            } else if (!itemHref) {
+              itemHref = `/license-issuers?search=${encodeURIComponent(rawTitle)}`;
+            }
 
             results.push({
               id: `api-${item.type || group.type}-${item.id}`,
+              rawId: item.id ? String(item.id) : undefined,
               title: rawTitle,
               subtitle: cleanSubtitle,
               category: group.label,
-              href: item.route || `/license-issuers?search=${encodeURIComponent(rawTitle)}`,
+              href: itemHref,
               icon: IconComponent,
-              badge: item.badge || (group.type === "license_issuers" ? "ISSUER" : undefined),
+              badge:
+                item.badge ||
+                (group.type === "license_issuers"
+                  ? "ISSUER"
+                  : isMembership
+                    ? "PLAN"
+                    : undefined),
               isApiResult: true,
             });
           });
@@ -631,6 +757,7 @@ export default function UnifiedSearch({
   const PREFERRED_ORDER = [
     "Quick Actions",
     "Pages",
+    "Memberships",
     "Users",
     "Sponsors",
     "Resources",
@@ -664,7 +791,11 @@ export default function UnifiedSearch({
     });
 
     Object.keys(groupedResults).forEach((cat) => {
-      if (!seen.has(cat) && groupedResults[cat] && groupedResults[cat]!.length > 0) {
+      if (
+        !seen.has(cat) &&
+        groupedResults[cat] &&
+        groupedResults[cat]!.length > 0
+      ) {
         seen.add(cat);
         ordered.push(cat);
       }
@@ -685,7 +816,6 @@ export default function UnifiedSearch({
     return list;
   }, [groupedResults, orderedCategories]);
 
-
   // Reset selected index when results change
   useEffect(() => {
     setSelectedIndex(0);
@@ -695,7 +825,7 @@ export default function UnifiedSearch({
   useEffect(() => {
     if (!isOpen || !listRef.current) return;
     const activeEl = listRef.current.querySelector(
-      `[data-index="${selectedIndex}"]`
+      `[data-index="${selectedIndex}"]`,
     ) as HTMLElement | null;
     if (activeEl) {
       activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -747,11 +877,15 @@ export default function UnifiedSearch({
       } else if (item.id === "action-upload-resource") {
         window.dispatchEvent(new CustomEvent("onspot:open-upload-resource"));
       } else if (item.id === "action-broadcast-notification") {
-        window.dispatchEvent(new CustomEvent("onspot:open-broadcast-notification"));
+        window.dispatchEvent(
+          new CustomEvent("onspot:open-broadcast-notification"),
+        );
       } else if (item.id === "action-create-membership") {
         window.dispatchEvent(new CustomEvent("onspot:open-create-membership"));
       } else if (item.id === "action-add-license-issuer") {
-        window.dispatchEvent(new CustomEvent("onspot:open-create-license-issuer"));
+        window.dispatchEvent(
+          new CustomEvent("onspot:open-create-license-issuer"),
+        );
       }
 
       // 2. In-page filter events for database results
@@ -761,17 +895,51 @@ export default function UnifiedSearch({
           const searchParam = urlObj.searchParams.get("search");
           if (searchParam) {
             if (item.category === "Users") {
-              window.dispatchEvent(new CustomEvent("onspot:filter-users", { detail: { search: searchParam } }));
+              window.dispatchEvent(
+                new CustomEvent("onspot:filter-users", {
+                  detail: { search: searchParam },
+                }),
+              );
             } else if (item.category === "Sponsors") {
-              window.dispatchEvent(new CustomEvent("onspot:filter-sponsors", { detail: { search: searchParam } }));
+              window.dispatchEvent(
+                new CustomEvent("onspot:filter-sponsors", {
+                  detail: { search: searchParam },
+                }),
+              );
             } else if (item.category === "Resources") {
-              window.dispatchEvent(new CustomEvent("onspot:filter-resources", { detail: { search: searchParam } }));
+              window.dispatchEvent(
+                new CustomEvent("onspot:filter-resources", {
+                  detail: { search: searchParam },
+                }),
+              );
             } else if (item.category === "GPS & Map Pins") {
-              window.dispatchEvent(new CustomEvent("onspot:filter-gps", { detail: { search: searchParam } }));
+              window.dispatchEvent(
+                new CustomEvent("onspot:filter-gps", {
+                  detail: { search: searchParam },
+                }),
+              );
             } else if (item.category === "Licenses") {
-              window.dispatchEvent(new CustomEvent("onspot:filter-licenses", { detail: { search: searchParam } }));
+              window.dispatchEvent(
+                new CustomEvent("onspot:filter-licenses", {
+                  detail: { search: searchParam },
+                }),
+              );
             } else if (item.category === "License Issuers") {
-              window.dispatchEvent(new CustomEvent("onspot:filter-license-issuers", { detail: { search: searchParam } }));
+              window.dispatchEvent(
+                new CustomEvent("onspot:filter-license-issuers", {
+                  detail: { search: searchParam },
+                }),
+              );
+            } else if (item.category === "Memberships") {
+              const idParam = urlObj.searchParams.get("id") || item.rawId;
+              window.dispatchEvent(
+                new CustomEvent("onspot:open-membership-detail", {
+                  detail: {
+                    search: searchParam,
+                    id: idParam,
+                  },
+                }),
+              );
             }
           }
         } catch {}
@@ -780,7 +948,6 @@ export default function UnifiedSearch({
 
     router.push(item.href);
   };
-
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isOpen) {
@@ -870,7 +1037,8 @@ export default function UnifiedSearch({
                 : "Suggested Actions & Pages"}
               {isApiLoading && (
                 <span className="inline-flex items-center gap-1 text-[#0E3E27] font-normal text-[10.5px]">
-                  <Loader2 className="w-3 h-3 animate-spin" /> Searching database...
+                  <Loader2 className="w-3 h-3 animate-spin" /> Searching
+                  database...
                 </span>
               )}
             </span>
@@ -894,7 +1062,8 @@ export default function UnifiedSearch({
                     Searching database...
                   </p>
                   <p className="text-[12px] text-gray-400 mt-1 max-w-xs mx-auto">
-                    Scanning users, sponsors, resources, license issuers, and map pins for &ldquo;{query}&rdquo;
+                    Scanning users, sponsors, resources, license issuers, and
+                    map pins for &ldquo;{query}&rdquo;
                   </p>
                 </div>
               ) : (
@@ -907,7 +1076,8 @@ export default function UnifiedSearch({
                   </p>
                   <p className="text-[12px] text-gray-400 mt-1 max-w-xs mx-auto">
                     No actions, pages, or records matched &ldquo;{query}&rdquo;.
-                    Try searching for &ldquo;create user&rdquo;, &ldquo;sponsors&rdquo;, or &ldquo;resources&rdquo;.
+                    Try searching for &ldquo;create user&rdquo;,
+                    &ldquo;sponsors&rdquo;, or &ldquo;resources&rdquo;.
                   </p>
                 </div>
               )
@@ -954,9 +1124,10 @@ export default function UnifiedSearch({
                                 className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                                   isSelected
                                     ? "bg-[#0E3E27] text-[#f5efdc]"
-                                    : item.category === "Quick Actions" || item.category === "License Issuers"
-                                    ? "bg-[#0E3E27]/10 text-[#0E3E27]"
-                                    : "bg-gray-100 text-gray-600"
+                                    : item.category === "Quick Actions" ||
+                                        item.category === "License Issuers"
+                                      ? "bg-[#0E3E27]/10 text-[#0E3E27]"
+                                      : "bg-gray-100 text-gray-600"
                                 }`}
                               >
                                 <Icon className="w-4 h-4" />
@@ -970,15 +1141,17 @@ export default function UnifiedSearch({
                                   {item.badge && (
                                     <span
                                       className={`text-[9.5px] font-semibold px-2 py-0.5 rounded-full shrink-0 tracking-wide uppercase ${
-                                        item.badge === "Action" || item.badge === "Broadcast"
+                                        item.badge === "Action" ||
+                                        item.badge === "Broadcast"
                                           ? "bg-[#0E3E27]/10 text-[#0E3E27]"
-                                          : item.badge === "Review Queue" || item.badge === "Pending"
-                                          ? "bg-amber-100 text-amber-800"
-                                          : item.badge === "Active"
-                                          ? "bg-emerald-100 text-emerald-800"
-                                          : item.badge === "ISSUER"
-                                          ? "bg-[#0E3E27]/10 text-[#0E3E27] border border-[#0E3E27]/20"
-                                          : "bg-gray-100 text-gray-600"
+                                          : item.badge === "Review Queue" ||
+                                              item.badge === "Pending"
+                                            ? "bg-amber-100 text-amber-800"
+                                            : item.badge === "Active"
+                                              ? "bg-emerald-100 text-emerald-800"
+                                              : item.badge === "ISSUER"
+                                                ? "bg-[#0E3E27]/10 text-[#0E3E27] border border-[#0E3E27]/20"
+                                                : "bg-gray-100 text-gray-600"
                                       }`}
                                     >
                                       {item.badge}
@@ -1047,9 +1220,6 @@ export default function UnifiedSearch({
                 close
               </span>
             </div>
-            <span className="text-[10px] text-gray-400">
-              Frontend Actions + API Data
-            </span>
           </div>
         </div>
       )}

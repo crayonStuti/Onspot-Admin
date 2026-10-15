@@ -41,7 +41,7 @@ export default function LicensesPage() {
 
   const [stateId, setStateId] = useState("");
   const [licenseType, setLicenseType] = useState("");
-  const [uploadDate, setUploadDate] = useState("30d");
+  const [uploadDate, setUploadDate] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Selection
@@ -132,7 +132,6 @@ export default function LicensesPage() {
     }
   }, [page, limit, stateId, licenseType, uploadDate, searchQuery]);
 
-
   // Ingest URL search parameter or filter event
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -148,7 +147,8 @@ export default function LicensesPage() {
       }
     };
     window.addEventListener("onspot:filter-licenses", handleFilter);
-    return () => window.removeEventListener("onspot:filter-licenses", handleFilter);
+    return () =>
+      window.removeEventListener("onspot:filter-licenses", handleFilter);
   }, []);
 
   // Debounced search trigger (calls backend API)
@@ -341,10 +341,10 @@ export default function LicensesPage() {
             appearance: "none",
           }}
         >
-          <option value="30d">Upload Date: Last 30 Days</option>
-          <option value="7d">Upload Date: Last 7 Days</option>
-          <option value="90d">Upload Date: Last 90 Days</option>
           <option value="all">All Time</option>
+          <option value="7d">Upload Date: Last 7 Days</option>
+          <option value="30d">Upload Date: Last 30 Days</option>
+          <option value="90d">Upload Date: Last 90 Days</option>
         </select>
 
         {/* Search input with HTML-style magnifying glass */}
@@ -421,10 +421,7 @@ export default function LicensesPage() {
             </svg>
           </button>
 
-          {(stateId ||
-            licenseType ||
-            uploadDate !== "30d" ||
-            searchQuery) && (
+          {(stateId || licenseType || uploadDate !== "30d" || searchQuery) && (
             <button
               type="button"
               id="btn-filters"

@@ -632,9 +632,13 @@ export default function GPSActivityPage() {
             <span className="text-[#9a9a9a] text-[13px] font-medium">
               Total Pins Added
             </span>
-            <span className="w-8 h-8 rounded-full bg-[#f1f5ee] flex items-center justify-center text-[#2d4a23]">
-              <MapPinIcon className="w-5 h-5" />
-            </span>
+            <Image
+              src="/images/total-pins.png"
+              alt="Total Pins Added"
+              width={30}
+              height={30}
+              className="object-contain"
+            />
           </div>
           {(() => {
             const rawTotal = summary?.total_pins;
@@ -717,9 +721,13 @@ export default function GPSActivityPage() {
             <span className="text-[#9a9a9a] text-[13px] font-medium">
               Most Tagged State
             </span>
-            <span className="w-8 h-8 rounded-full bg-[#f1f5ee] flex items-center justify-center text-[#2d4a23]">
-              <Compass className="w-5 h-5" />
-            </span>
+            <Image
+              src="/images/most-tagged-state.png"
+              alt="Most Tagged State"
+              width={30}
+              height={30}
+              className="object-contain"
+            />
           </div>
           <div className="text-[24px] font-bold text-[#1f1f1f] mb-1 truncate">
             {loading ? "..." : summary?.most_tagged_state?.state_name || "None"}
@@ -736,9 +744,13 @@ export default function GPSActivityPage() {
             <span className="text-[#9a9a9a] text-[13px] font-medium">
               Most Active Users
             </span>
-            <span className="w-8 h-8 rounded-full bg-[#f1f5ee] flex items-center justify-center text-[#2d4a23]">
-              <Users className="w-5 h-5" />
-            </span>
+            <Image
+              src="/images/active-user.png"
+              alt="Most Active Users"
+              width={30}
+              height={30}
+              className="object-contain"
+            />
           </div>
           <div
             className="text-[21px] font-bold text-[#1f1f1f] mb-1 truncate"
@@ -767,9 +779,13 @@ export default function GPSActivityPage() {
             <span className="text-[#9a9a9a] text-[13px] font-medium">
               Shared Publicly
             </span>
-            <span className="w-8 h-8 rounded-full bg-[#f1f5ee] flex items-center justify-center text-[#2d4a23]">
-              <Globe className="w-5 h-5" />
-            </span>
+            <Image
+              src="/images/shared-publicly.png"
+              alt="Shared Publicly"
+              width={30}
+              height={30}
+              className="object-contain"
+            />
           </div>
           <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
             {loading
@@ -788,9 +804,13 @@ export default function GPSActivityPage() {
               <span className="text-[#9a9a9a] text-[13px] font-medium">
                 Total Tag Types
               </span>
-              <span className="w-8 h-8 rounded-full bg-[#f1f5ee] flex items-center justify-center text-[#2d4a23]">
-                <Tag className="w-5 h-5" />
-              </span>
+              <Image
+                src="/images/total-tag-types.png"
+                alt="Total Tag Types"
+                width={30}
+                height={30}
+                className="object-contain"
+              />
             </div>
             <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
               {typeof summary.total_tag_types === "object" &&
@@ -1146,9 +1166,11 @@ export default function GPSActivityPage() {
                           <td className="py-3 px-3 align-middle">
                             <div className="flex items-center gap-2.5 text-[#111111] font-medium">
                               {avatarUrl ? (
-                                <img
+                                <Image
                                   src={avatarUrl}
                                   alt={uName}
+                                  width={30}
+                                  height={30}
                                   className="w-[30px] h-[30px] rounded-full object-cover flex-shrink-0 border border-gray-100"
                                 />
                               ) : (
@@ -1251,24 +1273,19 @@ export default function GPSActivityPage() {
               </table>
             </div>
 
-            {/* Table Footer Count & Pagination */}
-            <div className="mt-4 pt-3 border-t border-[#f1f1ed] flex flex-wrap items-center justify-between gap-3 text-[12.5px] text-[#888]">
-              <div>
-                Showing 1 to {mapPins.length} of {totalItems.toLocaleString()}{" "}
-                pins
-              </div>
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                totalItems={totalItems || mapPins.length}
-                pageSize={limit}
-                itemCountOnPage={mapPins.length}
-                itemLabel="pins"
-                onPageChange={(newPage) => setPage(newPage)}
-                loading={loading}
-              />
-            </div>
           </section>
+
+          {/* Standard Pagination matching all other admin pages outside the table card */}
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalItems || mapPins.length}
+            pageSize={limit}
+            itemCountOnPage={mapPins.length}
+            itemLabel="pins"
+            onPageChange={(newPage) => setPage(newPage)}
+            loading={loading}
+          />
         </div>
 
         {/* ===================== RIGHT COLUMN: PANELS & CHARTS (4 OR 5 COLS) ===================== */}
