@@ -679,38 +679,45 @@ export default function GPSActivityPage() {
                 : undefined;
 
             return (
-              <>
-                <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
-                  {loading ? "..." : (count ?? 0).toLocaleString()}
+              loading && !summary ? (
+                <div className="space-y-2 py-1">
+                  <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
+                  <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
                 </div>
-                {/* 30-Day comparison delta / trend indicator */}
-                {formatted ? (
-                  <div
-                    className={`text-[12px] font-medium flex items-center gap-1 ${
-                      trend === "down"
-                        ? "text-[#e03131]"
-                        : trend === "up"
-                          ? "text-[#34A853]"
-                          : "text-[#7D848D]"
-                    }`}
-                  >
-                    <span>{formatted}</span>
+              ) : (
+                <>
+                  <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
+                    {(count ?? 0).toLocaleString()}
                   </div>
-                ) : delta !== undefined ? (
-                  <div
-                    className={`text-[12px] font-medium flex items-center gap-1 ${
-                      trend === "down" || delta < 0
-                        ? "text-[#e03131]"
-                        : trend === "up" || delta > 0
-                          ? "text-[#34A853]"
-                          : "text-[#7D848D]"
-                    }`}
-                  >
-                    <span>{delta >= 0 ? "↑ +" : "↓ "}</span>
-                    <span>{Math.abs(delta)} vs previous 30 days</span>
-                  </div>
-                ) : null}
-              </>
+                  {/* 30-Day comparison delta / trend indicator */}
+                  {formatted ? (
+                    <div
+                      className={`text-[12px] font-medium flex items-center gap-1 ${
+                        trend === "down"
+                          ? "text-[#e03131]"
+                          : trend === "up"
+                            ? "text-[#34A853]"
+                            : "text-[#7D848D]"
+                      }`}
+                    >
+                      <span>{formatted}</span>
+                    </div>
+                  ) : delta !== undefined ? (
+                    <div
+                      className={`text-[12px] font-medium flex items-center gap-1 ${
+                        trend === "down" || delta < 0
+                          ? "text-[#e03131]"
+                          : trend === "up" || delta > 0
+                            ? "text-[#34A853]"
+                            : "text-[#7D848D]"
+                      }`}
+                    >
+                      <span>{delta >= 0 ? "↑ +" : "↓ "}</span>
+                      <span>{Math.abs(delta)} vs previous 30 days</span>
+                    </div>
+                  ) : null}
+                </>
+              )
             );
           })()}
         </div>
@@ -729,13 +736,22 @@ export default function GPSActivityPage() {
               className="object-contain"
             />
           </div>
-          <div className="text-[24px] font-bold text-[#1f1f1f] mb-1 truncate">
-            {loading ? "..." : summary?.most_tagged_state?.state_name || "None"}
-          </div>
-          <div className="text-[12px] text-[#34A853] font-medium flex items-center gap-1">
-            {summary?.most_tagged_state?.formatted_text ||
-              `${summary?.most_tagged_state?.pin_count ?? 0} Pins`}
-          </div>
+          {loading && !summary ? (
+            <div className="space-y-2 py-1">
+              <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
+              <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
+            </div>
+          ) : (
+            <>
+              <div className="text-[24px] font-bold text-[#1f1f1f] mb-1 truncate">
+                {summary?.most_tagged_state?.state_name || "None"}
+              </div>
+              <div className="text-[12px] text-[#34A853] font-medium flex items-center gap-1">
+                {summary?.most_tagged_state?.formatted_text ||
+                  `${summary?.most_tagged_state?.pin_count ?? 0} Pins`}
+              </div>
+            </>
+          )}
         </div>
 
         {/* 3. Most Active Users */}
@@ -752,25 +768,32 @@ export default function GPSActivityPage() {
               className="object-contain"
             />
           </div>
-          <div
-            className="text-[21px] font-bold text-[#1f1f1f] mb-1 truncate"
-            title={
-              summary?.most_active_user?.display_name ||
-              summary?.most_active_user?.email ||
-              "None"
-            }
-          >
-            {loading
-              ? "..."
-              : summary?.most_active_user?.display_name ||
-                summary?.most_active_user?.first_name ||
-                summary?.most_active_user?.email?.split("@")[0] ||
-                "None"}
-          </div>
-          <div className="text-[12px] text-[#34A853] font-medium flex items-center gap-1">
-            {summary?.most_active_user?.formatted_text ||
-              `${summary?.most_active_user?.pin_count ?? 0} Pins`}
-          </div>
+          {loading && !summary ? (
+            <div className="space-y-2 py-1">
+              <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
+              <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
+            </div>
+          ) : (
+            <>
+              <div
+                className="text-[21px] font-bold text-[#1f1f1f] mb-1 truncate"
+                title={
+                  summary?.most_active_user?.display_name ||
+                  summary?.most_active_user?.email ||
+                  "None"
+                }
+              >
+                {summary?.most_active_user?.display_name ||
+                  summary?.most_active_user?.first_name ||
+                  summary?.most_active_user?.email?.split("@")[0] ||
+                  "None"}
+              </div>
+              <div className="text-[12px] text-[#34A853] font-medium flex items-center gap-1">
+                {summary?.most_active_user?.formatted_text ||
+                  `${summary?.most_active_user?.pin_count ?? 0} Pins`}
+              </div>
+            </>
+          )}
         </div>
 
         {/* 4. Shared Publicly */}
@@ -787,14 +810,21 @@ export default function GPSActivityPage() {
               className="object-contain"
             />
           </div>
-          <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
-            {loading
-              ? "..."
-              : (summary?.shared_publicly?.count ?? 0).toLocaleString()}
-          </div>
-          <div className="text-[12px] text-[#3b6bbf] font-medium">
-            {summary?.shared_publicly?.percentage ?? 0}% of total
-          </div>
+          {loading && !summary ? (
+            <div className="space-y-2 py-1">
+              <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
+              <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
+            </div>
+          ) : (
+            <>
+              <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
+                {(summary?.shared_publicly?.count ?? 0).toLocaleString()}
+              </div>
+              <div className="text-[12px] text-[#3b6bbf] font-medium">
+                {summary?.shared_publicly?.percentage ?? 0}% of total
+              </div>
+            </>
+          )}
         </div>
 
         {/* 5. Total Tag Types (Handles both raw number and { count, formatted_text }) */}
@@ -812,18 +842,27 @@ export default function GPSActivityPage() {
                 className="object-contain"
               />
             </div>
-            <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
-              {typeof summary.total_tag_types === "object" &&
-              summary.total_tag_types !== null
-                ? (summary.total_tag_types.count ?? 0).toLocaleString()
-                : Number(summary.total_tag_types ?? 0).toLocaleString()}
-            </div>
-            <div className="text-[12px] text-[#888] font-normal">
-              {typeof summary.total_tag_types === "object" &&
-              summary.total_tag_types !== null
-                ? summary.total_tag_types.formatted_text || "Types used"
-                : "Types used"}
-            </div>
+            {loading && !summary ? (
+              <div className="space-y-2 py-1">
+                <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
+                <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
+              </div>
+            ) : (
+              <>
+                <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
+                  {typeof summary.total_tag_types === "object" &&
+                  summary.total_tag_types !== null
+                    ? (summary.total_tag_types.count ?? 0).toLocaleString()
+                    : Number(summary.total_tag_types ?? 0).toLocaleString()}
+                </div>
+                <div className="text-[12px] text-[#888] font-normal">
+                  {typeof summary.total_tag_types === "object" &&
+                  summary.total_tag_types !== null
+                    ? summary.total_tag_types.formatted_text || "Types used"
+                    : "Types used"}
+                </div>
+              </>
+            )}
           </div>
         )}
       </section>

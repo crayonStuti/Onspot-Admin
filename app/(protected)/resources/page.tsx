@@ -64,6 +64,8 @@ export default function ResourcesPage() {
 
   // Dashboard Stat Cards State (1:1 with HTML mockup & data.stats)
   const [statsLoading, setStatsLoading] = useState(true);
+  const [statsLoaded, setStatsLoaded] = useState(false);
+  const statsLoadedRef = React.useRef(false);
   const [stats, setStats] = useState({
     total_resources: {
       count: null as number | string | null,
@@ -257,7 +259,9 @@ export default function ResourcesPage() {
   // Fetch Resources List with new API query parameters
   const fetchResourcesList = useCallback(async () => {
     setLoading(true);
-    setStatsLoading(true);
+    if (!statsLoadedRef.current) {
+      setStatsLoading(true);
+    }
     try {
       let isPublishedParam: string | undefined = undefined;
       if (selectedVisibility === "Published") {
@@ -314,6 +318,8 @@ export default function ResourcesPage() {
               "down",
             ),
           });
+          statsLoadedRef.current = true;
+          setStatsLoaded(true);
         } else if (res.data.pagination?.totaldata !== undefined) {
           setStats((prev) => ({
             ...prev,
@@ -322,6 +328,8 @@ export default function ResourcesPage() {
               count: res.data.pagination.totaldata,
             },
           }));
+          statsLoadedRef.current = true;
+          setStatsLoaded(true);
         }
       } else {
         setResources([]);
@@ -501,7 +509,7 @@ export default function ResourcesPage() {
               </svg>
             </span>
           </div>
-          {statsLoading || loading ? (
+          {!statsLoaded ? (
             <div className="space-y-2 py-1">
               <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
               <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
@@ -543,7 +551,7 @@ export default function ResourcesPage() {
               </svg>
             </span>
           </div>
-          {statsLoading || loading ? (
+          {!statsLoaded ? (
             <div className="space-y-2 py-1">
               <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
               <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
@@ -585,7 +593,7 @@ export default function ResourcesPage() {
               </svg>
             </span>
           </div>
-          {statsLoading || loading ? (
+          {!statsLoaded ? (
             <div className="space-y-2 py-1">
               <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
               <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
@@ -627,7 +635,7 @@ export default function ResourcesPage() {
               </svg>
             </span>
           </div>
-          {statsLoading || loading ? (
+          {!statsLoaded ? (
             <div className="space-y-2 py-1">
               <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
               <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
@@ -688,7 +696,7 @@ export default function ResourcesPage() {
               </svg>
             </span>
           </div>
-          {statsLoading || loading ? (
+          {!statsLoaded ? (
             <div className="space-y-2 py-1">
               <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
               <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />

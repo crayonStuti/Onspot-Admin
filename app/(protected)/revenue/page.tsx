@@ -57,7 +57,7 @@ export default function RevenuePage() {
         if (isMounted && response?.data && Array.isArray(response.data)) {
           // Hide "Free / Trial" option
           const filtered = response.data.filter(
-            (m) => m && m.toLowerCase().trim() !== "free / trial"
+            (m) => m && m.toLowerCase().trim() !== "free / trial",
           );
           setPaymentMethods(filtered);
         }
@@ -224,7 +224,15 @@ export default function RevenuePage() {
   );
 
   useEffect(() => {
-    loadData(false, page, period, plan, paymentType, debouncedSearch, revenueType);
+    loadData(
+      false,
+      page,
+      period,
+      plan,
+      paymentType,
+      debouncedSearch,
+      revenueType,
+    );
   }, [page, period, plan, paymentType, debouncedSearch, revenueType]);
 
   const handlePeriodChange = (newPeriod: string) => {
@@ -344,19 +352,19 @@ export default function RevenuePage() {
     const list: { label: string; value: string }[] = [
       { label: "Basic", value: "basic" },
       { label: "Premium", value: "premium" },
-      { label: "Free", value: "free" },
     ];
-    if (data?.revenue_by_plan?.breakdown) {
-      data.revenue_by_plan.breakdown.forEach((item) => {
-        const val = (item.name || "").toLowerCase().trim();
-        if (val && !list.some((p) => p.value === val)) {
-          list.push({
-            label: item.name.charAt(0).toUpperCase() + item.name.slice(1),
-            value: val,
-          });
-        }
-      });
-    }
+    // if (data?.revenue_by_plan?.breakdown) {
+    //   data.revenue_by_plan.breakdown.forEach((item) => {
+    //     const val = (item.name || "").toLowerCase().trim();
+    //     if (val && !list.some((p) => p.value === val)) {
+    //       list.push({
+    //         label: item.name.charAt(0).toUpperCase() + item.name.slice(1),
+    //         value: val,
+    //       });
+    //     }
+    //   });
+    // }
+
     return list;
   }, [data?.revenue_by_plan]);
 
@@ -1212,8 +1220,8 @@ export default function RevenuePage() {
                           </td>
 
                           {/* Payment Method */}
-                          <td className="py-3.5 px-3 text-[#555] text-[12.5px]">
-                            {txn.payment_method || "Credit Card"}
+                          <td className="py-3.5 px-3 text-[#555] text-center text-[12.5px]">
+                            {txn.payment_method || "-"}
                           </td>
 
                           {/* Status */}

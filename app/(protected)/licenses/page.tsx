@@ -255,26 +255,35 @@ export default function LicensesPage() {
               </svg>
             </span>
           </div>
-          <div className="value text-[26px] font-bold text-[#1f1f1f] mb-2">
-            {loading ? "..." : totalCount.toLocaleString()}
-          </div>
-          <div
-            className={`delta text-[12px] inline-flex items-center gap-1 ${
-              trend === "down"
-                ? "text-[#e03131]"
-                : trend === "up" || weeklyChange > 0
-                  ? "text-[#34A853]"
-                  : "text-[#7D848D]"
-            }`}
-          >
-            {trend === "down" ? (
-              <span>&darr;{formattedText}</span>
-            ) : trend === "up" || weeklyChange > 0 ? (
-              <span>&uarr;{formattedText}</span>
-            ) : (
-              <span>&mdash; {formattedText}</span>
-            )}
-          </div>
+          {loading && !summaryData ? (
+            <div className="space-y-2 py-1">
+              <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
+              <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
+            </div>
+          ) : (
+            <>
+              <div className="value text-[26px] font-bold text-[#1f1f1f] mb-2">
+                {totalCount.toLocaleString()}
+              </div>
+              <div
+                className={`delta text-[12px] inline-flex items-center gap-1 ${
+                  trend === "down"
+                    ? "text-[#e03131]"
+                    : trend === "up" || weeklyChange > 0
+                      ? "text-[#34A853]"
+                      : "text-[#7D848D]"
+                }`}
+              >
+                {trend === "down" ? (
+                  <span>&darr;{formattedText}</span>
+                ) : trend === "up" || weeklyChange > 0 ? (
+                  <span>&uarr;{formattedText}</span>
+                ) : (
+                  <span>&mdash; {formattedText}</span>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </section>
 
