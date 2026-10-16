@@ -129,7 +129,9 @@ function MetricCard({
   isCurrency = false,
   forceTheme,
 }: MetricCardProps) {
-  const isDown = forceTheme ? forceTheme === "down" : metric?.trend === "down";
+  const isDown = metric?.trend === "down";
+  // console.log(metric?.trend, "isDown");
+  // console.log(isDown, "ss");
   const gradId = `sparkline-grad-${id}`;
 
   const graphData = metric?.graph_data || [];
@@ -595,12 +597,19 @@ const DONUT_COLORS: Record<string, string> = {
   premium: "#5da3f5",
 };
 
-function getDonutColor(level?: string, name?: string, index: number = 0): string {
+function getDonutColor(
+  level?: string,
+  name?: string,
+  index: number = 0,
+): string {
   const str = `${level || ""} ${name || ""}`.toLowerCase();
   if (str.includes("free")) return "#3a5230";
   if (str.includes("basic") || str.includes("standard")) return "#d4c79a";
   if (str.includes("premium") || str.includes("pro")) return "#5da3f5";
-  return DONUT_COLORS[level?.toLowerCase() || ""] || ["#3a5230", "#d4c79a", "#5da3f5"][index % 3];
+  return (
+    DONUT_COLORS[level?.toLowerCase() || ""] ||
+    ["#3a5230", "#d4c79a", "#5da3f5"][index % 3]
+  );
 }
 
 function MembershipConversionCard({
@@ -721,7 +730,12 @@ function MembershipConversionCard({
         >
           {/* SVG Donut - Exact HTML 270x270 dimensions & radius 70 */}
           <div
-            style={{ width: "270px", height: "270px", maxWidth: "100%", position: "relative" }}
+            style={{
+              width: "270px",
+              height: "270px",
+              maxWidth: "100%",
+              position: "relative",
+            }}
           >
             <svg
               id="chart-conversion"
@@ -866,6 +880,8 @@ export default function DashboardPage() {
     else setLoading(true);
     try {
       const res = await getDashboardOverview(period, stateLimit);
+
+      console.log(res);
       if (res && res.data) {
         setData(res.data);
       } else {

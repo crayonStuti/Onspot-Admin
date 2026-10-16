@@ -152,9 +152,12 @@ export default function MembershipsPage() {
     }
 
     window.addEventListener("onspot:open-create-membership", openNewPlanModal);
-    return () => window.removeEventListener("onspot:open-create-membership", openNewPlanModal);
+    return () =>
+      window.removeEventListener(
+        "onspot:open-create-membership",
+        openNewPlanModal,
+      );
   }, []);
-
 
   // Open Plan Detail Modal by Plan Object or ID/Search string
   const openPlanDetail = useCallback(
@@ -223,9 +226,7 @@ export default function MembershipsPage() {
 
     const params = new URLSearchParams(window.location.search);
     const idParam =
-      params.get("id") ||
-      params.get("planId") ||
-      params.get("membershipId");
+      params.get("id") || params.get("planId") || params.get("membershipId");
     const searchParam = params.get("search");
 
     if (idParam) {
@@ -524,7 +525,7 @@ export default function MembershipsPage() {
                   Monthly Recurring Revenue
                 </span>
                 <Image
-                  src="/images/membership/monthly-recurring-revenue.png"
+                  src="/images/monthly-recurring-revenue.png"
                   alt="Monthly Recurring Revenue"
                   width={30}
                   height={30}
@@ -554,7 +555,7 @@ export default function MembershipsPage() {
                   Annual Recurring Revenue
                 </span>
                 <Image
-                  src="/images/membership/annualy-recurring-revenue.png"
+                  src="/images/annualy-recurring-revenue.png"
                   alt="Annual Recurring Revenue"
                   width={30}
                   height={30}
@@ -613,9 +614,10 @@ export default function MembershipsPage() {
                   src={
                     churnRate?.trend === "down" ||
                     churnRate?.trend === "loss" ||
-                    (typeof churnRate?.weekly_change === "number" && churnRate.weekly_change < 0)
-                      ? "/images/membership/loss.png"
-                      : "/images/membership/profit.png"
+                    (typeof churnRate?.weekly_change === "number" &&
+                      churnRate.weekly_change < 0)
+                      ? "/images/loss.png"
+                      : "/images/profit.png"
                   }
                   alt="Churn Rate"
                   width={30}
@@ -1230,7 +1232,9 @@ export default function MembershipsPage() {
               {/* Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-4 rounded-xl bg-gray-50/70 border border-gray-100 text-xs">
                 <div>
-                  <span className="text-gray-400 block font-medium">Monthly Price</span>
+                  <span className="text-gray-400 block font-medium">
+                    Monthly Price
+                  </span>
                   <span className="font-bold text-sm text-[#0E3E27]">
                     {Number(
                       selectedPlan.monthly_price ?? selectedPlan.price_usd ?? 0,
@@ -1240,7 +1244,9 @@ export default function MembershipsPage() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-400 block font-medium">Yearly Price</span>
+                  <span className="text-gray-400 block font-medium">
+                    Yearly Price
+                  </span>
                   <span className="font-bold text-sm text-gray-800">
                     {Number(selectedPlan.yearly_price ?? 0) > 0
                       ? `$${Number(selectedPlan.yearly_price).toFixed(2)}/yr`
@@ -1365,7 +1371,9 @@ export default function MembershipsPage() {
                   Privileges & Included Features
                 </h4>
                 {(() => {
-                  const featureList = parseFeaturesToArray(selectedPlan.feature);
+                  const featureList = parseFeaturesToArray(
+                    selectedPlan.feature,
+                  );
 
                   if (featureList.length === 0) {
                     return (
@@ -1385,7 +1393,9 @@ export default function MembershipsPage() {
                           <span className="w-5 h-5 rounded-full bg-emerald-100 text-[#0E3E27] flex items-center justify-center flex-shrink-0">
                             <Check className="w-3.5 h-3.5" />
                           </span>
-                          <span className="font-medium text-gray-800">{feat}</span>
+                          <span className="font-medium text-gray-800">
+                            {feat}
+                          </span>
                         </div>
                       ))}
                     </div>

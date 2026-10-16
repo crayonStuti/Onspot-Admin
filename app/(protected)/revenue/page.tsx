@@ -582,7 +582,7 @@ export default function RevenuePage() {
         </div>
       )}
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.08),0_2px_6px_rgba(60,60,60,0.04)] flex flex-col justify-between">
           <div className="flex items-start justify-between mb-1.5">
             <span className="text-[#7D848D] text-[13px] font-medium">
@@ -620,6 +620,50 @@ export default function RevenuePage() {
                 )}
                 <span>
                   {data?.summary_cards?.subscription_revenue?.formatted_text ||
+                    "No previous comparison"}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="bg-white rounded-[14px] p-5 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.08),0_2px_6px_rgba(60,60,60,0.04)] flex flex-col justify-between">
+          <div className="flex items-start justify-between mb-1.5">
+            <span className="text-[#7D848D] text-[13px] font-medium">
+              Sponsorship Revenue
+            </span>
+            <Image
+              src="/images/handshake.png"
+              alt="Sponsorship Revenue"
+              width={30}
+              height={30}
+              className="object-contain"
+            />
+          </div>
+          {loading && !data ? (
+            <div className="space-y-2 py-2">
+              <div className="h-7 w-28 bg-[#f1f1ed] rounded animate-pulse" />
+              <div className="h-4 w-36 bg-[#f1f1ed] rounded animate-pulse" />
+            </div>
+          ) : (
+            <>
+              <div className="text-[24px] font-bold text-[#1f1f1f] my-1">
+                {formatMoney(data?.summary_cards?.sponsorship_revenue?.count)}
+              </div>
+              <div
+                className={`text-[12px] font-medium inline-flex items-center gap-1 ${
+                  data?.summary_cards?.sponsorship_revenue?.trend === "down"
+                    ? "text-[#e03131]"
+                    : "text-[#34A853]"
+                }`}
+              >
+                {data?.summary_cards?.sponsorship_revenue?.trend === "down" ? (
+                  <span>&darr;</span>
+                ) : (
+                  <span>&uarr;</span>
+                )}
+                <span>
+                  {data?.summary_cards?.sponsorship_revenue?.formatted_text ||
                     "No previous comparison"}
                 </span>
               </div>
