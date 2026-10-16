@@ -60,7 +60,6 @@ export default function UsersPage() {
   const [states, setStates] = useState<StateItem[]>([]);
   const [loadingStates, setLoadingStates] = useState(false);
 
-
   // View User Details Modal
   const [viewUserModal, setViewUserModal] = useState(false);
   const [selectedUserDetails, setSelectedUserDetails] = useState<any | null>(
@@ -88,12 +87,14 @@ export default function UsersPage() {
   const [licensesModalUser, setLicensesModalUser] = useState<UserItem | null>(
     null,
   );
+  const [previewLicenseImage, setPreviewLicenseImage] = useState<string | null>(
+    null,
+  );
 
   // Delete Confirmation Dialog
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserItem | null>(null);
   const [deleting, setDeleting] = useState(false);
-
 
   // Open Add User Modal from URL param (?action=create) or populate ?search= filter
   useEffect(() => {
@@ -402,7 +403,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      {/* ===================== FILTER CARD (matching HTML .filter-card) ===================== */}
+      {/* ===================== FILTER CARD ===================== */}
       <section className="bg-white rounded-[14px] p-5 sm:p-6 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)]">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.6fr_1fr_1.1fr_1fr_1fr_auto] gap-4 items-end">
           {/* Search User */}
@@ -531,7 +532,7 @@ export default function UsersPage() {
         </div>
       </section>
 
-      {/* ===================== DIVISION-SEC: USERS TABLE + MAP (matching HTML) ===================== */}
+      {/* ===================== DIVISION-SEC: USERS TABLE + MAP  ===================== */}
       <section className="flex flex-col xl:flex-row items-start gap-6 w-full min-w-0">
         {/* Table Column (matching HTML .table-card) */}
         <div className="flex-1 xl:w-[76%] w-full min-w-0 flex flex-col space-y-4">
@@ -543,7 +544,7 @@ export default function UsersPage() {
               </h3>
 
               <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                {/* View all Users dropdown (matching HTML #users-view) */}
+                {/* View all Users dropdown  */}
                 <select
                   value={quickView}
                   onChange={(e) => handleQuickViewChange(e.target.value)}
@@ -560,7 +561,7 @@ export default function UsersPage() {
                   <option value="premium">Premium only</option>
                 </select>
 
-                {/* Export button (matching HTML #export-btn) */}
+                {/* Export button  */}
                 <button
                   type="button"
                   onClick={handleExportCSV}
@@ -1253,9 +1254,12 @@ export default function UsersPage() {
                                 Card Photo:
                               </span>
                               <div
-                                onClick={() =>
-                                  setLicensesModalUser(selectedUserDetails)
-                                }
+                                onClick={() => {
+                                  const fullImgUrl = rawFrontImg.startsWith("http")
+                                    ? rawFrontImg
+                                    : `${API_URL}${rawFrontImg.startsWith("/") ? "" : "/"}${rawFrontImg}`;
+                                  setPreviewLicenseImage(fullImgUrl);
+                                }}
                                 className="cursor-pointer hover:opacity-80 transition-opacity"
                                 title="Click to view full photo"
                               >
@@ -1334,6 +1338,32 @@ export default function UsersPage() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== LICENSE CARD IMAGE PREVIEW MODAL ===================== */}
+      {previewLicenseImage && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setPreviewLicenseImage(null)}
+        >
+          <div
+            className="relative max-w-3xl max-h-[90vh] bg-white rounded-2xl overflow-hidden p-2 shadow-2xl flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPreviewLicenseImage(null)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-black/60 hover:bg-black text-white transition-colors z-10 cursor-pointer shadow-md"
+              title="Close image preview"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img
+              src={previewLicenseImage}
+              alt="License Card Preview"
+              className="max-w-full max-h-[85vh] object-contain rounded-xl"
+            />
           </div>
         </div>
       )}

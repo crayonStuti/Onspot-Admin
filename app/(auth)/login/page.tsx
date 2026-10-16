@@ -8,6 +8,7 @@ import {
   loginWithCredentials,
   setAuthSession,
   getStoredToken,
+  clearAuthSession,
   ApiError,
 } from "@/lib/api";
 
@@ -21,6 +22,13 @@ export default function LoginPage() {
 
   // If already logged in, navigate straight to protected area
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get("logout") === "true" || searchParams.has("force")) {
+        clearAuthSession();
+        return;
+      }
+    }
     const token = getStoredToken();
     if (token) {
       router.replace("/users");
@@ -68,7 +76,7 @@ export default function LoginPage() {
         refreshToken,
       );
       toast.success("Login successful");
-      router.push("/users");
+      router.push("/dashboard");
     } catch (err: any) {
       console.error("Login attempt failed:", err);
       const errorMessage =

@@ -111,15 +111,77 @@ export function isSessionValid(): boolean {
 
 export function clearAuthSession() {
   if (typeof window === "undefined") return;
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("refreshToken");
-  localStorage.removeItem("user");
-  localStorage.removeItem("isLoggedIn");
-  localStorage.removeItem("sessionCreatedAt");
-  localStorage.removeItem("lastActiveAt");
-  document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict";
-  document.cookie = "session-created=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict";
-  document.cookie = "last-active=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Strict";
+
+  // Clear local and session storage
+  try {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("sessionCreatedAt");
+    localStorage.removeItem("lastActiveAt");
+    sessionStorage.clear();
+  } catch (err) {
+    console.warn("Storage clear error:", err);
+  }
+
+  // Clear cookies comprehensively across all domain and path combinations
+  const knownCookies = [
+    "auth-token",
+    "session-created",
+    "last-active",
+    "token",
+    "authToken",
+    "refreshToken",
+    "session",
+  ];
+
+  const hostname = window.location.hostname;
+  const domains = ["", hostname, `.${hostname}`];
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    domains.push("localhost", ".localhost");
+  }
+
+  const paths = ["/", ""];
+
+  // Helper to expire a cookie with multiple attribute combinations
+  const expireCookie = (name: string) => {
+    domains.forEach((dom) => {
+      paths.forEach((pth) => {
+        const domStr = dom ? `; domain=${dom}` : "";
+        const pthStr = pth ? `; path=${pth}` : "";
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${pthStr}${domStr}`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${pthStr}${domStr}; SameSite=Lax`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT${pthStr}${domStr}; SameSite=Strict`;
+      });
+    });
+  };
+
+  knownCookies.forEach(expireCookie);
+
+  // Clear any extra cookies currently present in document.cookie
+  try {
+    document.cookie.split(";").forEach((cookieStr) => {
+      const trimmed = cookieStr.trim();
+      const eqPos = trimmed.indexOf("=");
+      const name = eqPos > -1 ? trimmed.substring(0, eqPos) : trimmed;
+      if (name) {
+        expireCookie(name);
+      }
+    });
+  } catch (err) {
+    console.warn("Cookie parse clear error:", err);
+  }
+
+  // Also trigger local Next.js logout API to clear server/HttpOnly cookies
+  try {
+    fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {});
+  } catch {
+    // Ignore fetch failure
+  }
 }
 
 let refreshPromise: Promise<string> | null = null;
@@ -334,6 +396,19 @@ export async function validateToken(): Promise<any> {
 }
 
 export async function logoutApi(): Promise<any> {
+  // 1. Call local server route to clear HttpOnly cookies and send Clear-Site-Data
+  try {
+    if (typeof window !== "undefined") {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    }
+  } catch (err) {
+    console.warn("Local logout route warning:", err);
+  }
+
+  // 2. Call external backend logout API
   try {
     return await fetchApi("/auth/logout", {
       method: "POST",
@@ -341,6 +416,8 @@ export async function logoutApi(): Promise<any> {
     });
   } catch (err) {
     console.warn("Logout API call warning:", err);
+  } finally {
+    clearAuthSession();
   }
 }
 
@@ -1454,6 +1531,7 @@ export async function getRevenueOverview(
   if (params.revenue_type) query.append("revenue_type", params.revenue_type);
 
   const qs = query.toString();
+  
   return await fetchApi<RevenueOverviewResponse>(`/admin/revenue/overview${qs ? `?${qs}` : ""}`);
 }
 

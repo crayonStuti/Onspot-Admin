@@ -226,7 +226,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     } finally {
       clearAuthSession();
       toast.success("Logged out successfully");
-      router.push("/login");
+      window.location.href = "/login?logout=true";
     }
   };
 

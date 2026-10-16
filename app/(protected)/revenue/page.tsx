@@ -531,8 +531,11 @@ export default function RevenuePage() {
   }, [data?.revenue_timeline, data?.revenue_by_month, period]);
 
   const timelineTitle = useMemo(() => {
-    if (period === "7_days" || period === "30_days") {
+    if (period === "7_days") {
       return "Revenue by Day";
+    }
+    if (period === "30_days") {
+      return "Revenue by Week";
     }
     if (period === "90") {
       return "Revenue by Month";
@@ -742,7 +745,7 @@ export default function RevenuePage() {
             <option value="">All Periods</option>
             <option value="7_days">Last 7 Days</option>
             <option value="30_days">Last 30 Days</option>
-            <option value="90">Last 90 Days</option>
+            <option value="90_days">Last 90 Days</option>
           </select>
         </div>
 

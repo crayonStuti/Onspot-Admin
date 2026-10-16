@@ -182,10 +182,16 @@ export default function LicenseIssuersPage() {
       handleOpenCreate();
     };
     window.addEventListener("onspot:filter-license-issuers", handleFilter);
-    window.addEventListener("onspot:open-create-license-issuer", handleOpenModal);
+    window.addEventListener(
+      "onspot:open-create-license-issuer",
+      handleOpenModal,
+    );
     return () => {
       window.removeEventListener("onspot:filter-license-issuers", handleFilter);
-      window.removeEventListener("onspot:open-create-license-issuer", handleOpenModal);
+      window.removeEventListener(
+        "onspot:open-create-license-issuer",
+        handleOpenModal,
+      );
     };
   }, []);
 
@@ -468,13 +474,13 @@ export default function LicenseIssuersPage() {
                           </button>
 
                           {/* More */}
-                          <button
+                          {/* <button
                             onClick={() => handleOpenEdit(issuer)}
                             title="More"
                             className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
                           >
                             <MoreVertical className="w-4 h-4" />
-                          </button>
+                          </button> */}
                         </div>
                       </td>
                     </tr>

@@ -163,7 +163,7 @@ export default function LicensesPage() {
   const handleResetFilters = () => {
     setStateId("");
     setLicenseType("");
-    setUploadDate("30d");
+    setUploadDate("all");
     setSearchQuery("");
     setPage(1);
   };
@@ -430,7 +430,7 @@ export default function LicensesPage() {
             </svg>
           </button>
 
-          {(stateId || licenseType || uploadDate !== "30d" || searchQuery) && (
+          {(stateId || licenseType || uploadDate !== "all" || searchQuery) && (
             <button
               type="button"
               id="btn-filters"
@@ -691,7 +691,7 @@ export default function LicensesPage() {
                           </button>
 
                           {/* Reusable Portal-based TableActionMenu with exact HTML icons */}
-                          <TableActionMenu
+                          {/* <TableActionMenu
                             menuWidth={185}
                             title="License Actions"
                             triggerClassName="!w-[30px] !h-[30px] !rounded-[7px]"
@@ -741,7 +741,7 @@ export default function LicensesPage() {
                                 },
                               },
                             ]}
-                          />
+                          /> */}
                         </div>
                       </td>
                     </tr>

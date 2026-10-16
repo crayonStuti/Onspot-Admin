@@ -215,6 +215,11 @@ export default function ResourceFormModal({
       return;
     }
 
+    if (!hasPdf && !hasUrl) {
+      toast.error("Resource file or URL is required");
+      return;
+    }
+
     setFormSaving(true);
     try {
       const payload = new FormData();
@@ -349,7 +354,7 @@ export default function ResourceFormModal({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Type *
+                  Type <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.resource_type}
@@ -399,7 +404,7 @@ export default function ResourceFormModal({
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Category *
+                  Category <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.category}
@@ -415,6 +420,20 @@ export default function ResourceFormModal({
                   ))}
                 </select>
               </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                Description / Content
+              </label>
+              <textarea
+                rows={3}
+                value={formData.content}
+                onChange={(e) =>
+                  setFormData({ ...formData, content: e.target.value })
+                }
+                placeholder="Summary of this resource or regulation guidelines..."
+                className="w-full p-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
+              />
             </div>
 
             <div>
@@ -459,51 +478,7 @@ export default function ResourceFormModal({
               )}
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Description / Content
-              </label>
-              <textarea
-                rows={3}
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
-                }
-                placeholder="Summary of this resource or regulation guidelines..."
-                className="w-full p-3 rounded-xl border border-gray-200 text-xs text-gray-800 focus:outline-none focus:border-[#0E3E27]"
-              />
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Category Icon
-                </label>
-                <div className="flex items-center gap-2.5">
-                  {categoryIconPreview && (
-                    <div className="w-9 h-9 rounded-lg border border-gray-200 overflow-hidden p-1 flex-shrink-0 bg-gray-50">
-                      <img
-                        src={categoryIconPreview}
-                        alt="Preview"
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] || null;
-                      setCategoryIconFile(file);
-                      if (file) {
-                        setCategoryIconPreview(URL.createObjectURL(file));
-                      }
-                    }}
-                    className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer w-full"
-                  />
-                </div>
-              </div>
-
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-semibold text-gray-700">
@@ -624,6 +599,35 @@ export default function ResourceFormModal({
                     </span>
                   </div>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Category Icon
+                </label>
+                <div className="flex items-center gap-2.5">
+                  {categoryIconPreview && (
+                    <div className="w-9 h-9 rounded-lg border border-gray-200 overflow-hidden p-1 flex-shrink-0 bg-gray-50">
+                      <img
+                        src={categoryIconPreview}
+                        alt="Preview"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setCategoryIconFile(file);
+                      if (file) {
+                        setCategoryIconPreview(URL.createObjectURL(file));
+                      }
+                    }}
+                    className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer w-full"
+                  />
+                </div>
               </div>
             </div>
 

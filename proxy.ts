@@ -25,33 +25,51 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Handle explicit logout on /login page
+  if (isAuthPage && (request.nextUrl.searchParams.get("logout") === "true" || request.nextUrl.searchParams.has("force"))) {
+    const response = NextResponse.next();
+    const cookieNames = ["auth-token", "session-created", "last-active", "token", "authToken", "refreshToken", "session"];
+    cookieNames.forEach((name) => {
+      response.cookies.delete(name);
+      response.cookies.set(name, "", { path: "/", maxAge: 0, expires: new Date(0) });
+    });
+    return response;
+  }
+
   // Check expiration if session cookies are present
   const isSessionExpired =
     (sessionCreated > 0 && now - sessionCreated > ABSOLUTE_SESSION_MAX_MS) ||
     (lastActive > 0 && now - lastActive > INACTIVITY_TIMEOUT_MS);
 
-  // If session is expired, clear cookies and force redirect to /login
-  if (token && isSessionExpired) {
-    const response = NextResponse.redirect(new URL("/login", request.url));
-    response.cookies.delete("auth-token");
-    response.cookies.delete("session-created");
-    response.cookies.delete("last-active");
+  // If token exists but has NO session timestamps, it is a foreign cookie from another project or invalid session
+  const isForeignOrUntracked = Boolean(token && sessionCreated === 0 && lastActive === 0);
+
+  // If session is expired or foreign cookie detected
+  if (token && (isSessionExpired || isForeignOrUntracked)) {
+    const response = isAuthPage
+      ? NextResponse.next()
+      : NextResponse.redirect(new URL("/login?logout=true", request.url));
+    const cookieNames = ["auth-token", "session-created", "last-active", "token", "authToken", "refreshToken", "session"];
+    cookieNames.forEach((name) => {
+      response.cookies.delete(name);
+      response.cookies.set(name, "", { path: "/", maxAge: 0, expires: new Date(0) });
+    });
     return response;
   }
 
-  const isAuthenticated = Boolean(token && !isSessionExpired);
+  const isAuthenticated = Boolean(token && !isSessionExpired && !isForeignOrUntracked);
 
   // Root path handling
   if (path === "/") {
     if (isAuthenticated) {
-      return NextResponse.redirect(new URL("/users", request.url));
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   // Already logged in trying to visit login
   if (isAuthPage && isAuthenticated) {
-    return NextResponse.redirect(new URL("/users", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   // Not logged in trying to visit protected pages

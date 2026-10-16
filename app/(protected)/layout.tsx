@@ -21,7 +21,7 @@ export default function ProtectedLayout({
     if (!isSessionValid()) {
       clearAuthSession();
       toast.error("Session expired. Please log in again.");
-      router.replace("/login");
+      window.location.href = "/login?logout=true";
       return;
     }
 
@@ -36,7 +36,7 @@ export default function ProtectedLayout({
       } else {
         toast.error("Authentication required. Please log in.");
       }
-      router.replace("/login");
+      window.location.href = "/login?logout=true";
     };
 
     window.addEventListener("onSpot:unauthorized", handleUnauthorized);
@@ -64,7 +64,7 @@ export default function ProtectedLayout({
         if (!isSessionValid()) {
           clearAuthSession();
           toast.error("Session expired. Please log in again.");
-          router.replace("/login");
+          window.location.href = "/login?logout=true";
         }
       },
       5 * 60 * 1000,
