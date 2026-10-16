@@ -1145,7 +1145,7 @@ export default function DashboardPage() {
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#e03131"
+                  stroke="#0e3e27"
                   strokeWidth="2"
                   style={{ width: "24px", height: "24px" }}
                 >
