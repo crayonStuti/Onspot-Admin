@@ -499,7 +499,7 @@ export default function MembershipsPage() {
                   Total Subscribers
                 </span>
                 <Image
-                  src="/images/membership/total-subscribers.png"
+                  src="/images/total-subscribers.png"
                   alt="Total Subscribers"
                   width={30}
                   height={30}
