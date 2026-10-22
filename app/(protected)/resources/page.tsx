@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import Image from "next/image";
 import {
   Search,
   Plus,
@@ -1610,14 +1611,17 @@ export default function ResourcesPage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#0E3E27] flex items-center justify-center flex-shrink-0 p-1.5 border border-emerald-100">
                   {selectedResource.category_icon ? (
-                    <img
+                    <Image
                       src={
                         selectedResource.category_icon.startsWith("http")
                           ? selectedResource.category_icon
                           : `${API_URL}${selectedResource.category_icon}`
                       }
-                      alt=""
+                      alt={selectedResource.title || ""}
+                      width={40}
+                      height={40}
                       className="w-full h-full object-contain"
+                      unoptimized
                     />
                   ) : (
                     <BookOpen className="w-5 h-5 text-[#0E3E27]" />

@@ -296,10 +296,13 @@ export function UserLicensesModal({
                                   className="group relative w-28 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-100 hover:border-[#2d4a23] transition-all cursor-pointer shadow-xs"
                                   title="Click to view front side image"
                                 >
-                                  <img
+                                  <Image
                                     src={resolveImageUrl(photo.front_image)}
                                     alt="License Front"
+                                    width={112}
+                                    height={80}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    unoptimized
                                   />
                                   <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] font-medium py-0.5 text-center backdrop-blur-xs">
                                     Front Side
@@ -312,10 +315,13 @@ export function UserLicensesModal({
                                   className="group relative w-28 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-100 hover:border-[#2d4a23] transition-all cursor-pointer shadow-xs"
                                   title="Click to view back side image"
                                 >
-                                  <img
+                                  <Image
                                     src={resolveImageUrl(photo.back_image)}
                                     alt="License Back"
+                                    width={112}
+                                    height={80}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    unoptimized
                                   />
                                   <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] font-medium py-0.5 text-center backdrop-blur-xs">
                                     Back Side
@@ -379,10 +385,13 @@ export function UserLicensesModal({
             >
               <X className="w-5 h-5" />
             </button>
-            <img
+            <Image
               src={previewImage}
               alt="License Photo Preview"
-              className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              width={800}
+              height={600}
+              className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg"
+              unoptimized
             />
           </div>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import {
   Search,
   Plus,
@@ -437,10 +438,13 @@ export default function SponsorsPage() {
                       <td className="py-3.5 px-3 align-middle">
                         <div className="flex items-center gap-3">
                           {sponsor.image ? (
-                            <img
+                            <Image
                               src={getImageSrc(sponsor.image)}
-                              alt=""
+                              alt={sponsor.sponsor_name || ""}
+                              width={36}
+                              height={36}
                               className="w-9 h-9 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                              unoptimized
                             />
                           ) : (
                             <div className="w-9 h-9 rounded-lg bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center flex-shrink-0 font-bold text-xs">
@@ -575,10 +579,13 @@ export default function SponsorsPage() {
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 {selectedSponsor.image ? (
-                  <img
+                  <Image
                     src={getImageSrc(selectedSponsor.image)}
-                    alt=""
+                    alt={selectedSponsor.sponsor_name || ""}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-xl object-cover border border-gray-200"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center font-bold">
@@ -816,10 +823,13 @@ export default function SponsorsPage() {
                 </label>
                 <div className="flex items-center gap-3">
                   {imagePreview ? (
-                    <img
+                    <Image
                       src={imagePreview}
                       alt="Preview"
+                      width={56}
+                      height={56}
                       className="w-14 h-14 rounded-lg object-cover border border-gray-200"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-14 h-14 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">

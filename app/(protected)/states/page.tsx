@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import Image from "next/image";
 import {
   Search,
   Plus,
@@ -345,10 +346,13 @@ export default function StatesPage() {
                       <td className="py-3.5 px-3 align-middle">
                         <div className="flex items-center gap-2.5">
                           {state.state_flag_image ? (
-                            <img
+                            <Image
                               src={getFlagUrl(state.state_flag_image)}
-                              alt=""
+                              alt={state.state_name || ""}
+                              width={28}
+                              height={20}
                               className="w-7 h-5 rounded-[3px] object-cover border border-gray-200"
+                              unoptimized
                             />
                           ) : (
                             <div className="w-7 h-7 rounded-[6px] bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center text-xs font-bold flex-shrink-0">
@@ -450,10 +454,13 @@ export default function StatesPage() {
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
                 {selectedState.state_flag_image ? (
-                  <img
+                  <Image
                     src={getFlagUrl(selectedState.state_flag_image)}
-                    alt=""
+                    alt={selectedState.state_name || ""}
+                    width={40}
+                    height={28}
                     className="w-10 h-7 rounded-[4px] object-cover border border-gray-200"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-9 h-9 rounded-xl bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center">
@@ -625,10 +632,13 @@ export default function StatesPage() {
                 </label>
                 <div className="flex items-center gap-3">
                   {flagPreview ? (
-                    <img
+                    <Image
                       src={flagPreview}
                       alt="Flag Preview"
+                      width={56}
+                      height={40}
                       className="w-14 h-10 rounded-[6px] object-cover border border-gray-200"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-14 h-10 rounded-[6px] bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">

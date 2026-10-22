@@ -122,9 +122,11 @@ export default function Header({
             title="Settings"
             className="hidden sm:flex w-[34px] h-[34px] sm:w-[42px] sm:h-[42px] rounded-full bg-[#f5efdc] items-center justify-center hover:bg-[#eae2c9] transition-colors cursor-pointer shrink-0"
           >
-            <img
+            <Image
               src="/images/setting-icon.png"
               alt="Settings"
+              width={24}
+              height={24}
               className="w-4 h-4 sm:w-6 sm:h-6 object-contain"
             />
           </Link>
@@ -135,9 +137,11 @@ export default function Header({
             title="Notifications"
             className="w-[34px] h-[34px] sm:w-[42px] sm:h-[42px] rounded-full bg-[#f5efdc] flex items-center justify-center hover:bg-[#eae2c9] transition-colors cursor-pointer shrink-0"
           >
-            <img
+            <Image
               src="/images/notification-icon.png"
               alt="Notifications"
+              width={24}
+              height={24}
               className="w-4 h-4 sm:w-6 sm:h-6 object-contain"
             />
           </Link>
@@ -146,10 +150,13 @@ export default function Header({
           <div className="flex items-center gap-1.5 sm:gap-2.5 py-1 pl-1 pr-2 sm:pr-3.5 rounded-full bg-white border border-[#ececec] shadow-xs shrink-0">
             <div className="w-[28px] h-[28px] sm:w-[36px] sm:h-[36px] rounded-full bg-[#0E3E27]/10 text-[#0E3E27] font-bold flex items-center justify-center text-xs overflow-hidden flex-shrink-0">
               {userPhoto ? (
-                <img
+                <Image
                   src={userPhoto}
                   alt={userEmail}
+                  width={36}
+                  height={36}
                   className="w-full h-full object-cover"
+                  unoptimized
                 />
               ) : (
                 userEmail.charAt(0).toUpperCase()

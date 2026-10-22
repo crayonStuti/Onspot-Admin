@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -94,10 +95,13 @@ export default function LoginPage() {
     <div className="w-full">
       {/* Brand Logo (54px high matching HTML) */}
       <div className="text-center mb-5">
-        <img
+        <Image
           src="/images/on-spot-logo.png"
           alt="On S.P.O.T."
+          width={150}
+          height={54}
           className="h-[54px] w-auto inline-block object-contain"
+          priority
         />
       </div>
 

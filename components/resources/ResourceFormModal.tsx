@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import {
   X,
   Loader2,
@@ -608,10 +609,13 @@ export default function ResourceFormModal({
                 <div className="flex items-center gap-2.5">
                   {categoryIconPreview && (
                     <div className="w-9 h-9 rounded-lg border border-gray-200 overflow-hidden p-1 flex-shrink-0 bg-gray-50">
-                      <img
+                      <Image
                         src={categoryIconPreview}
                         alt="Preview"
+                        width={36}
+                        height={36}
                         className="w-full h-full object-contain"
+                        unoptimized
                       />
                     </div>
                   )}

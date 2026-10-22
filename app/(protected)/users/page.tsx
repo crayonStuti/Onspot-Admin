@@ -1263,14 +1263,17 @@ export default function UsersPage() {
                                 className="cursor-pointer hover:opacity-80 transition-opacity"
                                 title="Click to view full photo"
                               >
-                                <img
+                                <Image
                                   src={
                                     rawFrontImg.startsWith("http")
                                       ? rawFrontImg
                                       : `${API_URL}${rawFrontImg.startsWith("/") ? "" : "/"}${rawFrontImg}`
                                   }
                                   alt="License Card"
+                                  width={40}
+                                  height={28}
                                   className="w-10 h-7 object-cover rounded border border-gray-200 shadow-2xs"
+                                  unoptimized
                                 />
                               </div>
                             </div>
@@ -1359,10 +1362,13 @@ export default function UsersPage() {
             >
               <X className="w-5 h-5" />
             </button>
-            <img
+            <Image
               src={previewLicenseImage}
               alt="License Card Preview"
-              className="max-w-full max-h-[85vh] object-contain rounded-xl"
+              width={800}
+              height={600}
+              className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-xl"
+              unoptimized
             />
           </div>
         </div>

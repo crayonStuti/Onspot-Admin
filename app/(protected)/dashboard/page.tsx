@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import {
   Users,
   UserCheck,
@@ -1098,9 +1099,9 @@ export default function DashboardPage() {
               label="Free Members"
               metric={data?.free_members}
               icon={
-                <img
+                <Image
                   src="/images/free-member.png"
-                  alt=""
+                  alt="Free Members"
                   width={22}
                   height={22}
                   style={{ objectFit: "contain" }}
@@ -1114,9 +1115,9 @@ export default function DashboardPage() {
               label="Premium Members"
               metric={data?.premium_members}
               icon={
-                <img
+                <Image
                   src="/images/premium-member.png"
-                  alt=""
+                  alt="Premium Members"
                   width={22}
                   height={22}
                   style={{ objectFit: "contain" }}

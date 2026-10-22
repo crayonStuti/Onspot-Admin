@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import {
   Search,
   Eye,
@@ -336,10 +337,13 @@ export default function PendingSponsorsPage() {
                       <td className="py-3.5 px-3 align-middle">
                         <div className="flex items-center gap-3">
                           {sponsor.image ? (
-                            <img
+                            <Image
                               src={getImageSrc(sponsor.image)}
-                              alt=""
+                              alt={sponsor.sponsor_name || ""}
+                              width={40}
+                              height={40}
                               className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                              unoptimized
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-lg bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center flex-shrink-0 font-bold text-xs">
@@ -478,10 +482,13 @@ export default function PendingSponsorsPage() {
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 {selectedSponsor.image ? (
-                  <img
+                  <Image
                     src={getImageSrc(selectedSponsor.image)}
-                    alt=""
+                    alt={selectedSponsor.sponsor_name || ""}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-xl object-cover border border-gray-200"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center font-bold">

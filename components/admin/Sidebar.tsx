@@ -288,9 +288,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   {item.iconType === "svg" ? (
                     item.svg
                   ) : (
-                    <img
-                      src={item.imgSrc}
-                      alt=""
+                    <Image
+                      src={item.imgSrc || ""}
+                      alt={item.label || ""}
+                      width={26}
+                      height={26}
                       className="w-[26px] h-[26px] object-contain"
                     />
                   )}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   X,
   Upload,
@@ -709,10 +710,13 @@ export default function MembershipFormModal({
             <div className="flex items-center gap-3.5 p-3.5 bg-gray-50/70 border border-dashed border-gray-300 rounded-xl">
               {imagePreview ? (
                 <div className="w-14 h-14 rounded-xl border border-gray-200 overflow-hidden p-1 flex-shrink-0 bg-white shadow-xs relative group">
-                  <img
+                  <Image
                     src={imagePreview}
                     alt="Badge preview"
+                    width={56}
+                    height={56}
                     className="w-full h-full object-contain"
+                    unoptimized
                   />
                 </div>
               ) : (
