@@ -3,13 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  X,
-  Loader2,
-  FileBadge,
-  MapPin,
-  ExternalLink,
-} from "lucide-react";
+import { X, Loader2, FileBadge, MapPin, ExternalLink } from "lucide-react";
 import {
   API_URL,
   getUserById,
@@ -32,7 +26,9 @@ export default function ViewUserDetailsModal({
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [userLicenses, setUserLicenses] = useState<any[]>([]);
   const [userMapPins, setUserMapPins] = useState<any[]>([]);
-  const [previewLicenseImage, setPreviewLicenseImage] = useState<string | null>(null);
+  const [previewLicenseImage, setPreviewLicenseImage] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!isOpen || !user) {
@@ -145,7 +141,9 @@ export default function ViewUserDetailsModal({
               <div className="w-12 h-12 rounded-full bg-emerald-50 text-[#2d4a23] font-bold text-lg flex items-center justify-center flex-shrink-0 border border-emerald-100 overflow-hidden relative">
                 {userDetails.profile?.profile_picture ? (
                   <Image
-                    src={getProfileImageUrl(userDetails.profile.profile_picture)}
+                    src={getProfileImageUrl(
+                      userDetails.profile.profile_picture,
+                    )}
                     alt="Avatar"
                     width={48}
                     height={48}
@@ -201,7 +199,7 @@ export default function ViewUserDetailsModal({
                       (typeof userDetails.profile?.membership === "object"
                         ? userDetails.profile?.membership?.name
                         : userDetails.profile?.membership) ||
-                      "Free",
+                      "None",
                   )}
                 </span>
               </div>
@@ -209,7 +207,9 @@ export default function ViewUserDetailsModal({
                 <span className="text-gray-400 block font-medium">Phone</span>
                 <span className="font-semibold text-gray-800">
                   {String(
-                    userDetails.profile?.phone || userDetails.phone || "Not provided",
+                    userDetails.profile?.phone ||
+                      userDetails.phone ||
+                      "Not provided",
                   )}
                 </span>
               </div>
@@ -228,14 +228,19 @@ export default function ViewUserDetailsModal({
                 </span>
               </div>
               <div>
-                <span className="text-gray-400 block font-medium">Joined On</span>
+                <span className="text-gray-400 block font-medium">
+                  Joined On
+                </span>
                 <span className="font-semibold text-gray-800">
                   {userDetails.created_at
-                    ? new Date(userDetails.created_at).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })
+                    ? new Date(userDetails.created_at).toLocaleDateString(
+                        "en-GB",
+                        {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        },
+                      )
                     : "—"}
                 </span>
               </div>
@@ -378,7 +383,9 @@ export default function ViewUserDetailsModal({
                       <div className="flex items-center gap-2 truncate">
                         <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                         <span className="font-medium text-gray-700 truncate">
-                          {pin.title || pin.location_name || `Pin #${pin.id || idx + 1}`}
+                          {pin.title ||
+                            pin.location_name ||
+                            `Pin #${pin.id || idx + 1}`}
                         </span>
                       </div>
                       <span className="text-[11px] text-gray-400 whitespace-nowrap ml-2">

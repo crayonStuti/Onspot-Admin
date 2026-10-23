@@ -388,7 +388,7 @@ export default function UsersPage() {
         (typeof u.profile?.membership === "object"
           ? u.profile?.membership?.name
           : u.profile?.membership) ||
-        "Free",
+        "None",
       u.created_at || "",
     ]);
 
@@ -697,10 +697,10 @@ export default function UsersPage() {
                         user.profile?.current_tier ||
                         user.profile?.membership?.name ||
                         user.profile?.membership ||
-                        "Free";
+                        "None";
                       const membershipStr = String(
                         typeof rawMembership === "object"
-                          ? rawMembership.name || "Free"
+                          ? rawMembership.name || "n/a"
                           : rawMembership,
                       );
                       const isPremium = membershipStr
@@ -1132,7 +1132,7 @@ export default function UsersPage() {
                         "object"
                           ? selectedUserDetails.profile?.membership?.name
                           : selectedUserDetails.profile?.membership) ||
-                        "Free",
+                        "None",
                     )}
                   </span>
                 </div>
@@ -1266,7 +1266,9 @@ export default function UsersPage() {
                               </span>
                               <div
                                 onClick={() => {
-                                  const fullImgUrl = rawFrontImg.startsWith("http")
+                                  const fullImgUrl = rawFrontImg.startsWith(
+                                    "http",
+                                  )
                                     ? rawFrontImg
                                     : `${API_URL}${rawFrontImg.startsWith("/") ? "" : "/"}${rawFrontImg}`;
                                   setPreviewLicenseImage(fullImgUrl);

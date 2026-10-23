@@ -3,19 +3,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Eye,
-  AlertCircle,
-  User as UserIcon,
-  ExternalLink,
-} from "lucide-react";
+import { Eye, AlertCircle, User as UserIcon, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import TableActionMenu from "@/components/admin/TableActionMenu";
-import {
-  getUsers,
-  UserItem,
-  API_URL,
-} from "@/lib/api";
+import { getUsers, UserItem, API_URL } from "@/lib/api";
 import ViewUserDetailsModal from "./ViewUserDetailsModal";
 
 export default function DashboardUsersTable() {
@@ -100,9 +91,7 @@ export default function DashboardUsersTable() {
       {/* Panel Head */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 mb-2 border-b border-[#ececec]">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-[#1f1f1f] text-[15px]">
-            Users
-          </h3>
+          <h3 className="font-semibold text-[#1f1f1f] text-[15px]">Users</h3>
           <span className="text-[11px] text-[#7D848D] bg-[#f5f5f2] px-2 py-0.5 rounded-full font-medium">
             Recent {users.length}
           </span>
@@ -211,18 +200,16 @@ export default function DashboardUsersTable() {
                   user.profile?.current_tier ||
                   user.profile?.membership?.name ||
                   user.profile?.membership ||
-                  "Free";
+                  "None";
                 const membershipStr = String(
                   typeof rawMembership === "object"
-                    ? rawMembership.name || "Free"
+                    ? rawMembership.name || "n/a"
                     : rawMembership,
                 );
                 const isPremium = membershipStr
                   .toLowerCase()
                   .includes("premium");
-                const isBasic = membershipStr
-                  .toLowerCase()
-                  .includes("basic");
+                const isBasic = membershipStr.toLowerCase().includes("basic");
                 const isActive =
                   user.status !== "inactive" && user.status !== "suspended";
                 const joinDate = user.created_at
@@ -275,8 +262,8 @@ export default function DashboardUsersTable() {
                           isPremium
                             ? "bg-[#eaf1fa] text-[#3b6bbf] border-[#cfdcef]"
                             : isBasic
-                            ? "bg-[#fff4d6] text-[#b58105] border-[#f1dba0]"
-                            : "bg-[#f1f1ed] text-[#7D848D] border-[#e2e2dc]"
+                              ? "bg-[#fff4d6] text-[#b58105] border-[#f1dba0]"
+                              : "bg-[#f1f1ed] text-[#7D848D] border-[#e2e2dc]"
                         }`}
                       >
                         {membershipStr}
@@ -326,7 +313,9 @@ export default function DashboardUsersTable() {
                           items={[
                             {
                               label: "View Profile",
-                              icon: <UserIcon className="w-4 h-4 text-[#7D848D]" />,
+                              icon: (
+                                <UserIcon className="w-4 h-4 text-[#7D848D]" />
+                              ),
                               onClick: () => setViewModalUser(user),
                             },
                             {
@@ -337,7 +326,7 @@ export default function DashboardUsersTable() {
                               onClick: () => {
                                 window.location.href = `/users?search=${encodeURIComponent(
                                   user.email,
-                                )};`
+                                )};`;
                               },
                             },
                           ]}
