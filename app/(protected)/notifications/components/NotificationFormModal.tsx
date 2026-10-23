@@ -225,45 +225,45 @@ export default function NotificationFormModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[2px] animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 bg-black/50 backdrop-blur-[2px] animate-in fade-in duration-200"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl bg-white rounded-[16px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-[#ececec] overflow-hidden max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-lg bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-[#ececec] overflow-hidden max-h-[85vh] sm:max-h-[90vh] flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4.5 border-b border-[#f0f0ed]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#014421]/10 flex items-center justify-center text-[#014421]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#f0f0ed] flex-shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#014421]/10 flex items-center justify-center text-[#014421] flex-shrink-0">
               {isEditing ? (
-                <Pencil className="w-5 h-5" />
+                <Pencil className="w-4 h-4 sm:w-5 sm:h-5" />
               ) : isDuplicating ? (
-                <Copy className="w-5 h-5" />
+                <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
               ) : (
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4 sm:w-5 sm:h-5" />
               )}
             </div>
-            <div>
-              <h2 className="text-[17px] font-semibold text-[#1f1f1f]">
+            <div className="min-w-0">
+              <h2 className="text-[15.5px] sm:text-[17px] font-semibold text-[#1f1f1f] truncate">
                 {isEditing
                   ? "Edit Draft Notification"
                   : isDuplicating
                   ? "Duplicate Notification"
                   : "Create New Notification"}
               </h2>
-              <p className="text-[12px] text-[#717171]">
+              <p className="text-[11px] sm:text-[12px] text-[#717171] truncate sm:whitespace-normal">
                 {isEditing
-                  ? "Update draft details. You can save changes or send the notification now."
+                  ? "Update draft details and send or save."
                   : isDuplicating
-                  ? "Old notification data loaded. Modify details and send as a new notification."
-                  : "Broadcast in-app notices, regulations, and announcements"}
+                  ? "Old notification data loaded for resend."
+                  : "Broadcast in-app notices and announcements"}
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-[#f3f3f0] flex items-center justify-center text-[#717171] hover:text-[#1f1f1f] transition-colors"
+            className="w-8 h-8 rounded-full hover:bg-[#f3f3f0] flex items-center justify-center text-[#717171] hover:text-[#1f1f1f] transition-colors flex-shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -275,11 +275,11 @@ export default function NotificationFormModal({
             e.preventDefault();
             handleSubmitWithStatus("sent");
           }}
-          className="flex-1 overflow-y-auto px-6 py-5 space-y-5"
+          className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4"
         >
           {/* Notification Title */}
           <div>
-            <label className="block text-[13px] font-medium text-[#2c2c2c] mb-1.5">
+            <label className="block text-[12.5px] sm:text-[13px] font-medium text-[#2c2c2c] mb-1">
               Notification Title <span className="text-red-500">*</span>
             </label>
             <input
@@ -288,13 +288,13 @@ export default function NotificationFormModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Florida Regulation Updates or Membership Renewal"
-              className="w-full h-10 px-3.5 bg-white border border-[#e2e2dc] rounded-[8px] text-[13px] text-[#1f1f1f] placeholder:text-[#a0a09a] focus:outline-none focus:border-[#014421] transition-colors"
+              className="w-full h-9.5 sm:h-10 px-3.5 bg-white border border-[#e2e2dc] rounded-[8px] text-[13px] text-[#1f1f1f] placeholder:text-[#a0a09a] focus:outline-none focus:border-[#014421] transition-colors"
             />
           </div>
 
           {/* Message Content */}
           <div>
-            <label className="block text-[13px] font-medium text-[#2c2c2c] mb-1.5">
+            <label className="block text-[12.5px] sm:text-[13px] font-medium text-[#2c2c2c] mb-1">
               Message Content <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -309,7 +309,7 @@ export default function NotificationFormModal({
 
           {/* Visual Type Selection */}
           <div>
-            <label className="block text-[13px] font-medium text-[#2c2c2c] mb-1.5">
+            <label className="block text-[12.5px] sm:text-[13px] font-medium text-[#2c2c2c] mb-1.5">
               Notification Type <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -329,7 +329,7 @@ export default function NotificationFormModal({
                     key={t}
                     type="button"
                     onClick={() => setType(t)}
-                    className={`flex items-center gap-2 p-2.5 rounded-[9px] border text-left transition-all ${
+                    className={`flex items-center gap-2 p-2 sm:p-2.5 rounded-[9px] border text-left transition-all ${
                       isSelected
                         ? "border-[#014421] bg-[#014421]/5 shadow-xs"
                         : "border-[#e5e5df] hover:border-[#cbcbc5] bg-white"
@@ -337,7 +337,7 @@ export default function NotificationFormModal({
                   >
                     <div className="flex-shrink-0">{conf.icon}</div>
                     <div className="min-w-0">
-                      <div className="text-[12.5px] font-medium text-[#1f1f1f] leading-tight truncate">
+                      <div className="text-[12px] sm:text-[12.5px] font-medium text-[#1f1f1f] leading-tight truncate">
                         {conf.label}
                       </div>
                     </div>
@@ -348,12 +348,12 @@ export default function NotificationFormModal({
           </div>
 
           {/* Target Audience & State Selection (Select in a Select) */}
-          <div className="p-4 bg-[#fbfbf9] rounded-[11px] border border-[#ebebe6] space-y-3.5">
+          <div className="p-3 sm:p-3.5 bg-[#fbfbf9] rounded-[11px] border border-[#ebebe6] space-y-2.5 sm:space-y-3">
             <div>
-              <label className="block text-[13px] font-semibold text-[#1f1f1f] mb-1">
+              <label className="block text-[12.5px] sm:text-[13px] font-semibold text-[#1f1f1f] mb-0.5">
                 Target Audience <span className="text-red-500">*</span>
               </label>
-              <p className="text-[11.5px] text-[#717171] mb-2">
+              <p className="text-[11px] text-[#717171] mb-1.5">
                 Choose which users will receive this broadcast notification.
               </p>
               <select
@@ -365,7 +365,7 @@ export default function NotificationFormModal({
                     setStateId("");
                   }
                 }}
-                className="w-full h-10 px-3 bg-white border border-[#e2e2dc] rounded-[8px] text-[13px] text-[#1f1f1f] focus:outline-none focus:border-[#014421]"
+                className="w-full h-9.5 sm:h-10 px-3 bg-white border border-[#e2e2dc] rounded-[8px] text-[12.5px] sm:text-[13px] text-[#1f1f1f] focus:outline-none focus:border-[#014421]"
               >
                 <option value="all_users">
                   All Users (Broadcast to all active accounts)
@@ -381,19 +381,19 @@ export default function NotificationFormModal({
             {targetAudience === "state_wise" && (
               <div className="pt-2 border-t border-[#ebebe6] animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[13px] font-semibold text-[#014421] flex items-center gap-1.5">
+                  <label className="text-[12.5px] sm:text-[13px] font-semibold text-[#014421] flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-[#014421]" />
                     Select Target State <span className="text-red-500">*</span>
                   </label>
-                  <span className="text-[11px] text-[#717171]">
-                    Required for state-wise targeting
+                  <span className="text-[10.5px] sm:text-[11px] text-[#717171]">
+                    Required for state targeting
                   </span>
                 </div>
                 <select
                   required
                   value={stateId}
                   onChange={(e) => setStateId(e.target.value)}
-                  className="w-full h-10 px-3 bg-white border-2 border-[#014421]/30 rounded-[8px] text-[13px] text-[#1f1f1f] focus:outline-none focus:border-[#014421] transition-colors"
+                  className="w-full h-9.5 sm:h-10 px-3 bg-white border-2 border-[#014421]/30 rounded-[8px] text-[12.5px] sm:text-[13px] text-[#1f1f1f] focus:outline-none focus:border-[#014421] transition-colors"
                 >
                   <option value="">-- Choose a State --</option>
                   {states.map((st) => (
@@ -407,110 +407,56 @@ export default function NotificationFormModal({
           </div>
 
           {/* Delivery Channel (send_type) */}
-          <div className="p-4 bg-[#fbfbf9] rounded-[11px] border border-[#ebebe6] space-y-1.5">
+          <div className="p-3 sm:p-3.5 bg-[#fbfbf9] rounded-[11px] border border-[#ebebe6] space-y-1">
             <div className="flex items-center justify-between">
-              <label className="block text-[13px] font-semibold text-[#1f1f1f]">
+              <label className="block text-[12.5px] sm:text-[13px] font-semibold text-[#1f1f1f]">
                 Delivery Channel <span className="text-red-500">*</span>
               </label>
-              <span className="text-[11px] text-[#717171]">Default: Both</span>
+              <span className="text-[10.5px] sm:text-[11px] text-[#717171]">Default: Both</span>
             </div>
-            <p className="text-[11.5px] text-[#717171]">
-              Select whether to broadcast through in-app push, email
-              notifications, or both channels.
+            <p className="text-[11px] text-[#717171]">
+              Select broadcast through push, email, or both channels.
             </p>
             <select
               value={sendType}
               onChange={(e) =>
                 setSendType(e.target.value as NotificationSendType)
               }
-              className="w-full h-10 px-3 bg-white border border-[#e2e2dc] rounded-[8px] text-[13px] text-[#1f1f1f] focus:outline-none focus:border-[#014421]"
+              className="w-full h-9.5 sm:h-10 px-3 bg-white border border-[#e2e2dc] rounded-[8px] text-[12.5px] sm:text-[13px] text-[#1f1f1f] focus:outline-none focus:border-[#014421]"
             >
               <option value="both">Both (Push & Email Notification)</option>
               <option value="push">Push Notification Only</option>
               <option value="email">Email Notification Only</option>
             </select>
           </div>
-          {/* <div>
-            <label className="block text-[12px] font-medium text-[#717171] uppercase tracking-wider mb-2">
-              Preview
-            </label>
-            <div className="p-3.5 bg-[#f5f5f2] rounded-[12px] border border-[#e8e8e2] flex items-start gap-3">
-              <div
-                className={`w-9 h-9 rounded-full ${currentTypeConfig.badgeBg} border ${currentTypeConfig.badgeBorder} flex items-center justify-center flex-shrink-0 mt-0.5`}
-              >
-                {currentTypeConfig.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="text-[13.5px] font-semibold text-[#1f1f1f] truncate">
-                    {title.trim() || "Notification Title"}
-                  </span>
-                  <span className="text-[11px] text-[#8e8e88] flex-shrink-0">
-                    Just now
-                  </span>
-                </div>
-                <p className="text-[12px] text-[#555] line-clamp-2 leading-relaxed">
-                  {message.trim() ||
-                    "Notification body content preview will appear here..."}
-                </p>
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 text-[10.5px] font-medium rounded-full ${currentTypeConfig.badgeBg} ${currentTypeConfig.badgeText} border ${currentTypeConfig.badgeBorder}`}
-                  >
-                    {currentTypeConfig.label}
-                  </span>
-                  {targetAudience === "all_users" && (
-                    <span className="inline-block px-[10px] py-[2px] rounded-[6px] text-[11px] font-medium border border-[#d8d0ee] bg-[#eeebf7] text-[#6b5ca5]">
-                      All Users
-                    </span>
-                  )}
-                  {targetAudience === "premium" && (
-                    <span className="inline-block px-[10px] py-[2px] rounded-[6px] text-[11px] font-medium border border-[#b8e0c2] bg-[#e8f5ec] text-[#34A853]">
-                      Premium Users
-                    </span>
-                  )}
-                  {targetAudience === "state_wise" && (
-                    <span className="inline-block px-[10px] py-[2px] rounded-[6px] text-[11px] font-medium border border-[#cfdcef] bg-[#eaf1fa] text-[#3b6bbf]">
-                      {selectedStateObj
-                        ? `State: ${selectedStateObj.state_name}`
-                        : "State: Specific"}
-                    </span>
-                  )}
-                  <span className="inline-block px-[10px] py-[2px] rounded-[6px] text-[11px] font-medium border border-[#e2e2dc] bg-white text-[#555]">
-                    Channel: {sendType === "both" ? "Both" : sendType === "push" ? "Push" : "Email"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div> */}
         </form>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-3 px-6 py-4 bg-[#fcfcfb] border-t border-[#f0f0ed]">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 px-4 sm:px-6 py-3 sm:py-3.5 bg-[#fcfcfb] border-t border-[#f0f0ed] flex-shrink-0">
           <button
             type="button"
             disabled={submittingAction !== null}
             onClick={onClose}
-            className="px-4 py-2 text-[13px] font-medium text-[#555] hover:text-[#1f1f1f] rounded-[8px] hover:bg-[#f0f0eb] transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2 text-xs sm:text-[13px] font-medium text-[#555] hover:text-[#1f1f1f] rounded-[8px] hover:bg-[#f0f0eb] transition-colors cursor-pointer text-center"
           >
             Cancel
           </button>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               disabled={submittingAction !== null}
               onClick={() => handleSubmitWithStatus("draft")}
-              className="inline-flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-[#2c2c2c] bg-white hover:bg-[#f7f7f2] border border-[#e2e2dc] rounded-[8px] transition-colors cursor-pointer disabled:opacity-60"
+              className="flex-1 sm:flex-none justify-center inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs sm:text-[13px] font-medium text-[#2c2c2c] bg-white hover:bg-[#f7f7f2] border border-[#e2e2dc] rounded-[8px] transition-colors cursor-pointer disabled:opacity-60 text-center"
             >
               {submittingAction === "draft" ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin text-[#717171]" />
-                  {isEditing ? "Saving Changes..." : "Saving Draft..."}
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#717171]" />
+                  <span>{isEditing ? "Saving..." : "Saving Draft..."}</span>
                 </>
               ) : (
                 <>
-                  <FileText className="w-4 h-4 text-[#717171]" />
-                  {isEditing ? "Save Draft Changes" : "Save as Draft"}
+                  <FileText className="w-3.5 h-3.5 text-[#717171]" />
+                  <span>{isEditing ? "Save Draft" : "Save Draft"}</span>
                 </>
               )}
             </button>
@@ -518,25 +464,23 @@ export default function NotificationFormModal({
               type="button"
               disabled={submittingAction !== null}
               onClick={() => handleSubmitWithStatus("sent")}
-              className="inline-flex items-center gap-2 px-5 py-2 text-[13px] font-medium text-white bg-[#014421] hover:bg-[#025c2d] rounded-[8px] transition-colors shadow-xs disabled:opacity-60 cursor-pointer"
+              className="flex-1 sm:flex-none justify-center inline-flex items-center gap-1.5 px-3.5 sm:px-5 py-2 text-xs sm:text-[13px] font-medium text-white bg-[#014421] hover:bg-[#025c2d] rounded-[8px] transition-colors shadow-xs disabled:opacity-60 cursor-pointer text-center"
             >
               {submittingAction === "sent" ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {isDuplicating
-                    ? "Sending Duplicate..."
-                    : isEditing
-                    ? "Sending Broadcast..."
-                    : "Sending..."}
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>{isDuplicating ? "Sending..." : isEditing ? "Sending..." : "Sending..."}</span>
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
-                  {isDuplicating
-                    ? "Duplicate & Send"
-                    : isEditing
-                    ? "Send Draft Now"
-                    : "Send Notification"}
+                  <Send className="w-3.5 h-3.5" />
+                  <span>
+                    {isDuplicating
+                      ? "Duplicate & Send"
+                      : isEditing
+                      ? "Send Now"
+                      : "Send"}
+                  </span>
                 </>
               )}
             </button>

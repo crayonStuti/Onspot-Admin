@@ -97,7 +97,9 @@ export default function NotificationsPage() {
   const [totalItems, setTotalItems] = useState(0);
 
   // Tab State: 'all_users' | 'admin'
-  const [activeTab, setActiveTab] = useState<"all_users" | "admin">("all_users");
+  const [activeTab, setActiveTab] = useState<"all_users" | "admin">(
+    "all_users",
+  );
 
   // Filters State
   const [audienceFilter, setAudienceFilter] = useState("");
@@ -566,7 +568,7 @@ export default function NotificationsPage() {
         {/* Left Section (Table + Performance) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Table Card */}
-          <div className="bg-white rounded-[14px] border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.06),0_2px_6px_rgba(60,60,60,0.04)] overflow-hidden">
+          <div className="bg-white py-1 rounded-[14px] border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.06),0_2px_6px_rgba(60,60,60,0.04)] overflow-hidden">
             {/* Tabs Header: All Users & Admin */}
             <div className="border-b border-[#ececec] px-5 bg-white flex items-center justify-between">
               <div className="flex items-center gap-6">
@@ -843,18 +845,16 @@ export default function NotificationsPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Table Footer with Pagination */}
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              pageSize={limit}
-              itemLabel="notifications"
-              onPageChange={(p) => setPage(p)}
-              className="px-5 py-3.5 bg-[#fcfcfb] border-t border-[#f0f0ed]"
-            />
           </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={limit}
+            itemLabel="notifications"
+            onPageChange={(p) => setPage(p)}
+            className="px-5 py-3.5"
+          />
 
           {/* Performance Overview Card */}
           <div className="bg-white rounded-[14px] p-6 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.06),0_2px_6px_rgba(60,60,60,0.04)]">
@@ -869,12 +869,19 @@ export default function NotificationsPage() {
                   { label: "Total Unopened", wVal: "w-16", wSub: "w-28" },
                   { label: "Bounced", wVal: "w-12", wSub: "w-24" },
                 ].map((sk, idx) => (
-                  <div key={idx} className="flex items-start gap-3 min-w-0 animate-pulse">
+                  <div
+                    key={idx}
+                    className="flex items-start gap-3 min-w-0 animate-pulse"
+                  >
                     <div className="w-[46px] h-[46px] rounded-[10px] bg-[#eef1ea] flex-shrink-0" />
                     <div className="min-w-0 flex-1 space-y-1.5 py-0.5">
-                      <div className="text-[12.5px] text-[#8a8a8a]">{sk.label}</div>
+                      <div className="text-[12.5px] text-[#8a8a8a]">
+                        {sk.label}
+                      </div>
                       <div className={`h-5 bg-[#e6e9e2] rounded ${sk.wVal}`} />
-                      <div className={`h-3 bg-[#e6e9e2] rounded ${sk.wSub} mt-1`} />
+                      <div
+                        className={`h-3 bg-[#e6e9e2] rounded ${sk.wSub} mt-1`}
+                      />
                     </div>
                   </div>
                 ))}

@@ -19,6 +19,7 @@ import {
   DashboardOverviewData,
   DashboardMetric,
 } from "@/lib/api";
+import DashboardUsersTable from "@/components/dashboard/DashboardUsersTable";
 
 /* -------------------------------------------------------------------------- */
 /* Helper: Generate Continuous SVG Path matching dashboard.html (NO CIRCLES)  */
@@ -110,9 +111,6 @@ function generateCleanSparkline(
   return { linePath, areaPath };
 }
 
-/* -------------------------------------------------------------------------- */
-/* Metric Card Component                                                      */
-/* -------------------------------------------------------------------------- */
 interface MetricCardProps {
   id: string;
   label: string;
@@ -865,9 +863,6 @@ function MembershipConversionCard({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Main Dashboard Page                                                        */
-/* -------------------------------------------------------------------------- */
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1217,6 +1212,11 @@ export default function DashboardPage() {
             </div>
 
             {/* Activity & Conversion Metrics Breakdown */}
+          </div>
+
+          {/* Users Listing Table (Max 6 users with Active / Inactive / Premium filters) */}
+          <div className="mt-6">
+            <DashboardUsersTable />
           </div>
         </>
       )}

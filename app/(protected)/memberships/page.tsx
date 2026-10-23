@@ -773,7 +773,7 @@ export default function MembershipsPage() {
                         </div>
                         <div className="text-[13px] text-[#888]">
                           {isFree
-                            ? "Forever"
+                            ? "14 Days"
                             : plan.yearly_price && yearlyPriceNum > 0
                               ? `$${yearlyPriceNum.toFixed(2)}/yr`
                               : "Month"}

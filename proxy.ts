@@ -4,6 +4,13 @@ import type { NextRequest } from "next/server";
 const INACTIVITY_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 1 Day (24 Hours)
 const ABSOLUTE_SESSION_MAX_MS = 7 * 24 * 60 * 60 * 1000; // 7 Days
 
+function isValidJwtStructure(token?: string): boolean {
+  if (!token || typeof token !== "string") return false;
+  const parts = token.trim().split(".");
+  if (parts.length !== 3) return false;
+  return parts.every((p) => p.length > 0 && /^[A-Za-z0-9_-]+$/.test(p));
+}
+
 export function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const token = request.cookies.get("auth-token")?.value;
@@ -14,24 +21,41 @@ export function proxy(request: NextRequest) {
   const isAuthPage = path.startsWith("/login");
   const isPublicAsset =
     path.startsWith("/_next") ||
-    path.startsWith("/api") ||
+    path.startsWith("/api/auth") ||
     path.startsWith("/images") ||
     path.startsWith("/onspot_admin_html") ||
     path.startsWith("/html-reference") ||
     path.startsWith("/old-frontend") ||
-    path.includes(".");
+    /\.(ico|png|jpg|jpeg|svg|webp|gif|css|js|woff|woff2|ttf|eot|map|txt)$/i.test(path);
 
   if (isPublicAsset) {
     return NextResponse.next();
   }
 
+  const cookieNames = [
+    "auth-token",
+    "session-created",
+    "last-active",
+    "token",
+    "authToken",
+    "refreshToken",
+    "session",
+  ];
+  const secureCookieOpts = {
+    path: "/",
+    maxAge: 0,
+    expires: new Date(0),
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+  };
+
   // Handle explicit logout on /login page
   if (isAuthPage && (request.nextUrl.searchParams.get("logout") === "true" || request.nextUrl.searchParams.has("force"))) {
     const response = NextResponse.next();
-    const cookieNames = ["auth-token", "session-created", "last-active", "token", "authToken", "refreshToken", "session"];
     cookieNames.forEach((name) => {
       response.cookies.delete(name);
-      response.cookies.set(name, "", { path: "/", maxAge: 0, expires: new Date(0) });
+      response.cookies.set(name, "", secureCookieOpts);
     });
     return response;
   }
@@ -43,21 +67,21 @@ export function proxy(request: NextRequest) {
 
   // If token exists but has NO session timestamps, it is a foreign cookie from another project or invalid session
   const isForeignOrUntracked = Boolean(token && sessionCreated === 0 && lastActive === 0);
+  const isTokenMalformed = Boolean(token && !isValidJwtStructure(token));
 
-  // If session is expired or foreign cookie detected
-  if (token && (isSessionExpired || isForeignOrUntracked)) {
+  // If session is expired, malformed, or foreign cookie detected
+  if (token && (isSessionExpired || isForeignOrUntracked || isTokenMalformed)) {
     const response = isAuthPage
       ? NextResponse.next()
       : NextResponse.redirect(new URL("/login?logout=true", request.url));
-    const cookieNames = ["auth-token", "session-created", "last-active", "token", "authToken", "refreshToken", "session"];
     cookieNames.forEach((name) => {
       response.cookies.delete(name);
-      response.cookies.set(name, "", { path: "/", maxAge: 0, expires: new Date(0) });
+      response.cookies.set(name, "", secureCookieOpts);
     });
     return response;
   }
 
-  const isAuthenticated = Boolean(token && !isSessionExpired && !isForeignOrUntracked);
+  const isAuthenticated = Boolean(token && isValidJwtStructure(token) && !isSessionExpired && !isForeignOrUntracked);
 
   // Root path handling
   if (path === "/") {

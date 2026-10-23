@@ -49,10 +49,7 @@ export default function MapLocationPickerDialog({
   // Hidden: Google Places requires active billing account
   const SHOW_SEARCH_AND_LOCATION = false;
 
-  const apiKey =
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-    process.env.FIREBASE_WEB_API_KEY ||
-    "";
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
   // Sync initial coordinates
   useEffect(() => {
@@ -79,7 +76,8 @@ export default function MapLocationPickerDialog({
     let isCancelled = false;
 
     const initializeMap = () => {
-      if (isCancelled || !mapContainerRef.current || !window.google?.maps) return;
+      if (isCancelled || !mapContainerRef.current || !window.google?.maps)
+        return;
 
       try {
         const centerPos = { lat, lng };
@@ -222,7 +220,11 @@ export default function MapLocationPickerDialog({
   const handleUpdateCoordinates = (newLat: number, newLng: number) => {
     setLat(newLat);
     setLng(newLng);
-    if (markerInstanceRef.current && mapInstanceRef.current && window.google?.maps) {
+    if (
+      markerInstanceRef.current &&
+      mapInstanceRef.current &&
+      window.google?.maps
+    ) {
       const pos = new window.google.maps.LatLng(newLat, newLng);
       markerInstanceRef.current.setPosition(pos);
       mapInstanceRef.current.panTo(pos);
@@ -305,7 +307,8 @@ export default function MapLocationPickerDialog({
                 Select Location on Google Map
               </h3>
               <p className="text-xs text-gray-500">
-                Click on the map or drag the pin marker to select exact coordinates.
+                Click on the map or drag the pin marker to select exact
+                coordinates.
               </p>
             </div>
           </div>
@@ -320,7 +323,10 @@ export default function MapLocationPickerDialog({
         {/* Search Bar with Google Places Autocomplete & My Location (Hidden as requested) */}
         {SHOW_SEARCH_AND_LOCATION && (
           <div className="px-6 py-3 border-b border-gray-100 bg-white relative z-20">
-            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="flex items-center gap-2"
+            >
               <div className="relative flex-1">
                 <input
                   ref={searchInputRef}

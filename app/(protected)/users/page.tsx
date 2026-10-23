@@ -45,6 +45,16 @@ export default function UsersPage() {
 
   // Search & Filter States
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search input to avoid excessive API requests
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const [filterStateName, setFilterStateName] = useState("");
   const [filterPlanLevel, setFilterPlanLevel] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
@@ -129,7 +139,7 @@ export default function UsersPage() {
       const res = await getUsers({
         page,
         limit,
-        search: searchQuery,
+        search: debouncedSearch,
         status: filterStatus,
         plan_level: filterPlanLevel,
         state_name: filterStateName,
@@ -167,7 +177,7 @@ export default function UsersPage() {
   }, [
     page,
     limit,
-    searchQuery,
+    debouncedSearch,
     filterStatus,
     filterPlanLevel,
     filterStateName,
@@ -197,6 +207,7 @@ export default function UsersPage() {
   // Reset Filters
   const handleResetFilters = () => {
     setSearchQuery("");
+    setDebouncedSearch("");
     setFilterStateName("");
     setFilterPlanLevel("");
     setFilterStatus("");

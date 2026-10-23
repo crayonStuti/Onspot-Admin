@@ -18,6 +18,38 @@ export class ApiError extends Error {
  * Parses response error body properly:
  * Handles array of messages, string message, nested errors, or raw text.
  */
+/**
+ * Sanitizes user search query to prevent control character injection and limit query length.
+ */
+export function sanitizeSearchQuery(query?: string, maxLength: number = 100): string {
+  if (!query || typeof query !== "string") return "";
+  return query.replace(/[\x00-\x1F\x7F]/g, "").trim().slice(0, maxLength);
+}
+
+/**
+ * Sanitizes error messages to prevent internal server stack trace disclosure in production.
+ */
+export function sanitizeErrorMessage(rawMessage: string, statusCode: number = 500): string {
+  if (!rawMessage || typeof rawMessage !== "string") {
+    return `Request failed with status ${statusCode}`;
+  }
+  if (statusCode >= 500 && process.env.NODE_ENV === "production") {
+    const sensitivePatterns = [
+      /\bat\s+[A-Za-z0-9_.]+\s+\(/i,
+      /node_modules/i,
+      /TypeError:/i,
+      /SyntaxError:/i,
+      /MongoError:/i,
+      /PostgresError:/i,
+      /SQLException:/i,
+    ];
+    if (sensitivePatterns.some((p) => p.test(rawMessage))) {
+      return "An unexpected server error occurred. Please contact support.";
+    }
+  }
+  return rawMessage;
+}
+
 function parseErrorMessage(errorData: any, status: number): { message: string; errorName?: string } {
   let message = `Request failed with status ${status}`;
   let errorName = undefined;
@@ -40,11 +72,43 @@ function parseErrorMessage(errorData: any, status: number): { message: string; e
     message = errorData;
   }
 
+  message = sanitizeErrorMessage(message, status);
+
   return { message, errorName };
+}
+
+/**
+ * Validates whether an outbound request destination is safe to receive the Authorization Bearer token.
+ * Prevents token leakage to external services (e.g. S3 buckets, CDNs, external APIs).
+ */
+export function shouldAttachAuthHeader(targetUrl: string, baseUrl?: string): boolean {
+  if (!targetUrl) return false;
+  // Relative paths always belong to local/backend proxy
+  if (targetUrl.startsWith("/")) return true;
+  if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) return true;
+
+  try {
+    const targetOrigin = new URL(targetUrl).origin;
+    if (!baseUrl) return false;
+    const backendOrigin = new URL(baseUrl).origin;
+    return targetOrigin === backendOrigin;
+  } catch {
+    return false;
+  }
 }
 
 export const INACTIVITY_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 1 Day (24 Hours)
 export const ABSOLUTE_SESSION_MAX_MS = 7 * 24 * 60 * 60 * 1000; // 7 Days
+
+export const AUTH_COOKIE_NAMES = [
+  "auth-token",
+  "session-created",
+  "last-active",
+  "token",
+  "authToken",
+  "refreshToken",
+  "session",
+] as const;
 
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -55,6 +119,13 @@ export function getStoredToken(): string | null {
 export function getStoredRefreshToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("refreshToken");
+}
+
+export function getCookieSecurityFlag(): string {
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    return "; Secure";
+  }
+  return "";
 }
 
 export function setAuthSession(token: string, user: any, refreshToken?: string) {
@@ -70,9 +141,10 @@ export function setAuthSession(token: string, user: any, refreshToken?: string) 
   localStorage.setItem("lastActiveAt", String(now));
 
   const maxExpires = new Date(now + ABSOLUTE_SESSION_MAX_MS);
-  document.cookie = `auth-token=${token}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Strict`;
-  document.cookie = `session-created=${now}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Strict`;
-  document.cookie = `last-active=${now}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Strict`;
+  const sec = getCookieSecurityFlag();
+  document.cookie = `auth-token=${token}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Lax${sec}`;
+  document.cookie = `session-created=${now}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Lax${sec}`;
+  document.cookie = `last-active=${now}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Lax${sec}`;
 }
 
 export function touchActivity() {
@@ -80,7 +152,8 @@ export function touchActivity() {
   const now = Date.now();
   localStorage.setItem("lastActiveAt", String(now));
   const maxExpires = new Date(now + ABSOLUTE_SESSION_MAX_MS);
-  document.cookie = `last-active=${now}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Strict`;
+  const sec = getCookieSecurityFlag();
+  document.cookie = `last-active=${now}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Lax${sec}`;
 }
 
 export function isSessionValid(): boolean {
@@ -126,15 +199,7 @@ export function clearAuthSession() {
   }
 
   // Clear cookies comprehensively across all domain and path combinations
-  const knownCookies = [
-    "auth-token",
-    "session-created",
-    "last-active",
-    "token",
-    "authToken",
-    "refreshToken",
-    "session",
-  ];
+  const knownCookies = AUTH_COOKIE_NAMES;
 
   const hostname = window.location.hostname;
   const domains = ["", hostname, `.${hostname}`];
@@ -249,7 +314,8 @@ export async function refreshTokenApi(customRefreshToken?: string): Promise<{ id
     touchActivity();
     const sessionCreatedAt = Number(localStorage.getItem("sessionCreatedAt") || Date.now());
     const maxExpires = new Date(sessionCreatedAt + ABSOLUTE_SESSION_MAX_MS);
-    document.cookie = `auth-token=${newIdToken}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Strict`;
+    const sec = getCookieSecurityFlag();
+    document.cookie = `auth-token=${newIdToken}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Lax${sec}`;
   }
 
   return { idToken: newIdToken, refreshToken: newRefreshToken };
@@ -277,16 +343,19 @@ export async function fetchApi<T = any>(
     ...(options.headers as Record<string, string>),
   };
 
-  if (token && !headers["Authorization"]) {
+  const url = endpoint.startsWith("http") ? endpoint : `${API_URL}${endpoint}`;
+
+  if (token && !headers["Authorization"] && shouldAttachAuthHeader(url, API_URL)) {
     headers["Authorization"] = `Bearer ${token}`;
+  } else if (!shouldAttachAuthHeader(url, API_URL)) {
+    // Explicitly delete any leaked Authorization header for third-party targets
+    delete headers["Authorization"];
   }
 
   // Set default JSON Content-Type only if body is not FormData
   if (options.body && !(options.body instanceof FormData) && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
-
-  const url = endpoint.startsWith("http") ? endpoint : `${API_URL}${endpoint}`;
 
   const response = await fetch(url, {
     cache: "no-store",
@@ -504,7 +573,7 @@ export async function getUsers(
     params.append("limit", String(l));
     if (sb) params.append("sortBy", sb);
     if (so) params.append("sortOrder", so);
-    if (s && s.trim()) params.append("search", s.trim());
+    if (s && s.trim()) params.append("search", sanitizeSearchQuery(s));
     if (st && st !== "all") params.append("status", st);
     if (plan_level && plan_level !== "all") params.append("plan_level", plan_level.toLowerCase());
     if (state_name && state_name !== "all") params.append("state_name", state_name);
@@ -515,7 +584,7 @@ export async function getUsers(
     params.append("limit", String(limit));
     if (sortBy) params.append("sortBy", sortBy);
     if (sortOrder) params.append("sortOrder", sortOrder);
-    if (search && search.trim()) params.append("search", search.trim());
+    if (search && search.trim()) params.append("search", sanitizeSearchQuery(search));
     if (status && status !== "all") params.append("status", status);
   }
 
@@ -680,7 +749,7 @@ export async function getStates(
 ): Promise<any> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (search && search.trim()) {
-    params.append("search", search.trim());
+    params.append("search", sanitizeSearchQuery(search));
   }
   return await fetchApi(`/states?${params.toString()}`);
 }
@@ -742,7 +811,7 @@ export async function getLicenseIssuers(
   state_id?: string
 ): Promise<any> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  if (search && search.trim()) params.append("search", search.trim());
+  if (search && search.trim()) params.append("search", sanitizeSearchQuery(search));
   if (state_id && state_id !== "all") params.append("state_id", state_id);
   return await fetchApi(`/license-issuers?${params.toString()}`);
 }
@@ -840,7 +909,7 @@ export async function getAdminResources(
   if (paramsObj.page) params.append("page", String(paramsObj.page));
   if (paramsObj.limit) params.append("limit", String(paramsObj.limit));
   if (paramsObj.search && paramsObj.search.trim()) {
-    params.append("search", paramsObj.search.trim());
+    params.append("search", sanitizeSearchQuery(paramsObj.search));
   }
   if (paramsObj.state_id && paramsObj.state_id !== "all") {
     params.append("state_id", paramsObj.state_id);
@@ -1103,7 +1172,7 @@ export async function getMapPins(
   const params = new URLSearchParams();
   if (paramsObj.page) params.append("page", String(paramsObj.page));
   if (paramsObj.limit) params.append("limit", String(paramsObj.limit));
-  if (paramsObj.search && paramsObj.search.trim()) params.append("search", paramsObj.search.trim());
+  if (paramsObj.search && paramsObj.search.trim()) params.append("search", sanitizeSearchQuery(paramsObj.search));
   if (paramsObj.state && paramsObj.state !== "all") params.append("state", paramsObj.state);
   if (paramsObj.state_id && paramsObj.state_id !== "all") params.append("state_id", paramsObj.state_id);
   if (paramsObj.visibility && paramsObj.visibility !== "all") params.append("visibility", paramsObj.visibility);
@@ -1178,7 +1247,7 @@ export async function getSponsors(
   status?: string
 ): Promise<any> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  if (search && search.trim()) params.append("search", search.trim());
+  if (search && search.trim()) params.append("search", sanitizeSearchQuery(search));
   if (status && status !== "all") params.append("status", status);
   return await fetchApi(`/sponsors?${params.toString()}`);
 }
