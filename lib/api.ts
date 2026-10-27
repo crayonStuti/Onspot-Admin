@@ -513,7 +513,6 @@ export interface UserItem {
     phone?: string;
     membership?: {
       name?: string;
-      price_usd?: string | number;
     };
     [key: string]: any;
   };

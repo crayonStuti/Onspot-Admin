@@ -713,9 +713,7 @@ export default function MembershipsPage() {
               ) : (
                 memberships.map((plan) => {
                   const featureList = parseFeaturesToArray(plan.feature);
-                  const monthlyPriceNum = Number(
-                    plan.monthly_price ?? plan.price_usd ?? 0,
-                  );
+                  const monthlyPriceNum = Number(plan.monthly_price ?? 0);
                   const yearlyPriceNum = Number(plan.yearly_price ?? 0);
                   const isFree = monthlyPriceNum === 0 && yearlyPriceNum === 0;
 
@@ -1236,11 +1234,9 @@ export default function MembershipsPage() {
                     Monthly Price
                   </span>
                   <span className="font-bold text-sm text-[#0E3E27]">
-                    {Number(
-                      selectedPlan.monthly_price ?? selectedPlan.price_usd ?? 0,
-                    ) === 0
+                    {Number(selectedPlan.monthly_price ?? 0) === 0
                       ? "Free"
-                      : `$${Number(selectedPlan.monthly_price ?? selectedPlan.price_usd).toFixed(2)}/mo`}
+                      : `$${Number(selectedPlan.monthly_price).toFixed(2)}/mo`}
                   </span>
                 </div>
                 <div>

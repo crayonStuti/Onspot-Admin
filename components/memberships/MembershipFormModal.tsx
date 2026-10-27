@@ -26,7 +26,6 @@ export interface MembershipItem {
   level?: string;
   description?: string;
   feature?: any;
-  price_usd?: string | number;
   monthly_price?: string | number;
   monthly_price_id?: string | null;
   yearly_price?: string | number;
@@ -249,10 +248,7 @@ export default function MembershipFormModal({
           initialData.monthly_price !== undefined &&
           initialData.monthly_price !== null
             ? initialData.monthly_price
-            : initialData.price_usd !== undefined &&
-                initialData.price_usd !== null
-              ? initialData.price_usd
-              : "";
+            : "";
         setMonthlyPrice(String(mPrice));
 
         const yPrice =
@@ -422,7 +418,10 @@ export default function MembershipFormModal({
     let parsedTaxes: number;
 
     try {
-      parsedMonthly = parseMonetaryValue(effectiveMonthlyPrice, "Monthly Price");
+      parsedMonthly = parseMonetaryValue(
+        effectiveMonthlyPrice,
+        "Monthly Price",
+      );
       parsedYearly = parseMonetaryValue(effectiveYearlyPrice, "Yearly Price");
       parsedTaxes = parseMonetaryValue(effectiveTaxes, "Taxes");
     } catch (valErr: any) {
@@ -445,7 +444,6 @@ export default function MembershipFormModal({
         formData.append("monthly_price", String(parsedMonthly));
         formData.append("yearly_price", String(parsedYearly));
         formData.append("taxes", String(parsedTaxes));
-        formData.append("price_usd", String(parsedMonthly));
         formData.append("feature", JSON.stringify(featureList));
         formData.append("image", imageFile);
         formData.append(
@@ -479,7 +477,6 @@ export default function MembershipFormModal({
           monthly_price: parsedMonthly,
           yearly_price: parsedYearly,
           taxes: parsedTaxes,
-          price_usd: parsedMonthly,
           feature: featureList,
           friends_limit: isFriendsUnlimited ? 0 : Number(friendsLimit) || 0,
           is_friends_unlimited: isFriendsUnlimited,
@@ -491,9 +488,7 @@ export default function MembershipFormModal({
           is_sponsorship_free: isSponsorshipFree,
         };
 
-        if (imageUrl) {
-          jsonBody.image = imageUrl;
-        }
+        jsonBody.image = imageUrl;
 
         if (isEdit && initialData?.id) {
           await updateMembership(initialData.id, jsonBody);
@@ -667,7 +662,9 @@ export default function MembershipFormModal({
                   />
                 </div>
                 <span className="text-[10.5px] text-gray-400 mt-0.5 block">
-                  {isFreeLevel ? "Locked at $0 for Free Tier" : "Recurring monthly fee"}
+                  {isFreeLevel
+                    ? "Locked at $0 for Free Tier"
+                    : "Recurring monthly fee"}
                 </span>
               </div>
 
@@ -696,7 +693,9 @@ export default function MembershipFormModal({
                   />
                 </div>
                 <span className="text-[10.5px] text-gray-400 mt-0.5 block">
-                  {isFreeLevel ? "Locked at $0 for Free Tier" : "Annual billing amount"}
+                  {isFreeLevel
+                    ? "Locked at $0 for Free Tier"
+                    : "Annual billing amount"}
                 </span>
               </div>
 
@@ -725,7 +724,9 @@ export default function MembershipFormModal({
                   />
                 </div>
                 <span className="text-[10.5px] text-gray-400 mt-0.5 block">
-                  {isFreeLevel ? "Locked at $0 for Free Tier" : "Applicable tax fee"}
+                  {isFreeLevel
+                    ? "Locked at $0 for Free Tier"
+                    : "Applicable tax fee"}
                 </span>
               </div>
             </div>
@@ -788,7 +789,10 @@ export default function MembershipFormModal({
                   best.
                 </p>
                 {imageUrl && !imageFile && (
-                  <p className="text-[10.5px] sm:text-[11px] text-emerald-700 mt-0.5 truncate max-w-full break-all" title={imageUrl}>
+                  <p
+                    className="text-[10.5px] sm:text-[11px] text-emerald-700 mt-0.5 truncate max-w-full break-all"
+                    title={imageUrl}
+                  >
                     Current badge: {imageUrl}
                   </p>
                 )}
