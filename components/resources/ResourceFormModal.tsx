@@ -27,6 +27,8 @@ export const RESOURCE_CATEGORIES = [
   "License Regulations - PDF",
   "Safety & Ethics - PDF",
   "Season Dates",
+  "State Agency Websites",
+  "Fishing State Url",
 ];
 
 export const RESOURCE_TYPES = [
