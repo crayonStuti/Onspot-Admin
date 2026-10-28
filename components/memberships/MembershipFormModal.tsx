@@ -350,6 +350,9 @@ export default function MembershipFormModal({
       setImageFile(null);
       setImageUrl("");
       setImagePreview(null);
+      setIconImageFile(null);
+      setIconImageUrl("");
+      setIconImagePreview(null);
       setFeatures([
         "Unlimited friends",
         "Priority support",
