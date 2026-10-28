@@ -238,7 +238,6 @@ export default function DashboardUsersTable() {
                               width={32}
                               height={32}
                               className="w-full h-full object-cover"
-                              unoptimized
                             />
                           ) : (
                             fullName.charAt(0).toUpperCase()

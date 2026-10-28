@@ -606,7 +606,7 @@ export default function LicensesPage() {
                                 width={32}
                                 height={32}
                                 className="w-full h-full object-cover"
-                                unoptimized
+                                 
                               />
                             ) : (
                               userName.charAt(0).toUpperCase()
@@ -822,7 +822,7 @@ export default function LicensesPage() {
                       width={48}
                       height={48}
                       className="w-full h-full object-cover"
-                      unoptimized
+                       
                     />
                   ) : (
                     getUserDisplayName(selectedLicense.user)

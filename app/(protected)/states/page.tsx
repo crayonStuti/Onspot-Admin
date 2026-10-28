@@ -352,7 +352,6 @@ export default function StatesPage() {
                               width={28}
                               height={20}
                               className="w-7 h-5 rounded-[3px] object-cover border border-gray-200"
-                              unoptimized
                             />
                           ) : (
                             <div className="w-7 h-7 rounded-[6px] bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center text-xs font-bold flex-shrink-0">
@@ -460,7 +459,6 @@ export default function StatesPage() {
                     width={40}
                     height={28}
                     className="w-10 h-7 rounded-[4px] object-cover border border-gray-200"
-                    unoptimized
                   />
                 ) : (
                   <div className="w-9 h-9 rounded-xl bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center">
@@ -638,7 +636,6 @@ export default function StatesPage() {
                       width={56}
                       height={40}
                       className="w-14 h-10 rounded-[6px] object-cover border border-gray-200"
-                      unoptimized
                     />
                   ) : (
                     <div className="w-14 h-10 rounded-[6px] bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400">

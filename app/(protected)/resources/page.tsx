@@ -1621,7 +1621,6 @@ export default function ResourcesPage() {
                       width={40}
                       height={40}
                       className="w-full h-full object-contain"
-                      unoptimized
                     />
                   ) : (
                     <BookOpen className="w-5 h-5 text-[#0E3E27]" />

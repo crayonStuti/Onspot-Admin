@@ -41,6 +41,7 @@ export interface MembershipItem {
   created_at?: string;
   updated_at?: string;
   image?: string;
+  icon_image?: string | null;
   license_reminders?: boolean | string;
   gallery_limit?: number | string;
   is_friends_unlimited?: boolean | string;
@@ -190,8 +191,10 @@ export default function MembershipFormModal({
   // 5. Image & Preview
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState("");
+  const [iconImageFile, setIconImageFile] = useState<File | null>(null);
+  const [iconImageUrl, setIconImageUrl] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-
+  const [iconImagePreview, setIconImagePreview] = useState<string | null>(null);
   // 6. Feature Perks List
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeatureText, setNewFeatureText] = useState("");
@@ -308,6 +311,19 @@ export default function MembershipFormModal({
       } else {
         setImageUrl("");
         setImagePreview(null);
+      }
+
+      setIconImageFile(null);
+      if (initialData.icon_image) {
+        setIconImageUrl(initialData.icon_image);
+        setIconImagePreview(
+          initialData.icon_image.startsWith("http")
+            ? initialData.icon_image
+            : `${API_URL}${initialData.icon_image.startsWith("/") ? "" : "/"}${initialData.icon_image}`,
+        );
+      } else {
+        setIconImageUrl("");
+        setIconImagePreview(null);
       }
 
       // Feature perks
@@ -433,8 +449,10 @@ export default function MembershipFormModal({
 
     setSaving(true);
     try {
-      if (imageFile) {
-        // Multipart/form-data payload when image file is uploaded
+      const hasFile = Boolean(imageFile || iconImageFile);
+
+      if (hasFile) {
+        // Multipart/form-data payload when image or icon file is uploaded
         const formData = new FormData();
         formData.append("name", name.trim());
         if (!isEdit) {
@@ -445,7 +463,19 @@ export default function MembershipFormModal({
         formData.append("yearly_price", String(parsedYearly));
         formData.append("taxes", String(parsedTaxes));
         formData.append("feature", JSON.stringify(featureList));
-        formData.append("image", imageFile);
+
+        if (imageFile) {
+          formData.append("image", imageFile);
+        } else if (imageUrl) {
+          formData.append("image", imageUrl);
+        }
+
+        if (iconImageFile) {
+          formData.append("icon_image", iconImageFile);
+        } else if (iconImageUrl) {
+          formData.append("icon_image", iconImageUrl);
+        }
+
         formData.append(
           "friends_limit",
           isFriendsUnlimited ? "0" : String(Number(friendsLimit) || 0),
@@ -486,9 +516,9 @@ export default function MembershipFormModal({
           is_licenses_unlimited: isLicensesUnlimited,
           map_activity: mapActivity,
           is_sponsorship_free: isSponsorshipFree,
+          image: imageUrl || null,
+          icon_image: iconImageUrl || null,
         };
-
-        jsonBody.image = imageUrl;
 
         if (isEdit && initialData?.id) {
           await updateMembership(initialData.id, jsonBody);
@@ -735,7 +765,7 @@ export default function MembershipFormModal({
           {/* Section 3: Plan Badge / Image */}
           <div className="space-y-2 pt-3 border-t border-gray-100">
             <label className="block font-semibold text-gray-700 mb-1">
-              Plan Badge / Icon Image
+              Plan Banner Image
             </label>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-3.5 bg-gray-50/70 border border-dashed border-gray-300 rounded-xl">
               <div className="flex items-center gap-3 min-w-0">
@@ -747,7 +777,6 @@ export default function MembershipFormModal({
                       width={56}
                       height={56}
                       className="w-full h-full object-contain"
-                      unoptimized
                     />
                   </div>
                 ) : (
@@ -805,6 +834,86 @@ export default function MembershipFormModal({
                     setImageFile(null);
                     setImageUrl("");
                     setImagePreview(null);
+                  }}
+                  className="hidden sm:block text-xs text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer flex-shrink-0"
+                  title="Remove image"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="space-y-2 pt-3 border-t border-gray-100">
+            <label className="block font-semibold text-gray-700 mb-1">
+              Plan Icon Image
+            </label>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-3.5 bg-gray-50/70 border border-dashed border-gray-300 rounded-xl">
+              <div className="flex items-center gap-3 min-w-0">
+                {iconImagePreview ? (
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl border border-gray-200 overflow-hidden p-1 flex-shrink-0 bg-white shadow-xs relative group">
+                    <Image
+                      src={iconImagePreview}
+                      alt="Badge preview"
+                      width={56}
+                      height={56}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl border border-gray-200 flex items-center justify-center flex-shrink-0 bg-white text-gray-400">
+                    <ImageIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
+                  </div>
+                )}
+                {iconImagePreview && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIconImageFile(null);
+                      setIconImageUrl("");
+                      setIconImagePreview(null);
+                    }}
+                    className="sm:hidden text-xs text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                    title="Remove image"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0 w-full">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setIconImageFile(file);
+                    if (file) {
+                      setIconImagePreview(URL.createObjectURL(file));
+                    }
+                  }}
+                  className="w-full max-w-full text-xs text-gray-500 file:mr-2.5 file:py-1.5 file:px-2.5 sm:file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-white file:text-[#0E3E27] file:border-gray-200 file:border hover:file:bg-gray-50 cursor-pointer"
+                />
+                <p className="text-[10.5px] sm:text-[11px] text-gray-400 mt-1 break-words">
+                  PNG, SVG, WebP or JPEG. Max 15MB. Transparent badge works
+                  best.
+                </p>
+                {iconImageUrl && !iconImageFile && (
+                  <p
+                    className="text-[10.5px] sm:text-[11px] text-emerald-700 mt-0.5 truncate max-w-full break-all"
+                    title={iconImageUrl}
+                  >
+                    Current Icon: {iconImageUrl}
+                  </p>
+                )}
+              </div>
+
+              {iconImagePreview && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIconImageFile(null);
+                    setIconImageUrl("");
+                    setIconImagePreview(null);
                   }}
                   className="hidden sm:block text-xs text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer flex-shrink-0"
                   title="Remove image"

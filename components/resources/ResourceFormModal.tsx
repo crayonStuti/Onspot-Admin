@@ -615,7 +615,6 @@ export default function ResourceFormModal({
                         width={36}
                         height={36}
                         className="w-full h-full object-contain"
-                        unoptimized
                       />
                     </div>
                   )}

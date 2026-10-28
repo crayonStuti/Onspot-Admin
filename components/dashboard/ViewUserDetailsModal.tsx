@@ -148,7 +148,6 @@ export default function ViewUserDetailsModal({
                     width={48}
                     height={48}
                     className="w-full h-full object-cover"
-                    unoptimized
                   />
                 ) : (
                   getUserDisplayName(userDetails).charAt(0).toUpperCase()
@@ -323,7 +322,6 @@ export default function ViewUserDetailsModal({
                                     alt="Front"
                                     fill
                                     className="object-cover"
-                                    unoptimized
                                   />
                                 </div>
                                 <span>Front Photo</span>
@@ -346,7 +344,6 @@ export default function ViewUserDetailsModal({
                                     alt="Back"
                                     fill
                                     className="object-cover"
-                                    unoptimized
                                   />
                                 </div>
                                 <span>Back Photo</span>
@@ -455,7 +452,6 @@ export default function ViewUserDetailsModal({
                 alt="License preview"
                 fill
                 className="object-contain"
-                unoptimized
               />
             </div>
           </div>

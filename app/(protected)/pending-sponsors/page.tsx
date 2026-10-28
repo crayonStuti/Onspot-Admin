@@ -149,7 +149,11 @@ export default function PendingSponsorsPage() {
       }
     };
     window.addEventListener("onspot:filter-pending-sponsors", handleFilter);
-    return () => window.removeEventListener("onspot:filter-pending-sponsors", handleFilter);
+    return () =>
+      window.removeEventListener(
+        "onspot:filter-pending-sponsors",
+        handleFilter,
+      );
   }, []);
 
   // Debounce search query to trigger server-side API search
@@ -343,7 +347,6 @@ export default function PendingSponsorsPage() {
                               width={40}
                               height={40}
                               className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                              unoptimized
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-lg bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center flex-shrink-0 font-bold text-xs">
@@ -488,7 +491,6 @@ export default function PendingSponsorsPage() {
                     width={48}
                     height={48}
                     className="w-12 h-12 rounded-xl object-cover border border-gray-200"
-                    unoptimized
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center font-bold">

@@ -41,12 +41,16 @@ export default function SponsorsPage() {
 
   // View Details Modal State
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [selectedSponsor, setSelectedSponsor] = useState<SponsorItem | null>(null);
+  const [selectedSponsor, setSelectedSponsor] = useState<SponsorItem | null>(
+    null,
+  );
   const [viewLoading, setViewLoading] = useState(false);
 
   // Add / Edit Modal State
   const [formModalOpen, setFormModalOpen] = useState(false);
-  const [editingSponsor, setEditingSponsor] = useState<SponsorItem | null>(null);
+  const [editingSponsor, setEditingSponsor] = useState<SponsorItem | null>(
+    null,
+  );
   const [formData, setFormData] = useState({
     sponsor_name: "",
     email_address: "",
@@ -94,14 +98,19 @@ export default function SponsorsPage() {
     window.addEventListener("onspot:open-add-sponsor", openNewSponsorModal);
     window.addEventListener("onspot:filter-sponsors", handleFilter);
     return () => {
-      window.removeEventListener("onspot:open-add-sponsor", openNewSponsorModal);
+      window.removeEventListener(
+        "onspot:open-add-sponsor",
+        openNewSponsorModal,
+      );
       window.removeEventListener("onspot:filter-sponsors", handleFilter);
     };
   }, []);
 
   // Delete Confirmation State
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [sponsorToDelete, setSponsorToDelete] = useState<SponsorItem | null>(null);
+  const [sponsorToDelete, setSponsorToDelete] = useState<SponsorItem | null>(
+    null,
+  );
   const [deleting, setDeleting] = useState(false);
 
   // Helper to extract id from sponsor
@@ -155,9 +164,7 @@ export default function SponsorsPage() {
           if (pag) {
             setTotalPages(pag.totalPages || 1);
             setTotalItems(
-              pag.totalItems ||
-                pag.totaldata ||
-                res.data.sponsors.length,
+              pag.totalItems || pag.totaldata || res.data.sponsors.length,
             );
           } else {
             setTotalPages(
@@ -444,7 +451,6 @@ export default function SponsorsPage() {
                               width={36}
                               height={36}
                               className="w-9 h-9 rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                              unoptimized
                             />
                           ) : (
                             <div className="w-9 h-9 rounded-lg bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center flex-shrink-0 font-bold text-xs">
@@ -585,7 +591,6 @@ export default function SponsorsPage() {
                     width={48}
                     height={48}
                     className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover border border-gray-200 flex-shrink-0"
-                    unoptimized
                   />
                 ) : (
                   <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-[#f5efdc] text-[#4a6b3f] flex items-center justify-center font-bold flex-shrink-0">
@@ -616,7 +621,9 @@ export default function SponsorsPage() {
             {viewLoading ? (
               <div className="py-12 flex flex-col items-center justify-center gap-2">
                 <Loader2 className="w-6 h-6 animate-spin text-[#2d4a23]" />
-                <span className="text-xs text-gray-500">Loading details...</span>
+                <span className="text-xs text-gray-500">
+                  Loading details...
+                </span>
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-4 text-xs">
@@ -633,14 +640,18 @@ export default function SponsorsPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col gap-1">
-                    <span className="text-gray-400 font-medium">Email Address</span>
+                    <span className="text-gray-400 font-medium">
+                      Email Address
+                    </span>
                     <span className="font-semibold text-gray-800 break-all">
                       {selectedSponsor.email_address || "—"}
                     </span>
                   </div>
 
                   <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col gap-1">
-                    <span className="text-gray-400 font-medium">Website Link</span>
+                    <span className="text-gray-400 font-medium">
+                      Website Link
+                    </span>
                     {selectedSponsor.link ? (
                       <a
                         href={
@@ -662,7 +673,9 @@ export default function SponsorsPage() {
                   </div>
 
                   <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col gap-1">
-                    <span className="text-gray-400 font-medium">Created At</span>
+                    <span className="text-gray-400 font-medium">
+                      Created At
+                    </span>
                     <span className="font-semibold text-gray-800">
                       {selectedSponsor.created_at
                         ? new Date(selectedSponsor.created_at).toLocaleString()
@@ -671,7 +684,9 @@ export default function SponsorsPage() {
                   </div>
 
                   <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col gap-1">
-                    <span className="text-gray-400 font-medium">Last Updated</span>
+                    <span className="text-gray-400 font-medium">
+                      Last Updated
+                    </span>
                     <span className="font-semibold text-gray-800">
                       {selectedSponsor.updated_at
                         ? new Date(selectedSponsor.updated_at).toLocaleString()
@@ -833,7 +848,6 @@ export default function SponsorsPage() {
                       width={56}
                       height={56}
                       className="w-14 h-14 rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                      unoptimized
                     />
                   ) : (
                     <div className="w-14 h-14 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 flex-shrink-0">
@@ -869,10 +883,10 @@ export default function SponsorsPage() {
                 disabled={submitting}
                 className="flex-1 sm:flex-none justify-center px-5 py-2 rounded-lg bg-[#4a6b3f] hover:bg-[#3c5733] text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 transition-colors cursor-pointer text-center"
               >
-                {submitting && (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                )}
-                <span>{editingSponsor ? "Save Changes" : "Create Sponsor"}</span>
+                {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>
+                  {editingSponsor ? "Save Changes" : "Create Sponsor"}
+                </span>
               </button>
             </div>
           </div>

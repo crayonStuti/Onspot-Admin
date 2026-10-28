@@ -428,10 +428,10 @@ export default function MembershipsPage() {
   ];
 
   const getPlanIcon = (plan: MembershipItem) => {
-    if (plan.image) {
-      const src = plan.image.startsWith("http")
-        ? plan.image
-        : `${API_URL}${plan.image.startsWith("/") ? "" : "/"}${plan.image}`;
+    if (plan.icon_image) {
+      const src = plan.icon_image.startsWith("http")
+        ? plan.icon_image
+        : `${API_URL}${plan.icon_image.startsWith("/") ? "" : "/"}${plan.icon_image}`;
       return (
         <Image
           src={src}

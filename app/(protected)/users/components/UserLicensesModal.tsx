@@ -164,8 +164,8 @@ export function UserLicensesModal({
                     No licenses found
                   </p>
                   <p className="text-xs text-gray-400 max-w-xs">
-                    This user does not have any active hunting, fishing, or state
-                    licenses uploaded.
+                    This user does not have any active hunting, fishing, or
+                    state licenses uploaded.
                   </p>
                 </div>
               </div>
@@ -176,7 +176,8 @@ export function UserLicensesModal({
                   lic.name ||
                   lic.title ||
                   "Recreational License";
-                const licenseNum = lic.license_number || `ID #${lic.id?.slice(0, 8)}`;
+                const licenseNum =
+                  lic.license_number || `ID #${lic.id?.slice(0, 8)}`;
                 const issuerName =
                   lic.issued_by?.organisation ||
                   lic.organisation ||
@@ -184,14 +185,16 @@ export function UserLicensesModal({
                   "State Wildlife Agency";
                 const stateName =
                   lic.state?.state_name ||
-                  (lic.state?.state_code ? `State of ${lic.state.state_code}` : "State Agency");
+                  (lic.state?.state_code
+                    ? `State of ${lic.state.state_code}`
+                    : "State Agency");
                 const stateCode = lic.state?.state_code;
                 const agencyWebsite = lic.issued_by?.agency_website;
 
                 const validFrom = lic.valid_from;
-                const validTo = lic.valid_to || lic.expires_at || lic.expiry_date;
-                const isExpired =
-                  validTo && new Date(validTo) < new Date();
+                const validTo =
+                  lic.valid_to || lic.expires_at || lic.expiry_date;
+                const isExpired = validTo && new Date(validTo) < new Date();
 
                 const photos = lic.photos || [];
 
@@ -222,7 +225,10 @@ export function UserLicensesModal({
                             </span>
                           </div>
                           <div className="text-[11px] text-gray-500 font-medium">
-                            License #: <span className="font-semibold text-gray-800">{licenseNum}</span>
+                            License #:{" "}
+                            <span className="font-semibold text-gray-800">
+                              {licenseNum}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -248,7 +254,10 @@ export function UserLicensesModal({
                         </div>
                         <div className="flex items-center gap-1.5 text-gray-500 text-[11px] pl-5">
                           <Building2 className="w-3 h-3 text-gray-400" />
-                          <span className="truncate max-w-[200px]" title={issuerName}>
+                          <span
+                            className="truncate max-w-[200px]"
+                            title={issuerName}
+                          >
                             {issuerName}
                           </span>
                           {agencyWebsite && (
@@ -270,7 +279,9 @@ export function UserLicensesModal({
                         <div className="flex items-center sm:justify-end gap-1.5 text-gray-700 font-medium">
                           <Calendar className="w-3.5 h-3.5 text-[#2d4a23]" />
                           <span>
-                            {validTo ? `Expires: ${validTo}` : "Expiry: Unlimited"}
+                            {validTo
+                              ? `Expires: ${validTo}`
+                              : "Expiry: Unlimited"}
                           </span>
                         </div>
                         {validFrom && (
@@ -292,7 +303,11 @@ export function UserLicensesModal({
                             <React.Fragment key={photo.id || pIdx}>
                               {photo.front_image && (
                                 <div
-                                  onClick={() => setPreviewImage(resolveImageUrl(photo.front_image))}
+                                  onClick={() =>
+                                    setPreviewImage(
+                                      resolveImageUrl(photo.front_image),
+                                    )
+                                  }
                                   className="group relative w-28 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-100 hover:border-[#2d4a23] transition-all cursor-pointer shadow-xs"
                                   title="Click to view front side image"
                                 >
@@ -302,7 +317,6 @@ export function UserLicensesModal({
                                     width={112}
                                     height={80}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                    unoptimized
                                   />
                                   <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] font-medium py-0.5 text-center backdrop-blur-xs">
                                     Front Side
@@ -311,7 +325,11 @@ export function UserLicensesModal({
                               )}
                               {photo.back_image && (
                                 <div
-                                  onClick={() => setPreviewImage(resolveImageUrl(photo.back_image))}
+                                  onClick={() =>
+                                    setPreviewImage(
+                                      resolveImageUrl(photo.back_image),
+                                    )
+                                  }
                                   className="group relative w-28 h-20 rounded-lg border border-gray-200 overflow-hidden bg-gray-100 hover:border-[#2d4a23] transition-all cursor-pointer shadow-xs"
                                   title="Click to view back side image"
                                 >
@@ -321,7 +339,6 @@ export function UserLicensesModal({
                                     width={112}
                                     height={80}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                    unoptimized
                                   />
                                   <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[9px] font-medium py-0.5 text-center backdrop-blur-xs">
                                     Back Side
@@ -391,7 +408,6 @@ export function UserLicensesModal({
               width={800}
               height={600}
               className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg"
-              unoptimized
             />
           </div>
         </div>

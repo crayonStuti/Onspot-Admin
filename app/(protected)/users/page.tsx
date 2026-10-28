@@ -753,7 +753,6 @@ export default function UsersPage() {
                                     width={32}
                                     height={32}
                                     className="w-full h-full object-cover"
-                                    unoptimized
                                   />
                                 ) : (
                                   fullName.charAt(0).toUpperCase()
@@ -1075,7 +1074,6 @@ export default function UsersPage() {
                       width={48}
                       height={48}
                       className="w-full h-full object-cover"
-                      unoptimized
                     />
                   ) : (
                     getUserDisplayName(selectedUserDetails)
@@ -1286,7 +1284,6 @@ export default function UsersPage() {
                                   width={40}
                                   height={28}
                                   className="w-10 h-7 object-cover rounded border border-gray-200 shadow-2xs"
-                                  unoptimized
                                 />
                               </div>
                             </div>
@@ -1381,7 +1378,6 @@ export default function UsersPage() {
               width={800}
               height={600}
               className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-xl"
-              unoptimized
             />
           </div>
         </div>
