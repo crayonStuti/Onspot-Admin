@@ -217,19 +217,27 @@ export default function AdminProfilePage() {
     try {
       const formData = new FormData();
       formData.append("profile_picture", file);
-      
+
       // Preserve current profile fields to prevent any backend overwriting
-      if (editForm.first_name) formData.append("first_name", editForm.first_name.trim());
-      if (editForm.last_name) formData.append("last_name", editForm.last_name.trim());
-      if (editForm.display_name) formData.append("display_name", editForm.display_name.trim());
+      if (editForm.first_name)
+        formData.append("first_name", editForm.first_name.trim());
+      if (editForm.last_name)
+        formData.append("last_name", editForm.last_name.trim());
+      if (editForm.display_name)
+        formData.append("display_name", editForm.display_name.trim());
       if (editForm.phone) formData.append("phone", editForm.phone.trim());
-      if (editForm.street_address) formData.append("street_address", editForm.street_address.trim());
-      if (editForm.street_address_2) formData.append("street_address_2", editForm.street_address_2.trim());
+      if (editForm.street_address)
+        formData.append("street_address", editForm.street_address.trim());
+      if (editForm.street_address_2)
+        formData.append("street_address_2", editForm.street_address_2.trim());
       if (editForm.city) formData.append("city", editForm.city.trim());
       if (editForm.state) formData.append("state", editForm.state.trim());
       if (editForm.zipcode) formData.append("zipcode", editForm.zipcode.trim());
       if (editForm.date_of_birth) {
-        formData.append("date_of_birth", formatDateForSubmit(editForm.date_of_birth));
+        formData.append(
+          "date_of_birth",
+          formatDateForSubmit(editForm.date_of_birth),
+        );
       }
 
       const res = await updateMyProfile(formData);
@@ -263,11 +271,15 @@ export default function AdminProfilePage() {
         window.dispatchEvent(new CustomEvent("onSpot:userProfileUpdated"));
       }
 
-      toast.success("Profile picture updated successfully!", { id: uploadToastId });
+      toast.success("Profile picture updated successfully!", {
+        id: uploadToastId,
+      });
       await fetchProfile();
     } catch (err: any) {
       console.error("Avatar update error:", err);
-      toast.error(err?.message || "Failed to update profile picture", { id: uploadToastId });
+      toast.error(err?.message || "Failed to update profile picture", {
+        id: uploadToastId,
+      });
     } finally {
       setUploadingAvatar(false);
       // Reset input value so re-selecting same file triggers onChange
@@ -289,17 +301,25 @@ export default function AdminProfilePage() {
       // In multipart form, pass empty string or null identifier
       const formData = new FormData();
       formData.append("profile_picture", "");
-      if (editForm.first_name) formData.append("first_name", editForm.first_name.trim());
-      if (editForm.last_name) formData.append("last_name", editForm.last_name.trim());
-      if (editForm.display_name) formData.append("display_name", editForm.display_name.trim());
+      if (editForm.first_name)
+        formData.append("first_name", editForm.first_name.trim());
+      if (editForm.last_name)
+        formData.append("last_name", editForm.last_name.trim());
+      if (editForm.display_name)
+        formData.append("display_name", editForm.display_name.trim());
       if (editForm.phone) formData.append("phone", editForm.phone.trim());
-      if (editForm.street_address) formData.append("street_address", editForm.street_address.trim());
-      if (editForm.street_address_2) formData.append("street_address_2", editForm.street_address_2.trim());
+      if (editForm.street_address)
+        formData.append("street_address", editForm.street_address.trim());
+      if (editForm.street_address_2)
+        formData.append("street_address_2", editForm.street_address_2.trim());
       if (editForm.city) formData.append("city", editForm.city.trim());
       if (editForm.state) formData.append("state", editForm.state.trim());
       if (editForm.zipcode) formData.append("zipcode", editForm.zipcode.trim());
       if (editForm.date_of_birth) {
-        formData.append("date_of_birth", formatDateForSubmit(editForm.date_of_birth));
+        formData.append(
+          "date_of_birth",
+          formatDateForSubmit(editForm.date_of_birth),
+        );
       }
 
       try {
@@ -317,7 +337,9 @@ export default function AdminProfilePage() {
           city: editForm.city.trim(),
           state: editForm.state.trim(),
           zipcode: editForm.zipcode.trim(),
-          date_of_birth: editForm.date_of_birth ? formatDateForSubmit(editForm.date_of_birth) : undefined,
+          date_of_birth: editForm.date_of_birth
+            ? formatDateForSubmit(editForm.date_of_birth)
+            : undefined,
         });
       }
 
@@ -348,11 +370,15 @@ export default function AdminProfilePage() {
         window.dispatchEvent(new CustomEvent("onSpot:userProfileUpdated"));
       }
 
-      toast.success("Profile picture removed successfully!", { id: removeToastId });
+      toast.success("Profile picture removed successfully!", {
+        id: removeToastId,
+      });
       await fetchProfile();
     } catch (err: any) {
       console.error("Remove avatar error:", err);
-      toast.error(err?.message || "Failed to remove profile picture", { id: removeToastId });
+      toast.error(err?.message || "Failed to remove profile picture", {
+        id: removeToastId,
+      });
     } finally {
       setUploadingAvatar(false);
     }
@@ -547,7 +573,9 @@ export default function AdminProfilePage() {
             <label
               htmlFor="hero-avatar-upload"
               className={`absolute inset-0 rounded-full bg-black/40 text-white flex flex-col items-center justify-center transition-opacity text-xs ${
-                uploadingAvatar ? "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100 cursor-pointer"
+                uploadingAvatar
+                  ? "opacity-0 pointer-events-none"
+                  : "opacity-0 group-hover:opacity-100 cursor-pointer"
               }`}
               title="Change profile picture"
             >
