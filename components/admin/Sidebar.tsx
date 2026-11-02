@@ -222,7 +222,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     try {
       await logoutApi();
     } catch {
-      // ignore
     } finally {
       clearAuthSession();
       toast.success("Logged out successfully");

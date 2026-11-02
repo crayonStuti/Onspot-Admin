@@ -66,21 +66,33 @@ export default function Header({
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("user");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const name =
-          parsed.first_name || parsed.display_name || parsed.email || "Admin";
-        setUserEmail(name);
-        setUserRole(parsed.role || "Admin");
-        setUserPhoto(
-          parsed.photoURL || parsed.profile?.profile_picture || null,
-        );
+    const updateHeaderUser = () => {
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const name =
+            parsed.first_name || parsed.display_name || parsed.email || "Admin";
+          setUserEmail(name);
+          setUserRole(parsed.role || "Admin");
+          setUserPhoto(
+            parsed.photoURL || parsed.profile?.profile_picture || null,
+          );
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
+    };
+
+    updateHeaderUser();
+
+    window.addEventListener("onSpot:userProfileUpdated", updateHeaderUser);
+    window.addEventListener("storage", updateHeaderUser);
+
+    return () => {
+      window.removeEventListener("onSpot:userProfileUpdated", updateHeaderUser);
+      window.removeEventListener("storage", updateHeaderUser);
+    };
   }, []);
 
   return (

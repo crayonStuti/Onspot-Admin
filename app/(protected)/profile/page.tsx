@@ -22,6 +22,8 @@ import {
   RefreshCw,
   Sparkles,
   ArrowRight,
+  X,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -62,6 +64,7 @@ export default function AdminProfilePage() {
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Password Form State
@@ -189,8 +192,8 @@ export default function AdminProfilePage() {
     fetchStates();
   }, [fetchProfile]);
 
-  // Handle avatar file selection
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle avatar file selection and immediately update profile image
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -206,6 +209,153 @@ export default function AdminProfilePage() {
     setAvatarFile(file);
     const objectUrl = URL.createObjectURL(file);
     setAvatarPreview(objectUrl);
+
+    // Immediately upload and update the profile picture on backend
+    setUploadingAvatar(true);
+    const uploadToastId = toast.loading("Updating profile picture...");
+
+    try {
+      const formData = new FormData();
+      formData.append("profile_picture", file);
+      
+      // Preserve current profile fields to prevent any backend overwriting
+      if (editForm.first_name) formData.append("first_name", editForm.first_name.trim());
+      if (editForm.last_name) formData.append("last_name", editForm.last_name.trim());
+      if (editForm.display_name) formData.append("display_name", editForm.display_name.trim());
+      if (editForm.phone) formData.append("phone", editForm.phone.trim());
+      if (editForm.street_address) formData.append("street_address", editForm.street_address.trim());
+      if (editForm.street_address_2) formData.append("street_address_2", editForm.street_address_2.trim());
+      if (editForm.city) formData.append("city", editForm.city.trim());
+      if (editForm.state) formData.append("state", editForm.state.trim());
+      if (editForm.zipcode) formData.append("zipcode", editForm.zipcode.trim());
+      if (editForm.date_of_birth) {
+        formData.append("date_of_birth", formatDateForSubmit(editForm.date_of_birth));
+      }
+
+      const res = await updateMyProfile(formData);
+      const updatedUserRes = res?.data?.user || res?.user || res?.data || res;
+      const newPicUrl =
+        updatedUserRes?.profile?.profile_picture ||
+        updatedUserRes?.photoURL ||
+        objectUrl;
+
+      // Update local storage
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const updatedUser = {
+            ...parsed,
+            photoURL: getAvatarUrl(newPicUrl),
+            profile: {
+              ...(parsed.profile || {}),
+              profile_picture: getAvatarUrl(newPicUrl),
+            },
+          };
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        }
+      } catch {
+        // ignore
+      }
+
+      // Notify Header and other components to update image
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("onSpot:userProfileUpdated"));
+      }
+
+      toast.success("Profile picture updated successfully!", { id: uploadToastId });
+      await fetchProfile();
+    } catch (err: any) {
+      console.error("Avatar update error:", err);
+      toast.error(err?.message || "Failed to update profile picture", { id: uploadToastId });
+    } finally {
+      setUploadingAvatar(false);
+      // Reset input value so re-selecting same file triggers onChange
+      e.target.value = "";
+    }
+  };
+
+  // Remove / Null current profile picture
+  const handleRemoveAvatar = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+
+    if (!avatarPreview && !avatarFile) return;
+
+    setUploadingAvatar(true);
+    const removeToastId = toast.loading("Removing profile picture...");
+
+    try {
+      // 1. Try sending FormData with empty/null profile_picture
+      // In multipart form, pass empty string or null identifier
+      const formData = new FormData();
+      formData.append("profile_picture", "");
+      if (editForm.first_name) formData.append("first_name", editForm.first_name.trim());
+      if (editForm.last_name) formData.append("last_name", editForm.last_name.trim());
+      if (editForm.display_name) formData.append("display_name", editForm.display_name.trim());
+      if (editForm.phone) formData.append("phone", editForm.phone.trim());
+      if (editForm.street_address) formData.append("street_address", editForm.street_address.trim());
+      if (editForm.street_address_2) formData.append("street_address_2", editForm.street_address_2.trim());
+      if (editForm.city) formData.append("city", editForm.city.trim());
+      if (editForm.state) formData.append("state", editForm.state.trim());
+      if (editForm.zipcode) formData.append("zipcode", editForm.zipcode.trim());
+      if (editForm.date_of_birth) {
+        formData.append("date_of_birth", formatDateForSubmit(editForm.date_of_birth));
+      }
+
+      try {
+        await updateMyProfile(formData);
+      } catch {
+        // Fallback to JSON payload if FormData empty string is ignored or errors
+        await updateMyProfile({
+          profile_picture: null,
+          first_name: editForm.first_name.trim(),
+          last_name: editForm.last_name.trim(),
+          display_name: editForm.display_name.trim(),
+          phone: editForm.phone.trim(),
+          street_address: editForm.street_address.trim(),
+          street_address_2: editForm.street_address_2.trim(),
+          city: editForm.city.trim(),
+          state: editForm.state.trim(),
+          zipcode: editForm.zipcode.trim(),
+          date_of_birth: editForm.date_of_birth ? formatDateForSubmit(editForm.date_of_birth) : undefined,
+        });
+      }
+
+      setAvatarFile(null);
+      setAvatarPreview(null);
+
+      // Update local storage
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const updatedUser = {
+            ...parsed,
+            photoURL: null,
+            profile: {
+              ...(parsed.profile || {}),
+              profile_picture: null,
+            },
+          };
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        }
+      } catch {
+        // ignore
+      }
+
+      // Notify Header
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("onSpot:userProfileUpdated"));
+      }
+
+      toast.success("Profile picture removed successfully!", { id: removeToastId });
+      await fetchProfile();
+    } catch (err: any) {
+      console.error("Remove avatar error:", err);
+      toast.error(err?.message || "Failed to remove profile picture", { id: removeToastId });
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   // Submit profile edit
@@ -269,6 +419,11 @@ export default function AdminProfilePage() {
         }
       } catch {
         // ignore
+      }
+
+      // Notify Header and other components to update image & profile details
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("onSpot:userProfileUpdated"));
       }
 
       await fetchProfile();
@@ -366,9 +521,15 @@ export default function AdminProfilePage() {
         <div className="absolute bottom-0 right-1/4 -mb-16 w-80 h-80 rounded-full bg-[#f5efdc]/10 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
-          {/* Avatar with status badge */}
+          {/* Avatar with status badge & remove button */}
           <div className="relative group shrink-0">
-            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white/20 shadow-2xl overflow-hidden bg-emerald-950/60 flex items-center justify-center text-white text-3xl font-bold backdrop-blur-xs">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white/20 shadow-2xl overflow-hidden bg-emerald-950/60 flex items-center justify-center text-white text-3xl font-bold backdrop-blur-xs relative">
+              {uploadingAvatar ? (
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-1 z-10 text-white">
+                  <Loader2 className="w-6 h-6 animate-spin text-emerald-300" />
+                  <span className="text-[10px] font-medium">Updating...</span>
+                </div>
+              ) : null}
               {avatarPreview ? (
                 <Image
                   src={avatarPreview}
@@ -381,10 +542,13 @@ export default function AdminProfilePage() {
                 fullName.charAt(0).toUpperCase()
               )}
             </div>
+
             {/* Quick edit photo overlay button */}
             <label
               htmlFor="hero-avatar-upload"
-              className="absolute inset-0 rounded-full bg-black/40 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs"
+              className={`absolute inset-0 rounded-full bg-black/40 text-white flex flex-col items-center justify-center transition-opacity text-xs ${
+                uploadingAvatar ? "opacity-0 pointer-events-none" : "opacity-0 group-hover:opacity-100 cursor-pointer"
+              }`}
               title="Change profile picture"
             >
               <Camera className="w-6 h-6 mb-1" />
@@ -393,10 +557,25 @@ export default function AdminProfilePage() {
                 id="hero-avatar-upload"
                 type="file"
                 accept="image/*"
+                disabled={uploadingAvatar}
                 className="hidden"
                 onChange={handleAvatarChange}
               />
             </label>
+
+            {/* Cross icon to remove/null current avatar */}
+            {avatarPreview && !uploadingAvatar && (
+              <button
+                type="button"
+                onClick={handleRemoveAvatar}
+                className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-md cursor-pointer border-2 border-white transition-transform hover:scale-110 z-20"
+                title="Remove profile image"
+                aria-label="Remove profile image"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+
             <div
               className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-emerald-400 border-2 border-white shadow-xs"
               title="Active Admin"
