@@ -30,6 +30,7 @@ const ROUTE_TITLES: Record<string, string> = {
   "/pending-sponsors": "Pending Sponsors",
   "/notifications": "Notification / Announcements",
   "/settings": "Admin Settings",
+  "/profile": "Admin Profile",
 };
 
 function getDynamicTitle(pathname: string): string {
@@ -147,7 +148,11 @@ export default function Header({
           </Link>
 
           {/* Profile Pill */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 py-1 pl-1 pr-2 sm:pr-3.5 rounded-full bg-white border border-[#ececec] shadow-xs shrink-0">
+          <Link
+            href="/profile"
+            title="View Profile"
+            className="flex items-center gap-1.5 sm:gap-2.5 py-1 pl-1 pr-2 sm:pr-3.5 rounded-full bg-white border border-[#ececec] hover:border-[#2d4a23]/30 hover:shadow-sm transition-all shrink-0 cursor-pointer"
+          >
             <div className="w-[28px] h-[28px] sm:w-[36px] sm:h-[36px] rounded-full bg-[#0E3E27]/10 text-[#0E3E27] font-bold flex items-center justify-center text-xs overflow-hidden flex-shrink-0">
               {userPhoto ? (
                 <Image
@@ -170,7 +175,7 @@ export default function Header({
               </div>
             </div>
             <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#888]" />
-          </div>
+          </Link>
         </div>
       </div>
 

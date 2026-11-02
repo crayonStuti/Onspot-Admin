@@ -450,7 +450,7 @@ export default function MembershipsPage() {
           alt="Premium"
           width={28}
           height={28}
-          className="w-7 h-7 object-contain"
+          className="w-10 h-10 object-contain"
         />
       );
     }

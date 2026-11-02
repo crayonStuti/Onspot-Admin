@@ -464,6 +464,25 @@ export async function validateToken(): Promise<any> {
   return await fetchApi("/user-profile/me");
 }
 
+export async function getMyProfile(): Promise<any> {
+  return await fetchApi("/user-profile/me");
+}
+
+export async function updateMyProfile(data: FormData | any): Promise<any> {
+  const isFormData = data instanceof FormData;
+  return await fetchApi("/user-profile/me", {
+    method: "PUT",
+    body: isFormData ? data : JSON.stringify(data),
+  });
+}
+
+export async function changePasswordApi(data: { currentPassword: string; newPassword: string }): Promise<any> {
+  return await fetchApi("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function logoutApi(): Promise<any> {
   // 1. Call local server route to clear HttpOnly cookies and send Clear-Site-Data
   try {

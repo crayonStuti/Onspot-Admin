@@ -247,7 +247,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         {/* Brand Logo */}
         <div className="pt-5 pb-6 px-5 flex items-center justify-between lg:justify-center flex-shrink-0">
-          <Link href="/users" className="relative w-[130px] lg:w-[150px] h-[52px] block">
+          <Link
+            href="/users"
+            className="relative w-[130px] lg:w-[150px] h-[52px] block"
+          >
             <Image
               src="/images/on-spot-logo.png"
               alt="S.P.O.T. Logo"
@@ -267,7 +270,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation List */}
-        <nav className="flex-1 overflow-y-auto pl-3.5 pr-2 space-y-1.5 min-h-0">
+        <nav className="flex-1 overflow-y-auto pl-3.5 pr-2 space-y-1.5 min-h-0 pb-4">
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
