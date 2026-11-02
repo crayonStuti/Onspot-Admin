@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Search, ChevronDown } from "lucide-react";
 import UnifiedSearch from "./UnifiedSearch";
+import { API_URL } from "@/lib/api";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -60,10 +61,23 @@ export default function Header({
   const pathname = usePathname();
   const title = customTitle || getDynamicTitle(pathname);
 
-  const [userEmail, setUserEmail] = useState<string>("Leonardo Smith");
+  const [userEmail, setUserEmail] = useState<string>("");
   const [userRole, setUserRole] = useState<string>("Admin");
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState<boolean>(false);
+
+  const getProfileImageUrl = (url?: string | null) => {
+    if (!url) return "";
+    if (
+      url.startsWith("http://") ||
+      url.startsWith("https://") ||
+      url.startsWith("blob:") ||
+      url.startsWith("data:")
+    ) {
+      return url;
+    }
+    return `${API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+  };
 
   useEffect(() => {
     const updateHeaderUser = () => {
@@ -76,7 +90,10 @@ export default function Header({
           setUserEmail(name);
           setUserRole(parsed.role || "Admin");
           setUserPhoto(
-            parsed.photoURL || parsed.profile?.profile_picture || null,
+            parsed.photoURL ||
+            parsed.profile?.profile_picture ||
+            parsed.profile_picture ||
+            null,
           );
         }
       } catch {
@@ -168,7 +185,7 @@ export default function Header({
             <div className="w-[28px] h-[28px] sm:w-[36px] sm:h-[36px] rounded-full bg-[#0E3E27]/10 text-[#0E3E27] font-bold flex items-center justify-center text-xs overflow-hidden flex-shrink-0">
               {userPhoto ? (
                 <Image
-                  src={userPhoto}
+                  src={getProfileImageUrl(userPhoto)}
                   alt={userEmail}
                   width={36}
                   height={36}

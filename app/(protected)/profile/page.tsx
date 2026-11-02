@@ -155,10 +155,33 @@ export default function AdminProfilePage() {
       };
 
       setEditForm(initialForm);
-      if (profile?.profile_picture || user?.photoURL) {
-        setAvatarPreview(
-          getAvatarUrl(profile?.profile_picture || user?.photoURL),
-        );
+      const pic = profile?.profile_picture || user?.photoURL || user?.profile_picture;
+      if (pic) {
+        setAvatarPreview(getAvatarUrl(pic));
+      } else {
+        setAvatarPreview(null);
+      }
+
+      // Sync freshly fetched user info to localStorage and notify Header
+      try {
+        const stored = localStorage.getItem("user");
+        const existing = stored ? JSON.parse(stored) : {};
+        const updatedUser = {
+          ...existing,
+          ...user,
+          photoURL: pic ? getAvatarUrl(pic) : null,
+          profile: {
+            ...(existing.profile || {}),
+            ...(profile || {}),
+            profile_picture: pic ? getAvatarUrl(pic) : null,
+          },
+        };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("onSpot:userProfileUpdated"));
+        }
+      } catch {
+        // ignore
       }
     } catch (err: any) {
       console.error("Fetch admin profile error:", err);
@@ -411,8 +434,13 @@ export default function AdminProfilePage() {
       if (avatarFile) {
         formData.append("profile_picture", avatarFile);
       }
-
       const res = await updateMyProfile(formData);
+      const updatedUserRes = res?.data?.user || res?.user || res?.data || res;
+      const newPicUrl =
+        updatedUserRes?.profile?.profile_picture ||
+        updatedUserRes?.photoURL ||
+        avatarPreview;
+
       toast.success("Profile updated successfully!");
 
       // Update local storage so Header immediately reflects the changes
@@ -426,7 +454,7 @@ export default function AdminProfilePage() {
             last_name: editForm.last_name,
             display_name: editForm.display_name,
             phone: editForm.phone,
-            photoURL: avatarPreview || parsed.photoURL,
+            photoURL: newPicUrl || parsed.photoURL,
             profile: {
               ...(parsed.profile || {}),
               first_name: editForm.first_name,
@@ -438,7 +466,7 @@ export default function AdminProfilePage() {
               city: editForm.city,
               state: editForm.state,
               zipcode: editForm.zipcode,
-              profile_picture: avatarPreview || parsed.profile?.profile_picture,
+              profile_picture: newPicUrl || parsed.profile?.profile_picture,
             },
           };
           localStorage.setItem("user", JSON.stringify(updatedUser));
