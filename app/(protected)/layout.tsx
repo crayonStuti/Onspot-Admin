@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/admin/Sidebar";
 import Header from "@/components/admin/Header";
-import { isSessionValid, clearAuthSession, touchActivity } from "@/lib/api";
+import { isSessionValid, clearAuthSession, touchActivity, getMyProfile } from "@/lib/api";
 import { toast } from "sonner";
 
 export default function ProtectedLayout({
@@ -69,6 +69,39 @@ export default function ProtectedLayout({
       },
       5 * 60 * 1000,
     );
+
+    // 4. Background fetch latest profile to ensure profile picture and names are fresh
+    getMyProfile()
+      .then((res) => {
+        const fullUser =
+          res?.data?.user || res?.user || res?.data || res;
+        if (fullUser) {
+          const pic =
+            fullUser.profile?.profile_picture ||
+            fullUser.profile_picture ||
+            fullUser.photoURL;
+
+          const stored = localStorage.getItem("user");
+          const existing = stored ? JSON.parse(stored) : {};
+
+          const updatedUser = {
+            ...existing,
+            ...fullUser,
+            photoURL: pic || null,
+            profile: {
+              ...(existing.profile || {}),
+              ...(fullUser.profile || {}),
+              profile_picture: pic || null,
+            },
+          };
+
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+          window.dispatchEvent(new CustomEvent("onSpot:userProfileUpdated"));
+        }
+      })
+      .catch((err) => {
+        console.warn("Background profile sync warning:", err);
+      });
 
     return () => {
       window.removeEventListener("onSpot:unauthorized", handleUnauthorized);

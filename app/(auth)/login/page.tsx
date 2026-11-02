@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   loginWithCredentials,
+  getMyProfile,
   setAuthSession,
   getStoredToken,
   clearAuthSession,
@@ -71,11 +72,45 @@ export default function LoginPage() {
         (response as any).data?.refreshToken ||
         (response as any).token?.refreshToken;
 
+      // 1. Initial auth session setup
       setAuthSession(
         response.idToken || (response as any).token,
         response.user,
         refreshToken,
       );
+
+      // 2. Fetch full user profile to retrieve latest profile_picture, names, etc.
+      try {
+        const profileRes = await getMyProfile();
+        const fullUser =
+          profileRes?.data?.user ||
+          profileRes?.user ||
+          profileRes?.data ||
+          profileRes;
+
+        if (fullUser) {
+          const pic =
+            fullUser.profile?.profile_picture ||
+            fullUser.profile_picture ||
+            fullUser.photoURL ||
+            response.user?.photoURL;
+
+          const mergedUser = {
+            ...response.user,
+            ...fullUser,
+            photoURL: pic || null,
+            profile: {
+              ...(response.user?.profile || {}),
+              ...(fullUser.profile || {}),
+              profile_picture: pic || null,
+            },
+          };
+          localStorage.setItem("user", JSON.stringify(mergedUser));
+        }
+      } catch (profileErr) {
+        console.warn("Could not pre-fetch full profile on login:", profileErr);
+      }
+
       toast.success("Login successful");
       router.push("/dashboard");
     } catch (err: any) {
