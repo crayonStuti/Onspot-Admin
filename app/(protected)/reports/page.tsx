@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
+import ExportButton, { formatExportDate } from "@/components/admin/ExportButton";
 import {
   getAdminReports,
   getStates,
@@ -88,7 +89,6 @@ export default function ReportsPage() {
 
   // Data states
   const [loading, setLoading] = useState<boolean>(true);
-  const [exporting, setExporting] = useState<boolean>(false);
   const [records, setRecords] = useState<any[]>([]);
   const [summaryData, setSummaryData] = useState<any>(null);
 
@@ -387,9 +387,9 @@ export default function ReportsPage() {
         u.membership_level || (u.has_membership ? "Active" : "free"),
         u.is_hunter ? "Yes" : "No",
         u.is_fisherman ? "Yes" : "No",
-        u.joined_date ? new Date(u.joined_date).toLocaleDateString() : "",
+        u.joined_date ? formatExportDate(u.joined_date) : "",
         u.last_activity_at
-          ? new Date(u.last_activity_at).toLocaleString()
+          ? formatExportDate(u.last_activity_at)
           : "Never",
       ]);
       return { headers, rows };
@@ -424,13 +424,13 @@ export default function ReportsPage() {
         m.status || "",
         m.monthly_price !== undefined ? Number(m.monthly_price).toFixed(2) : "",
         m.yearly_price !== undefined ? Number(m.yearly_price).toFixed(2) : "",
-        m.start_date ? new Date(m.start_date).toLocaleDateString() : "",
+        m.start_date ? formatExportDate(m.start_date) : "",
         m.end_date
-          ? new Date(m.end_date).toLocaleDateString()
+          ? formatExportDate(m.end_date)
           : "Active (Ongoing)",
         m.has_saved_card ? "Yes" : "No",
         m.trial_start_date && !m.is_trial_expired ? "Trial Active" : "No",
-        m.created_at ? new Date(m.created_at).toLocaleDateString() : "",
+        m.created_at ? formatExportDate(m.created_at) : "",
       ]);
       return { headers, rows };
     }
@@ -456,11 +456,11 @@ export default function ReportsPage() {
         l.license_number || "",
         l.license_type || "",
         l.state_name || l.state_code || "",
-        l.valid_from ? new Date(l.valid_from).toLocaleDateString() : "-",
-        l.expiry_date ? new Date(l.expiry_date).toLocaleDateString() : "",
+        l.valid_from ? formatExportDate(l.valid_from) : "-",
+        l.expiry_date ? formatExportDate(l.expiry_date) : "",
         l.status || "",
         l.user_membership || "",
-        l.upload_date ? new Date(l.upload_date).toLocaleDateString() : "",
+        l.upload_date ? formatExportDate(l.upload_date) : "",
       ]);
       return { headers, rows };
     }
@@ -490,118 +490,30 @@ export default function ReportsPage() {
       s.user_email || "",
       s.user_membership_level || "Admin",
       s.is_sponsorship_free_with_plan ? "Yes" : "No",
-      s.created_at ? new Date(s.created_at).toLocaleDateString() : "",
+      s.created_at ? formatExportDate(s.created_at) : "",
     ]);
     return { headers, rows };
   };
 
-  // Fetch full data for export if current page doesn't have all records
-  const getFullDataForExport = async (): Promise<any[]> => {
-    // If the API doc states "If page & limit omitted, returns ALL records"
-    try {
-      const exportParams = buildFilterParams(undefined, undefined, true);
-      const res = await getAdminReports(exportParams);
-      const { records: exportRows } = parseReportResponse(res);
-      if (exportRows && exportRows.length > 0) {
-        return exportRows;
-      }
-    } catch (err) {
-      console.warn(
-        "Export full dataset request failed, using visible page rows:",
-        err,
+  // Fetch full data for export with active filters and omitted pagination
+  const fetchAllReportsForExport = useCallback(async (): Promise<any[]> => {
+    const exportParams = buildFilterParams(undefined, undefined, true);
+    const res = await getAdminReports(exportParams);
+    const { records: exportRows } = parseReportResponse(res);
+    if (!Array.isArray(exportRows)) {
+      throw new Error(
+        `Invalid API response: Expected an array of report records for ${activeTab}`,
       );
     }
-    return records;
-  };
+    return exportRows;
+  }, [buildFilterParams, activeTab]);
 
-  const handleExportExcel = async () => {
-    if (records.length === 0) {
-      toast.error("No report data available to export.");
-      return;
-    }
-
-    setExporting(true);
-    const toastId = toast.loading("Generating Excel workbook export...");
-
-    try {
-      const dataToExport = await getFullDataForExport();
-      const { headers, rows } = getExportHeadersAndRows(
-        dataToExport,
-        activeTab,
-      );
-
-      // Construct native Excel XML (.xls spreadsheet compatible with Excel)
-      let xml = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>\r\n`;
-      xml += `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\r\n`;
-      xml += ` xmlns:o="urn:schemas-microsoft-com:office:office"\r\n`;
-      xml += ` xmlns:x="urn:schemas-microsoft-com:office:excel"\r\n`;
-      xml += ` xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"\r\n`;
-      xml += ` xmlns:html="http://www.w3.org/TR/REC-html40">\r\n`;
-      xml += ` <Worksheet ss:Name="${activeTab.toUpperCase()}_REPORT">\r\n`;
-      xml += `  <Table>\r\n`;
-
-      // Header row
-      xml += `   <Row>\r\n`;
-      headers.forEach((h) => {
-        xml += `    <Cell><Data ss:Type="String">${escapeXml(h)}</Data></Cell>\r\n`;
-      });
-      xml += `   </Row>\r\n`;
-
-      // Data rows
-      rows.forEach((row) => {
-        xml += `   <Row>\r\n`;
-        row.forEach((cell) => {
-          const valStr = String(cell ?? "");
-          const isNum = !isNaN(Number(valStr)) && valStr.trim() !== "";
-          const dataType = isNum ? "Number" : "String";
-
-          xml += `    <Cell><Data ss:Type="${dataType}">${escapeXml(valStr)}</Data></Cell>\r\n`;
-        });
-        xml += `   </Row>\r\n`;
-      });
-
-      xml += `  </Table>\r\n`;
-      xml += ` </Worksheet>\r\n`;
-      xml += `</Workbook>\r\n`;
-
-      const blob = new Blob([xml], {
-        type: "application/vnd.ms-excel;charset=utf-8",
-      });
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download = `onspot_report_${activeTab}_${new Date().toISOString().slice(0, 10)}.xls`;
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast.success(
-        `Successfully exported ${dataToExport.length} ${activeTab} records as Excel.`,
-        {
-          id: toastId,
-        },
-      );
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to export Excel.", {
-        id: toastId,
-      });
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const escapeXml = (unsafe: string) => {
-    return unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&apos;");
-  };
+  const getReportExportHeadersAndRows = useCallback(
+    (dataRows: any[]) => {
+      return getExportHeadersAndRows(dataRows, activeTab);
+    },
+    [activeTab],
+  );
 
   // Status Badge UI Helper
   const renderStatusBadge = (status?: string) => {
@@ -685,15 +597,15 @@ export default function ReportsPage() {
 
           {/* Export Action Buttons */}
           <div className="flex items-center gap-2.5 flex-wrap">
-            <button
-              onClick={handleExportExcel}
-              disabled={exporting || loading || records.length === 0}
-              className="h-[38px] px-3.5 bg-[#1f3d2a] hover:bg-[#162d1f] disabled:opacity-50 text-white text-[13px] font-medium rounded-[8px] inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
-              title="Export filtered records as Excel (.xls)"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
-              <span>Export Excel</span>
-            </button>
+            <ExportButton<any>
+              fetchData={fetchAllReportsForExport}
+              getHeadersAndRows={getReportExportHeadersAndRows}
+              filenamePrefix={`onspot_report_${activeTab}`}
+              totalRecords={totalRecords}
+              label="Export CSV"
+              className="h-[38px] px-3.5 bg-[#1f3d2a] hover:bg-[#162d1f] text-white text-[13px] font-medium rounded-[8px] inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+              icon={<FileSpreadsheet className="w-4 h-4 text-emerald-300" />}
+            />
           </div>
         </div>
 

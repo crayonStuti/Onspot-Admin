@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
 import TableActionMenu from "@/components/admin/TableActionMenu";
+import ExportButton, { formatExportDate } from "@/components/admin/ExportButton";
 import {
   getAdminLicenses,
   getStates,
@@ -183,13 +184,27 @@ export default function LicensesPage() {
     );
   };
 
-  // Export to CSV
-  const handleExportCSV = () => {
-    if (licenses.length === 0) {
-      toast.error("No licenses available to export.");
-      return;
+  // Full Dataset Export for Licenses
+  const fetchAllLicensesForExport = useCallback(async (): Promise<AdminLicenseItem[]> => {
+    const res = await getAdminLicenses({
+      page: undefined,
+      limit: undefined,
+      state_id: stateId || undefined,
+      license_type: licenseType || undefined,
+      upload_date: uploadDate && uploadDate !== "all" ? uploadDate : undefined,
+      search: searchQuery.trim() || undefined,
+    });
+
+    if (!res || !res.data || !Array.isArray(res.data.licenses)) {
+      throw new Error(
+        "Invalid API response: Expected an array of licenses under data.licenses",
+      );
     }
 
+    return res.data.licenses;
+  }, [stateId, licenseType, uploadDate, searchQuery]);
+
+  const getLicenseExportHeadersAndRows = useCallback((data: AdminLicenseItem[]) => {
     const headers = [
       "License ID",
       "License Number",
@@ -202,34 +217,20 @@ export default function LicensesPage() {
       "Created At",
     ];
 
-    const rows = licenses.map((item) => [
-      `"${item.id}"`,
-      `"${item.license_number || ""}"`,
-      `"${item.license_type || ""}"`,
-      `"${item.state?.state_name || item.state?.state_code || ""}"`,
-      `"${getUserDisplayName(item.user)}"`,
-      `"${item.user?.email || ""}"`,
-      `"${item.valid_from ? new Date(item.valid_from).toLocaleDateString() : ""}"`,
-      `"${item.valid_to ? new Date(item.valid_to).toLocaleDateString() : ""}"`,
-      `"${item.created_at ? new Date(item.created_at).toLocaleDateString() : ""}"`,
+    const rows = data.map((item) => [
+      item.id,
+      item.license_number || "",
+      item.license_type || "",
+      item.state?.state_name || item.state?.state_code || "",
+      getUserDisplayName(item.user),
+      item.user?.email || "",
+      formatExportDate(item.valid_from),
+      formatExportDate(item.valid_to),
+      formatExportDate(item.created_at),
     ]);
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute(
-      "download",
-      `licenses_export_${new Date().toISOString().slice(0, 10)}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Exported ${licenses.length} licenses.`);
-  };
+    return { headers, rows };
+  }, []);
 
   // Stat Card Count calculation
   const totalCount = summaryData?.total_licenses?.count ?? totalItems;
@@ -408,27 +409,29 @@ export default function LicensesPage() {
 
         {/* Toolbar: Export & Reset matching HTML .lic-toolbar */}
         <div className="lic-toolbar flex items-center gap-2.5 ml-auto">
-          <button
-            type="button"
-            id="btn-export"
-            onClick={handleExportCSV}
+          <ExportButton<AdminLicenseItem>
+            fetchData={fetchAllLicensesForExport}
+            getHeadersAndRows={getLicenseExportHeadersAndRows}
+            filenamePrefix="licenses_export"
+            totalRecords={totalItems}
+            label="Export"
             className="lic-tb-btn inline-flex items-center gap-2 px-4 py-[9px] bg-white border border-[#e4e4df] rounded-[8px] text-[13px] font-medium text-[#2c2c2c] hover:bg-[#f7f7f2] hover:border-[#d4d4cd] transition-colors cursor-pointer"
-          >
-            <span>Export</span>
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-4 h-4 text-[#7D848D]"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-          </button>
+            icon={
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4 h-4 text-[#7D848D]"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            }
+          />
 
           {(stateId || licenseType || uploadDate !== "all" || searchQuery) && (
             <button

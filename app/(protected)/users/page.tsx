@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
 import TableActionMenu from "@/components/admin/TableActionMenu";
+import ExportButton, { formatExportDate } from "@/components/admin/ExportButton";
 import {
   getUsers,
   deleteUser,
@@ -360,13 +361,36 @@ export default function UsersPage() {
     }
   };
 
-  // Export Users to CSV
-  const handleExportCSV = () => {
-    if (users.length === 0) {
-      toast.info("No users to export.");
-      return;
+  // Full Dataset Export for Users
+  const fetchAllUsersForExport = useCallback(async (): Promise<UserItem[]> => {
+    const res = await getUsers({
+      page: undefined,
+      limit: undefined,
+      search: debouncedSearch,
+      status: filterStatus,
+      plan_level: filterPlanLevel,
+      state_name: filterStateName,
+      joined_at: filterJoinedAt,
+      sortBy: "created_at",
+      sortOrder: "DESC",
+    });
+
+    if (!res || !res.data || !Array.isArray(res.data.users)) {
+      throw new Error(
+        "Invalid API response: Expected an array of users under data.users",
+      );
     }
 
+    return res.data.users;
+  }, [
+    debouncedSearch,
+    filterStatus,
+    filterPlanLevel,
+    filterStateName,
+    filterJoinedAt,
+  ]);
+
+  const getUserExportHeadersAndRows = useCallback((data: UserItem[]) => {
     const headers = [
       "ID",
       "First Name",
@@ -377,7 +401,7 @@ export default function UsersPage() {
       "Membership",
       "Created At",
     ];
-    const rows = users.map((u) => [
+    const rows = data.map((u) => [
       u.id,
       u.first_name && u.first_name !== "null" ? u.first_name : "",
       u.last_name && u.last_name !== "null" ? u.last_name : "",
@@ -389,28 +413,10 @@ export default function UsersPage() {
           ? u.profile?.membership?.name
           : u.profile?.membership) ||
         "None",
-      u.created_at || "",
+      formatExportDate(u.created_at),
     ]);
-
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [
-        headers.join(","),
-        ...rows.map((e) => e.map((val) => `"${val}"`).join(",")),
-      ].join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute(
-      "download",
-      `onspot_users_${new Date().toISOString().slice(0, 10)}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("Users exported successfully.");
-  };
+    return { headers, rows };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -572,38 +578,30 @@ export default function UsersPage() {
                   <option value="premium">Premium only</option>
                 </select>
 
-                {/* Export button  */}
-                <button
-                  type="button"
-                  onClick={handleExportCSV}
+                {/* Export button */}
+                <ExportButton<UserItem>
+                  fetchData={fetchAllUsersForExport}
+                  getHeadersAndRows={getUserExportHeadersAndRows}
+                  filenamePrefix="onspot_users"
+                  totalRecords={totalUsers}
+                  label="Export"
                   className="h-[30px] px-2.5 sm:px-3 rounded-[7px] border border-[#e4e4df] bg-white hover:bg-[#f7f7f2] text-[12px] font-medium text-[#4a4a4a] inline-flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
-                >
-                  <svg
-                    className="w-3 h-3 text-[#6b6b6b]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  <span>Export</span>
-                  <svg
-                    className="w-3 h-3 text-[#6b6b6b]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
+                  icon={
+                    <svg
+                      className="w-3 h-3 text-[#6b6b6b]"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                  }
+                />
 
                 {/* Add User button */}
                 <button

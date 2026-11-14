@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
+import ExportButton, { formatExportDate } from "@/components/admin/ExportButton";
 import {
   getMapPins,
   getMapPinTags,
@@ -361,13 +362,75 @@ export default function GPSActivityPage() {
     }
   };
 
-  // Export to CSV
-  const handleExportCSV = () => {
-    if (mapPins.length === 0) {
-      toast.info("No GPS pins to export.");
-      return;
+  // Full Dataset Export for GPS Pins
+  const fetchAllPinsForExport = useCallback(async (): Promise<MapPinItem[]> => {
+    let activityFilterParam: string | undefined = undefined;
+    if (selectedTimeframe === "custom") {
+      activityFilterParam = "custom";
+    } else if (
+      selectedTimeframe === "7" ||
+      selectedTimeframe === "7_days"
+    ) {
+      activityFilterParam = "7_days";
+    } else if (
+      selectedTimeframe === "30" ||
+      selectedTimeframe === "30_days"
+    ) {
+      activityFilterParam = "30_days";
+    } else if (
+      selectedTimeframe === "90" ||
+      selectedTimeframe === "90_days"
+    ) {
+      activityFilterParam = "90_days";
+    } else if (
+      selectedTimeframe === "365" ||
+      selectedTimeframe === "last_year"
+    ) {
+      activityFilterParam = "last_year";
     }
 
+    const res = await getMapPins({
+      page: undefined,
+      limit: undefined,
+      search: searchQuery.trim(),
+      state:
+        selectedState && selectedState !== "all" ? selectedState : undefined,
+      visibility:
+        selectedVisibility && selectedVisibility !== "all"
+          ? selectedVisibility
+          : undefined,
+      tag_type:
+        selectedTagType && selectedTagType !== "all"
+          ? selectedTagType
+          : undefined,
+      user_id:
+        selectedUserId && selectedUserId !== "all"
+          ? selectedUserId
+          : undefined,
+      activity_filter: activityFilterParam,
+      start_date: dateRangeStart || undefined,
+      end_date: dateRangeEnd || undefined,
+    });
+
+    if (!res || !res.data || !Array.isArray(res.data.pins)) {
+      throw new Error(
+        "Invalid API response: Expected an array of pins under data.pins",
+      );
+    }
+
+    return res.data.pins;
+  }, [
+    searchQuery,
+    selectedState,
+    selectedVisibility,
+    selectedTagType,
+    selectedUserId,
+    selectedTimeframe,
+    dateRangeStart,
+    dateRangeEnd,
+  ]);
+
+  const getPinExportHeadersAndRows = useCallback((data: MapPinItem[]) => {
     const headers = [
       "ID",
       "User Name",
@@ -381,7 +444,7 @@ export default function GPSActivityPage() {
       "Date",
     ];
 
-    const rows = mapPins.map((p) => {
+    const rows = data.map((p) => {
       const uName = getUserDisplayName(p.user);
       const uEmail = p.user?.email || "N/A";
       const loc = p.tagged_location || p.location_name || p.title || "N/A";
@@ -389,37 +452,23 @@ export default function GPSActivityPage() {
         p.state?.state_name || p.state?.state_code || p.state_name || "N/A";
       const tag = p.tags && p.tags[0] ? p.tags[0].name : "General";
       const vis = p.visibility || (p.is_public ? "public" : "private");
-      const d = p.created_at ? new Date(p.created_at).toLocaleDateString() : "";
+      const d = formatExportDate(p.created_at);
       return [
-        `"${p.id}"`,
-        `"${uName}"`,
-        `"${uEmail}"`,
-        `"${loc}"`,
-        `"${p.latitude}"`,
-        `"${p.longitude}"`,
-        `"${stName}"`,
-        `"${tag}"`,
-        `"${vis}"`,
-        `"${d}"`,
+        p.id,
+        uName,
+        uEmail,
+        loc,
+        p.latitude ?? "",
+        p.longitude ?? "",
+        stName,
+        tag,
+        vis,
+        d,
       ];
     });
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute(
-      "download",
-      `onspot_gps_activity_${new Date().toISOString().slice(0, 10)}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Exported ${mapPins.length} GPS pins.`);
-  };
+    return { headers, rows };
+  }, []);
 
   // Activity Chart Coordinates computation
   const chartPoints = useMemo(() => {
@@ -588,13 +637,15 @@ export default function GPSActivityPage() {
     <div className="space-y-6">
       {/* ===================== EXPORT BAR & TIMEFRAME ===================== */}
       <div className="flex items-center justify-end gap-2.5">
-        <button
-          onClick={handleExportCSV}
+        <ExportButton<MapPinItem>
+          fetchData={fetchAllPinsForExport}
+          getHeadersAndRows={getPinExportHeadersAndRows}
+          filenamePrefix="onspot_gps_activity"
+          totalRecords={totalItems}
+          label="Export"
           className="h-[38px] px-4 border border-[#e4e4df] bg-white hover:bg-[#f7f7f4] rounded-[6px] text-[#444] text-[13px] inline-flex items-center gap-2 font-normal transition-colors cursor-pointer shadow-xs"
-        >
-          <span>Export</span>
-          <Download className="w-3.5 h-3.5 text-[#666]" />
-        </button>
+          icon={<Download className="w-3.5 h-3.5 text-[#666]" />}
+        />
         <select
           value={selectedTimeframe}
           onChange={(e) => {

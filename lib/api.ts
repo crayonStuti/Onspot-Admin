@@ -5,12 +5,7 @@ export class ApiError extends Error {
   errorName?: string;
   data?: any;
 
-  constructor(
-    message: string,
-    statusCode: number = 500,
-    errorName?: string,
-    data?: any,
-  ) {
+  constructor(message: string, statusCode: number = 500, errorName?: string, data?: any) {
     super(message);
     this.name = "ApiError";
     this.statusCode = statusCode;
@@ -26,24 +21,15 @@ export class ApiError extends Error {
 /**
  * Sanitizes user search query to prevent control character injection and limit query length.
  */
-export function sanitizeSearchQuery(
-  query?: string,
-  maxLength: number = 100,
-): string {
+export function sanitizeSearchQuery(query?: string, maxLength: number = 100): string {
   if (!query || typeof query !== "string") return "";
-  return query
-    .replace(/[\x00-\x1F\x7F]/g, "")
-    .trim()
-    .slice(0, maxLength);
+  return query.replace(/[\x00-\x1F\x7F]/g, "").trim().slice(0, maxLength);
 }
 
 /**
  * Sanitizes error messages to prevent internal server stack trace disclosure in production.
  */
-export function sanitizeErrorMessage(
-  rawMessage: string,
-  statusCode: number = 500,
-): string {
+export function sanitizeErrorMessage(rawMessage: string, statusCode: number = 500): string {
   if (!rawMessage || typeof rawMessage !== "string") {
     return `Request failed with status ${statusCode}`;
   }
@@ -64,10 +50,7 @@ export function sanitizeErrorMessage(
   return rawMessage;
 }
 
-function parseErrorMessage(
-  errorData: any,
-  status: number,
-): { message: string; errorName?: string } {
+function parseErrorMessage(errorData: any, status: number): { message: string; errorName?: string } {
   let message = `Request failed with status ${status}`;
   let errorName = undefined;
 
@@ -76,15 +59,9 @@ function parseErrorMessage(
       errorName = errorData.error;
     }
 
-    if (
-      typeof errorData.message === "string" &&
-      errorData.message.trim().length > 0
-    ) {
+    if (typeof errorData.message === "string" && errorData.message.trim().length > 0) {
       message = errorData.message;
-    } else if (
-      Array.isArray(errorData.message) &&
-      errorData.message.length > 0
-    ) {
+    } else if (Array.isArray(errorData.message) && errorData.message.length > 0) {
       message = errorData.message.join(". ");
     } else if (errorData.error && typeof errorData.error === "string") {
       message = errorData.error;
@@ -104,15 +81,11 @@ function parseErrorMessage(
  * Validates whether an outbound request destination is safe to receive the Authorization Bearer token.
  * Prevents token leakage to external services (e.g. S3 buckets, CDNs, external APIs).
  */
-export function shouldAttachAuthHeader(
-  targetUrl: string,
-  baseUrl?: string,
-): boolean {
+export function shouldAttachAuthHeader(targetUrl: string, baseUrl?: string): boolean {
   if (!targetUrl) return false;
   // Relative paths always belong to local/backend proxy
   if (targetUrl.startsWith("/")) return true;
-  if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://"))
-    return true;
+  if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) return true;
 
   try {
     const targetOrigin = new URL(targetUrl).origin;
@@ -155,11 +128,7 @@ export function getCookieSecurityFlag(): string {
   return "";
 }
 
-export function setAuthSession(
-  token: string,
-  user: any,
-  refreshToken?: string,
-) {
+export function setAuthSession(token: string, user: any, refreshToken?: string) {
   if (typeof window === "undefined") return;
   const now = Date.now();
   localStorage.setItem("authToken", token);
@@ -193,16 +162,11 @@ export function isSessionValid(): boolean {
   if (!token) return false;
 
   const now = Date.now();
-  const sessionCreatedAt = Number(
-    localStorage.getItem("sessionCreatedAt") || 0,
-  );
+  const sessionCreatedAt = Number(localStorage.getItem("sessionCreatedAt") || 0);
   const lastActiveAt = Number(localStorage.getItem("lastActiveAt") || 0);
 
   // 1. Check 7-day absolute session expiration
-  if (
-    sessionCreatedAt > 0 &&
-    now - sessionCreatedAt > ABSOLUTE_SESSION_MAX_MS
-  ) {
+  if (sessionCreatedAt > 0 && now - sessionCreatedAt > ABSOLUTE_SESSION_MAX_MS) {
     console.warn("Session expired: 7-day absolute lifetime exceeded.");
     clearAuthSession();
     return false;
@@ -287,9 +251,7 @@ export function clearAuthSession() {
 
 let refreshPromise: Promise<string> | null = null;
 
-export async function refreshTokenApi(
-  customRefreshToken?: string,
-): Promise<{ idToken: string; refreshToken?: string }> {
+export async function refreshTokenApi(customRefreshToken?: string): Promise<{ idToken: string; refreshToken?: string }> {
   const refreshToken = customRefreshToken || getStoredRefreshToken();
   if (!refreshToken) {
     clearAuthSession();
@@ -316,18 +278,11 @@ export async function refreshTokenApi(
         errorBody = null;
       }
     }
-    const { message, errorName } = parseErrorMessage(
-      errorBody,
-      response.status,
-    );
+    const { message, errorName } = parseErrorMessage(errorBody, response.status);
     // If refresh token call fails, force full logout
     clearAuthSession();
     if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("onSpot:unauthorized", {
-          detail: { reason: "refresh_failed" },
-        }),
-      );
+      window.dispatchEvent(new CustomEvent("onSpot:unauthorized", { detail: { reason: "refresh_failed" } }));
     }
     throw new ApiError(message, response.status, errorName, errorBody);
   }
@@ -342,7 +297,9 @@ export async function refreshTokenApi(
     data.data?.accessToken;
 
   const newRefreshToken =
-    data.refreshToken || data.data?.refreshToken || refreshToken;
+    data.refreshToken ||
+    data.data?.refreshToken ||
+    refreshToken;
 
   if (!newIdToken) {
     clearAuthSession();
@@ -355,9 +312,7 @@ export async function refreshTokenApi(
       localStorage.setItem("refreshToken", newRefreshToken);
     }
     touchActivity();
-    const sessionCreatedAt = Number(
-      localStorage.getItem("sessionCreatedAt") || Date.now(),
-    );
+    const sessionCreatedAt = Number(localStorage.getItem("sessionCreatedAt") || Date.now());
     const maxExpires = new Date(sessionCreatedAt + ABSOLUTE_SESSION_MAX_MS);
     const sec = getCookieSecurityFlag();
     document.cookie = `auth-token=${newIdToken}; path=/; expires=${maxExpires.toUTCString()}; SameSite=Lax${sec}`;
@@ -369,7 +324,7 @@ export async function refreshTokenApi(
 export async function fetchApi<T = any>(
   endpoint: string,
   options: RequestInit = {},
-  isRetry: boolean = false,
+  isRetry: boolean = false
 ): Promise<T> {
   const isAuthEndpoint =
     endpoint.includes("/auth/login") ||
@@ -379,27 +334,18 @@ export async function fetchApi<T = any>(
   // Validate session timeout on protected calls
   if (!isAuthEndpoint && typeof window !== "undefined" && !isSessionValid()) {
     clearAuthSession();
-    window.dispatchEvent(
-      new CustomEvent("onSpot:unauthorized", {
-        detail: { reason: "session_expired" },
-      }),
-    );
+    window.dispatchEvent(new CustomEvent("onSpot:unauthorized", { detail: { reason: "session_expired" } }));
     throw new ApiError("Session expired. Please log in again.", 401);
   }
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
 
   const url = endpoint.startsWith("http") ? endpoint : `${API_URL}${endpoint}`;
 
-  if (
-    token &&
-    !headers["Authorization"] &&
-    shouldAttachAuthHeader(url, API_URL)
-  ) {
+  if (token && !headers["Authorization"] && shouldAttachAuthHeader(url, API_URL)) {
     headers["Authorization"] = `Bearer ${token}`;
   } else if (!shouldAttachAuthHeader(url, API_URL)) {
     // Explicitly delete any leaked Authorization header for third-party targets
@@ -407,11 +353,7 @@ export async function fetchApi<T = any>(
   }
 
   // Set default JSON Content-Type only if body is not FormData
-  if (
-    options.body &&
-    !(options.body instanceof FormData) &&
-    !headers["Content-Type"]
-  ) {
+  if (options.body && !(options.body instanceof FormData) && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -426,12 +368,7 @@ export async function fetchApi<T = any>(
     const isAuthRefreshEndpoint = endpoint.includes("/auth/refresh-token");
     const storedRefreshToken = getStoredRefreshToken();
 
-    if (
-      response.status === 401 &&
-      !isRetry &&
-      !isAuthRefreshEndpoint &&
-      storedRefreshToken
-    ) {
+    if (response.status === 401 && !isRetry && !isAuthRefreshEndpoint && storedRefreshToken) {
       try {
         if (!refreshPromise) {
           refreshPromise = refreshTokenApi()
@@ -448,20 +385,12 @@ export async function fetchApi<T = any>(
           Authorization: `Bearer ${newToken}`,
         };
 
-        return await fetchApi<T>(
-          endpoint,
-          { ...options, headers: retryHeaders },
-          true,
-        );
+        return await fetchApi<T>(endpoint, { ...options, headers: retryHeaders }, true);
       } catch (refreshErr) {
         console.warn("Auto token refresh failed:", refreshErr);
         clearAuthSession();
         if (typeof window !== "undefined") {
-          window.dispatchEvent(
-            new CustomEvent("onSpot:unauthorized", {
-              detail: { reason: "refresh_failed" },
-            }),
-          );
+          window.dispatchEvent(new CustomEvent("onSpot:unauthorized", { detail: { reason: "refresh_failed" } }));
         }
       }
     }
@@ -477,18 +406,11 @@ export async function fetchApi<T = any>(
       }
     }
 
-    const { message, errorName } = parseErrorMessage(
-      errorBody,
-      response.status,
-    );
+    const { message, errorName } = parseErrorMessage(errorBody, response.status);
 
     if (response.status === 401 && typeof window !== "undefined") {
       clearAuthSession();
-      window.dispatchEvent(
-        new CustomEvent("onSpot:unauthorized", {
-          detail: { reason: "unauthorized" },
-        }),
-      );
+      window.dispatchEvent(new CustomEvent("onSpot:unauthorized", { detail: { reason: "unauthorized" } }));
     }
 
     throw new ApiError(message, response.status, errorName, errorBody);
@@ -531,10 +453,7 @@ export interface LoginResponse {
   };
 }
 
-export async function loginWithCredentials(body: {
-  email: string;
-  password: string;
-}): Promise<LoginResponse> {
+export async function loginWithCredentials(body: { email: string; password: string }): Promise<LoginResponse> {
   return await fetchApi<LoginResponse>("/auth/login", {
     method: "POST",
     body: JSON.stringify(body),
@@ -557,10 +476,7 @@ export async function updateMyProfile(data: FormData | any): Promise<any> {
   });
 }
 
-export async function changePasswordApi(data: {
-  currentPassword: string;
-  newPassword: string;
-}): Promise<any> {
+export async function changePasswordApi(data: { currentPassword: string; newPassword: string }): Promise<any> {
   return await fetchApi("/auth/change-password", {
     method: "POST",
     body: JSON.stringify(data),
@@ -653,14 +569,14 @@ export async function getUsers(
   search: string = "",
   status: string = "",
   sortBy: string = "created_at",
-  sortOrder: string = "DESC",
+  sortOrder: string = "DESC"
 ): Promise<UsersResponse> {
   const params = new URLSearchParams();
 
   if (typeof pageOrParams === "object" && pageOrParams !== null) {
     const {
-      page = 1,
-      limit: l = 10,
+      page,
+      limit: l,
       search: s = "",
       status: st = "",
       plan_level = "",
@@ -671,25 +587,30 @@ export async function getUsers(
       id = "",
     } = pageOrParams;
 
-    params.append("page", String(page));
-    params.append("limit", String(l));
+    if (page !== undefined && page !== null) {
+      params.append("page", String(page));
+    }
+    if (l !== undefined && l !== null) {
+      params.append("limit", String(l));
+    }
     if (sb) params.append("sortBy", sb);
     if (so) params.append("sortOrder", so);
     if (s && s.trim()) params.append("search", sanitizeSearchQuery(s));
     if (st && st !== "all") params.append("status", st);
-    if (plan_level && plan_level !== "all")
-      params.append("plan_level", plan_level.toLowerCase());
-    if (state_name && state_name !== "all")
-      params.append("state_name", state_name);
+    if (plan_level && plan_level !== "all") params.append("plan_level", plan_level.toLowerCase());
+    if (state_name && state_name !== "all") params.append("state_name", state_name);
     if (joined_at) params.append("joined_at", joined_at);
     if (id) params.append("id", id);
   } else {
-    params.append("page", String(pageOrParams));
-    params.append("limit", String(limit));
+    if (pageOrParams !== undefined && pageOrParams !== null) {
+      params.append("page", String(pageOrParams));
+    }
+    if (limit !== undefined && limit !== null) {
+      params.append("limit", String(limit));
+    }
     if (sortBy) params.append("sortBy", sortBy);
     if (sortOrder) params.append("sortOrder", sortOrder);
-    if (search && search.trim())
-      params.append("search", sanitizeSearchQuery(search));
+    if (search && search.trim()) params.append("search", sanitizeSearchQuery(search));
     if (status && status !== "all") params.append("status", status);
   }
 
@@ -717,10 +638,7 @@ export async function registerUser(userData: any): Promise<any> {
   });
 }
 
-export async function updateUserProfile(
-  userId: string,
-  data: any,
-): Promise<any> {
+export async function updateUserProfile(userId: string, data: any): Promise<any> {
   const isFormData = data instanceof FormData;
   return await fetchApi(`/user-profile/${userId}`, {
     method: "PUT",
@@ -728,10 +646,7 @@ export async function updateUserProfile(
   });
 }
 
-export async function changeUserPassword(
-  userId: string,
-  newPassword: string,
-): Promise<any> {
+export async function changeUserPassword(userId: string, newPassword: string): Promise<any> {
   return await fetchApi(`/admin/users/${userId}/change-password`, {
     method: "POST",
     body: JSON.stringify({ newPassword }),
@@ -752,15 +667,10 @@ export async function getUserLicenses(userId: string): Promise<any> {
 }
 
 export async function getUserBookmarks(email: string): Promise<any> {
-  return await fetchApi(
-    `/resource-bookmarks/user/me?email=${encodeURIComponent(email)}`,
-  );
+  return await fetchApi(`/resource-bookmarks/user/me?email=${encodeURIComponent(email)}`);
 }
 
-export async function getUserMapPins(
-  email: string,
-  limit: number = 10,
-): Promise<any> {
+export async function getUserMapPins(email: string, limit: number = 10): Promise<any> {
   const params = new URLSearchParams({ email, limit: String(limit) });
   return await fetchApi(`/map/pins?${params.toString()}`);
 }
@@ -769,14 +679,8 @@ export async function getUserMapPins(
    MEMBERSHIPS & STATES
    ========================================================================= */
 
-export async function getMemberships(
-  page: number = 1,
-  limit: number = 100,
-): Promise<any> {
-  const params = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-  });
+export async function getMemberships(page: number = 1, limit: number = 100): Promise<any> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   return await fetchApi(`/memberships?${params.toString()}`);
 }
 
@@ -792,10 +696,7 @@ export async function createMembership(data: any): Promise<any> {
   });
 }
 
-export async function updateMembership(
-  membershipId: string,
-  data: any,
-): Promise<any> {
+export async function updateMembership(membershipId: string, data: any): Promise<any> {
   const isFormData = data instanceof FormData;
   return await fetchApi(`/memberships/${membershipId}`, {
     method: "PUT",
@@ -849,9 +750,7 @@ export interface AdminMembershipOverviewResponse {
 }
 
 export async function getAdminMembershipOverview(): Promise<AdminMembershipOverviewResponse> {
-  return await fetchApi<AdminMembershipOverviewResponse>(
-    "/memberships?admin_overview=true",
-  );
+  return await fetchApi<AdminMembershipOverviewResponse>("/memberships?admin_overview=true");
 }
 
 /* =========================================================================
@@ -872,12 +771,9 @@ export interface StateItem {
 export async function getStates(
   page: number = 1,
   limit: number = 100,
-  search: string = "",
+  search: string = ""
 ): Promise<any> {
-  const params = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-  });
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (search && search.trim()) {
     params.append("search", sanitizeSearchQuery(search));
   }
@@ -938,31 +834,22 @@ export async function getLicenseIssuers(
   page: number = 1,
   limit: number = 10,
   search: string = "",
-  state_id?: string,
+  state_id?: string
 ): Promise<any> {
-  const params = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-  });
-  if (search && search.trim())
-    params.append("search", sanitizeSearchQuery(search));
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (search && search.trim()) params.append("search", sanitizeSearchQuery(search));
   if (state_id && state_id !== "all") params.append("state_id", state_id);
   return await fetchApi(`/license-issuers?${params.toString()}`);
 }
 
-export async function createLicenseIssuer(
-  data: LicenseIssuerInput,
-): Promise<any> {
+export async function createLicenseIssuer(data: LicenseIssuerInput): Promise<any> {
   return await fetchApi("/license-issuers", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export async function updateLicenseIssuer(
-  issuerId: string,
-  data: LicenseIssuerInput,
-): Promise<any> {
+export async function updateLicenseIssuer(issuerId: string, data: LicenseIssuerInput): Promise<any> {
   return await fetchApi(`/license-issuers/${issuerId}`, {
     method: "PUT",
     body: JSON.stringify(data),
@@ -1009,12 +896,7 @@ export interface GetAdminResourcesParams {
   is_published?: string | boolean;
   last_updated?: string;
   timeframe?: string;
-  sortBy?:
-    | "created_at"
-    | "resource_type"
-    | "category"
-    | "is_published"
-    | string;
+  sortBy?: "created_at" | "resource_type" | "category" | "is_published" | string;
   sortOrder?: "ASC" | "DESC" | string;
 }
 
@@ -1033,7 +915,7 @@ export async function getAdminResources(
     timeframe?: string;
     sortBy?: string;
     sortOrder?: string;
-  },
+  }
 ): Promise<any> {
   let paramsObj: GetAdminResourcesParams = {};
 
@@ -1087,11 +969,7 @@ export async function getAdminResources(
     if (!params.has("last_updated")) {
       params.append("last_updated", paramsObj.timeframe);
     }
-  } else if (
-    paramsObj.last_updated &&
-    paramsObj.last_updated !== "all" &&
-    !params.has("timeframe")
-  ) {
+  } else if (paramsObj.last_updated && paramsObj.last_updated !== "all" && !params.has("timeframe")) {
     params.append("timeframe", paramsObj.last_updated);
   }
   if (paramsObj.sortBy) {
@@ -1116,10 +994,7 @@ export async function createResource(data: any): Promise<any> {
   });
 }
 
-export async function updateResource(
-  resourceId: string,
-  data: any,
-): Promise<any> {
+export async function updateResource(resourceId: string, data: any): Promise<any> {
   const isFormData = data instanceof FormData;
   return await fetchApi(`/resources/${resourceId}`, {
     method: "PUT",
@@ -1160,25 +1035,21 @@ export interface AdminPinState {
 }
 
 export interface AdminPinSummary {
-  total_pins:
-    | number
-    | {
-        count?: number;
-        last_30_days_count?: number;
-        previous_30_days_count?: number;
-        change_vs_last_30_days?: number;
-        change_30d?: number;
-        delta?: number;
-        weekly_change?: number;
-        trend?: "up" | "down" | "flat" | string;
-        formatted_text?: string;
-      };
-  total_tag_types?:
-    | number
-    | {
-        count?: number;
-        formatted_text?: string;
-      };
+  total_pins: number | {
+    count?: number;
+    last_30_days_count?: number;
+    previous_30_days_count?: number;
+    change_vs_last_30_days?: number;
+    change_30d?: number;
+    delta?: number;
+    weekly_change?: number;
+    trend?: "up" | "down" | "flat" | string;
+    formatted_text?: string;
+  };
+  total_tag_types?: number | {
+    count?: number;
+    formatted_text?: string;
+  };
   most_tagged_state?: {
     state_id: string;
     state_name: string;
@@ -1303,7 +1174,7 @@ export async function getMapPins(
   user_id?: string,
   start_date?: string,
   end_date?: string,
-  activity_filter?: string,
+  activity_filter?: string
 ): Promise<AdminPinsResponse> {
   let paramsObj: GetAdminPinsParams = {};
 
@@ -1327,20 +1198,13 @@ export async function getMapPins(
   const params = new URLSearchParams();
   if (paramsObj.page) params.append("page", String(paramsObj.page));
   if (paramsObj.limit) params.append("limit", String(paramsObj.limit));
-  if (paramsObj.search && paramsObj.search.trim())
-    params.append("search", sanitizeSearchQuery(paramsObj.search));
-  if (paramsObj.state && paramsObj.state !== "all")
-    params.append("state", paramsObj.state);
-  if (paramsObj.state_id && paramsObj.state_id !== "all")
-    params.append("state_id", paramsObj.state_id);
-  if (paramsObj.visibility && paramsObj.visibility !== "all")
-    params.append("visibility", paramsObj.visibility);
-  if (paramsObj.tag_type && paramsObj.tag_type !== "all")
-    params.append("tag_type", paramsObj.tag_type);
-  if (paramsObj.user_id && paramsObj.user_id !== "all")
-    params.append("user_id", paramsObj.user_id);
-  if (paramsObj.activity_filter && paramsObj.activity_filter !== "all")
-    params.append("activity_filter", paramsObj.activity_filter);
+  if (paramsObj.search && paramsObj.search.trim()) params.append("search", sanitizeSearchQuery(paramsObj.search));
+  if (paramsObj.state && paramsObj.state !== "all") params.append("state", paramsObj.state);
+  if (paramsObj.state_id && paramsObj.state_id !== "all") params.append("state_id", paramsObj.state_id);
+  if (paramsObj.visibility && paramsObj.visibility !== "all") params.append("visibility", paramsObj.visibility);
+  if (paramsObj.tag_type && paramsObj.tag_type !== "all") params.append("tag_type", paramsObj.tag_type);
+  if (paramsObj.user_id && paramsObj.user_id !== "all") params.append("user_id", paramsObj.user_id);
+  if (paramsObj.activity_filter && paramsObj.activity_filter !== "all") params.append("activity_filter", paramsObj.activity_filter);
   if (paramsObj.start_date) params.append("start_date", paramsObj.start_date);
   if (paramsObj.end_date) params.append("end_date", paramsObj.end_date);
 
@@ -1369,7 +1233,7 @@ export interface UpdateMapPinPayload {
 
 export async function updateMapPin(
   id: string,
-  payload: UpdateMapPinPayload,
+  payload: UpdateMapPinPayload
 ): Promise<any> {
   return await fetchApi(`/admin/pins/${id}`, {
     method: "PUT",
@@ -1406,14 +1270,10 @@ export async function getSponsors(
   page: number = 1,
   limit: number = 10,
   search: string = "",
-  status?: string,
+  status?: string
 ): Promise<any> {
-  const params = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-  });
-  if (search && search.trim())
-    params.append("search", sanitizeSearchQuery(search));
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (search && search.trim()) params.append("search", sanitizeSearchQuery(search));
   if (status && status !== "all") params.append("status", status);
   return await fetchApi(`/sponsors?${params.toString()}`);
 }
@@ -1438,10 +1298,7 @@ export async function updateSponsor(id: string, data: any): Promise<any> {
   });
 }
 
-export async function updateSponsorStatus(
-  id: string,
-  status: string,
-): Promise<any> {
+export async function updateSponsorStatus(id: string, status: string): Promise<any> {
   return await fetchApi(`/sponsors/${id}/status`, {
     method: "PUT",
     headers: {
@@ -1517,7 +1374,7 @@ export interface DashboardOverviewResponse {
 
 export async function getDashboardOverview(
   period: string = "30d",
-  stateLimit: string = "top10",
+  stateLimit: string = "top10"
 ): Promise<DashboardOverviewResponse> {
   const params = new URLSearchParams();
   if (period) params.append("period", period);
@@ -1605,25 +1462,18 @@ export interface AdminLicensesFilterParams {
 }
 
 export async function getAdminLicenses(
-  params: AdminLicensesFilterParams = {},
+  params: AdminLicensesFilterParams = {}
 ): Promise<AdminLicensesResponse> {
   const query = new URLSearchParams();
   if (params.page) query.append("page", String(params.page));
   if (params.limit) query.append("limit", String(params.limit));
-  if (params.state_id && params.state_id !== "all")
-    query.append("state_id", params.state_id);
-  if (params.license_type && params.license_type !== "all")
-    query.append("license_type", params.license_type.toLowerCase());
-  if (params.upload_date && params.upload_date !== "")
-    query.append("upload_date", params.upload_date);
-  if (params.status && params.status !== "all" && params.status !== "")
-    query.append("status", params.status);
-  if (params.search && params.search.trim())
-    query.append("search", params.search.trim());
+  if (params.state_id && params.state_id !== "all") query.append("state_id", params.state_id);
+  if (params.license_type && params.license_type !== "all") query.append("license_type", params.license_type.toLowerCase());
+  if (params.upload_date && params.upload_date !== "") query.append("upload_date", params.upload_date);
+  if (params.status && params.status !== "all" && params.status !== "") query.append("status", params.status);
+  if (params.search && params.search.trim()) query.append("search", params.search.trim());
 
-  return await fetchApi<AdminLicensesResponse>(
-    `/admin/licenses?${query.toString()}`,
-  );
+  return await fetchApi<AdminLicensesResponse>(`/admin/licenses?${query.toString()}`);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1758,13 +1608,11 @@ export interface PaymentMethodsResponse {
 }
 
 export async function getPaymentMethods(): Promise<PaymentMethodsResponse> {
-  return await fetchApi<PaymentMethodsResponse>(
-    "/admin/revenue/payment-methods",
-  );
+  return await fetchApi<PaymentMethodsResponse>("/admin/revenue/payment-methods");
 }
 
 export async function getRevenueOverview(
-  params: RevenueOverviewParams = {},
+  params: RevenueOverviewParams = {}
 ): Promise<RevenueOverviewResponse> {
   const query = new URLSearchParams();
   if (params.page) query.append("page", String(params.page));
@@ -1778,31 +1626,17 @@ export async function getRevenueOverview(
   if (params.revenue_type) query.append("revenue_type", params.revenue_type);
 
   const qs = query.toString();
-
-  return await fetchApi<RevenueOverviewResponse>(
-    `/admin/revenue/overview${qs ? `?${qs}` : ""}`,
-  );
+  
+  return await fetchApi<RevenueOverviewResponse>(`/admin/revenue/overview${qs ? `?${qs}` : ""}`);
 }
 
 /* =========================================================================
    NOTIFICATIONS API
    ========================================================================= */
 
-export type NotificationVisualType =
-  | "info"
-  | "error"
-  | "congratulation"
-  | "warning"
-  | "offer";
-export type NotificationTargetAudience =
-  | "all_users"
-  | "premium"
-  | "state_wise"
-  | "admin";
-export type NotificationDateRange =
-  | "last_7_days"
-  | "last_30_days"
-  | "last_90_days";
+export type NotificationVisualType = "info" | "error" | "congratulation" | "warning" | "offer";
+export type NotificationTargetAudience = "all_users" | "premium" | "state_wise" | "admin";
+export type NotificationDateRange = "last_7_days" | "last_30_days" | "last_90_days";
 export type NotificationSendType = "both" | "push" | "email";
 export type NotificationStatus = "sent" | "draft";
 
@@ -1900,7 +1734,7 @@ export interface UpdateNotificationPayload {
 }
 
 export async function getAdminNotifications(
-  filters: NotificationFilters = {},
+  filters: NotificationFilters = {}
 ): Promise<NotificationsResponse> {
   const query = new URLSearchParams();
   if (filters.page) query.append("page", String(filters.page));
@@ -1928,13 +1762,11 @@ export async function getAdminNotifications(
   }
 
   const qs = query.toString();
-  return await fetchApi<NotificationsResponse>(
-    `/notifications${qs ? `?${qs}` : ""}`,
-  );
+  return await fetchApi<NotificationsResponse>(`/notifications${qs ? `?${qs}` : ""}`);
 }
 
 export async function createNotification(
-  payload: CreateNotificationPayload,
+  payload: CreateNotificationPayload
 ): Promise<{ message: string; count?: number; data?: any }> {
   return await fetchApi("/notifications", {
     method: "POST",
@@ -1944,7 +1776,7 @@ export async function createNotification(
 
 export async function updateNotification(
   id: string,
-  payload: UpdateNotificationPayload,
+  payload: UpdateNotificationPayload
 ): Promise<any> {
   return await fetchApi(`/notifications/${id}`, {
     method: "PUT",
@@ -1991,16 +1823,14 @@ export interface AdminSearchResponse {
 export async function adminGlobalSearch(
   query: string,
   limit: number = 4,
-  type?: string,
+  type?: string
 ): Promise<AdminSearchResponse> {
   const params = new URLSearchParams({
     search: query.trim(),
     limit: String(limit),
   });
   if (type) params.append("type", type);
-  return await fetchApi<AdminSearchResponse>(
-    `/admin/search?${params.toString()}`,
-  );
+  return await fetchApi<AdminSearchResponse>(`/admin/search?${params.toString()}`);
 }
 
 /* =========================================================================
@@ -2201,3 +2031,6 @@ export async function getAdminReports<T = any>(
     `/admin/reports?${query.toString()}`,
   );
 }
+
+
+
