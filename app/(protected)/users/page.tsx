@@ -16,7 +16,9 @@ import {
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
 import TableActionMenu from "@/components/admin/TableActionMenu";
-import ExportButton, { formatExportDate } from "@/components/admin/ExportButton";
+import ExportButton, {
+  formatExportDate,
+} from "@/components/admin/ExportButton";
 import {
   getUsers,
   deleteUser,
@@ -392,7 +394,7 @@ export default function UsersPage() {
 
   const getUserExportHeadersAndRows = useCallback((data: UserItem[]) => {
     const headers = [
-      "ID",
+      //  "ID",
       "First Name",
       "Last Name",
       "Email",
@@ -402,7 +404,7 @@ export default function UsersPage() {
       "Created At",
     ];
     const rows = data.map((u) => [
-      u.id,
+      //  u.id,
       u.first_name && u.first_name !== "null" ? u.first_name : "",
       u.last_name && u.last_name !== "null" ? u.last_name : "",
       u.email,

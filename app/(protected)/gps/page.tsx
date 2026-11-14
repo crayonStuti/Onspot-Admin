@@ -26,7 +26,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
-import ExportButton, { formatExportDate } from "@/components/admin/ExportButton";
+import ExportButton, {
+  formatExportDate,
+} from "@/components/admin/ExportButton";
 import {
   getMapPins,
   getMapPinTags,
@@ -367,20 +369,11 @@ export default function GPSActivityPage() {
     let activityFilterParam: string | undefined = undefined;
     if (selectedTimeframe === "custom") {
       activityFilterParam = "custom";
-    } else if (
-      selectedTimeframe === "7" ||
-      selectedTimeframe === "7_days"
-    ) {
+    } else if (selectedTimeframe === "7" || selectedTimeframe === "7_days") {
       activityFilterParam = "7_days";
-    } else if (
-      selectedTimeframe === "30" ||
-      selectedTimeframe === "30_days"
-    ) {
+    } else if (selectedTimeframe === "30" || selectedTimeframe === "30_days") {
       activityFilterParam = "30_days";
-    } else if (
-      selectedTimeframe === "90" ||
-      selectedTimeframe === "90_days"
-    ) {
+    } else if (selectedTimeframe === "90" || selectedTimeframe === "90_days") {
       activityFilterParam = "90_days";
     } else if (
       selectedTimeframe === "365" ||
@@ -404,9 +397,7 @@ export default function GPSActivityPage() {
           ? selectedTagType
           : undefined,
       user_id:
-        selectedUserId && selectedUserId !== "all"
-          ? selectedUserId
-          : undefined,
+        selectedUserId && selectedUserId !== "all" ? selectedUserId : undefined,
       activity_filter: activityFilterParam,
       start_date: dateRangeStart || undefined,
       end_date: dateRangeEnd || undefined,
@@ -432,7 +423,7 @@ export default function GPSActivityPage() {
 
   const getPinExportHeadersAndRows = useCallback((data: MapPinItem[]) => {
     const headers = [
-      "ID",
+      //   "ID",
       "User Name",
       "User Email",
       "Tagged Location",
@@ -454,7 +445,7 @@ export default function GPSActivityPage() {
       const vis = p.visibility || (p.is_public ? "public" : "private");
       const d = formatExportDate(p.created_at);
       return [
-        p.id,
+        //  p.id,
         uName,
         uEmail,
         loc,
@@ -729,46 +720,44 @@ export default function GPSActivityPage() {
                 ? rawTotal.formatted_text
                 : undefined;
 
-            return (
-              loading && !summary ? (
-                <div className="space-y-2 py-1">
-                  <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
-                  <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
+            return loading && !summary ? (
+              <div className="space-y-2 py-1">
+                <div className="h-7 w-24 bg-[#ecece6] rounded-md animate-pulse" />
+                <div className="h-3.5 w-28 bg-[#f2f2ed] rounded animate-pulse" />
+              </div>
+            ) : (
+              <>
+                <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
+                  {(count ?? 0).toLocaleString()}
                 </div>
-              ) : (
-                <>
-                  <div className="text-[24px] font-bold text-[#1f1f1f] mb-1">
-                    {(count ?? 0).toLocaleString()}
+                {/* 30-Day comparison delta / trend indicator */}
+                {formatted ? (
+                  <div
+                    className={`text-[12px] font-medium flex items-center gap-1 ${
+                      trend === "down"
+                        ? "text-[#e03131]"
+                        : trend === "up"
+                          ? "text-[#34A853]"
+                          : "text-[#7D848D]"
+                    }`}
+                  >
+                    <span>{formatted}</span>
                   </div>
-                  {/* 30-Day comparison delta / trend indicator */}
-                  {formatted ? (
-                    <div
-                      className={`text-[12px] font-medium flex items-center gap-1 ${
-                        trend === "down"
-                          ? "text-[#e03131]"
-                          : trend === "up"
-                            ? "text-[#34A853]"
-                            : "text-[#7D848D]"
-                      }`}
-                    >
-                      <span>{formatted}</span>
-                    </div>
-                  ) : delta !== undefined ? (
-                    <div
-                      className={`text-[12px] font-medium flex items-center gap-1 ${
-                        trend === "down" || delta < 0
-                          ? "text-[#e03131]"
-                          : trend === "up" || delta > 0
-                            ? "text-[#34A853]"
-                            : "text-[#7D848D]"
-                      }`}
-                    >
-                      <span>{delta >= 0 ? "↑ +" : "↓ "}</span>
-                      <span>{Math.abs(delta)} vs previous 30 days</span>
-                    </div>
-                  ) : null}
-                </>
-              )
+                ) : delta !== undefined ? (
+                  <div
+                    className={`text-[12px] font-medium flex items-center gap-1 ${
+                      trend === "down" || delta < 0
+                        ? "text-[#e03131]"
+                        : trend === "up" || delta > 0
+                          ? "text-[#34A853]"
+                          : "text-[#7D848D]"
+                    }`}
+                  >
+                    <span>{delta >= 0 ? "↑ +" : "↓ "}</span>
+                    <span>{Math.abs(delta)} vs previous 30 days</span>
+                  </div>
+                ) : null}
+              </>
             );
           })()}
         </div>
@@ -1362,7 +1351,6 @@ export default function GPSActivityPage() {
                 </tbody>
               </table>
             </div>
-
           </section>
 
           {/* Standard Pagination matching all other admin pages outside the table card */}

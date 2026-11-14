@@ -14,7 +14,9 @@ import {
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
 import TableActionMenu from "@/components/admin/TableActionMenu";
-import ExportButton, { formatExportDate } from "@/components/admin/ExportButton";
+import ExportButton, {
+  formatExportDate,
+} from "@/components/admin/ExportButton";
 import {
   getAdminLicenses,
   getStates,
@@ -185,7 +187,9 @@ export default function LicensesPage() {
   };
 
   // Full Dataset Export for Licenses
-  const fetchAllLicensesForExport = useCallback(async (): Promise<AdminLicenseItem[]> => {
+  const fetchAllLicensesForExport = useCallback(async (): Promise<
+    AdminLicenseItem[]
+  > => {
     const res = await getAdminLicenses({
       page: undefined,
       limit: undefined,
@@ -204,33 +208,32 @@ export default function LicensesPage() {
     return res.data.licenses;
   }, [stateId, licenseType, uploadDate, searchQuery]);
 
-  const getLicenseExportHeadersAndRows = useCallback((data: AdminLicenseItem[]) => {
-    const headers = [
-      "License ID",
-      "License Number",
-      "Type",
-      "State",
-      "User Name",
-      "User Email",
-      "Valid From",
-      "Valid To",
-      "Created At",
-    ];
+  const getLicenseExportHeadersAndRows = useCallback(
+    (data: AdminLicenseItem[]) => {
+      const headers = [
+        "License Number",
+        "Type",
+        "State",
+        "User Name",
+        "User Email",
+        "Valid To",
+        "Created At",
+      ];
 
-    const rows = data.map((item) => [
-      item.id,
-      item.license_number || "",
-      item.license_type || "",
-      item.state?.state_name || item.state?.state_code || "",
-      getUserDisplayName(item.user),
-      item.user?.email || "",
-      formatExportDate(item.valid_from),
-      formatExportDate(item.valid_to),
-      formatExportDate(item.created_at),
-    ]);
+      const rows = data.map((item) => [
+        item.license_number || "",
+        item.license_type || "",
+        item.state?.state_name || item.state?.state_code || "",
+        getUserDisplayName(item.user),
+        item.user?.email || "",
+        formatExportDate(item.valid_to),
+        formatExportDate(item.created_at),
+      ]);
 
-    return { headers, rows };
-  }, []);
+      return { headers, rows };
+    },
+    [],
+  );
 
   // Stat Card Count calculation
   const totalCount = summaryData?.total_licenses?.count ?? totalItems;
@@ -609,7 +612,6 @@ export default function LicensesPage() {
                                 width={32}
                                 height={32}
                                 className="w-full h-full object-cover"
-                                 
                               />
                             ) : (
                               userName.charAt(0).toUpperCase()
@@ -825,7 +827,6 @@ export default function LicensesPage() {
                       width={48}
                       height={48}
                       className="w-full h-full object-cover"
-                       
                     />
                   ) : (
                     getUserDisplayName(selectedLicense.user)

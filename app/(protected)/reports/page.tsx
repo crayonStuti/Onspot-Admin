@@ -24,7 +24,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
-import ExportButton, { formatExportDate } from "@/components/admin/ExportButton";
+import ExportButton, {
+  formatExportDate,
+} from "@/components/admin/ExportButton";
 import {
   getAdminReports,
   getStates,
@@ -355,7 +357,7 @@ export default function ReportsPage() {
   const getExportHeadersAndRows = (dataRows: any[], type: TabKey) => {
     if (type === "users") {
       const headers = [
-        "User ID",
+        //  "User ID",
         "First Name",
         "Last Name",
         "Display Name",
@@ -370,10 +372,10 @@ export default function ReportsPage() {
         "Hunter",
         "Fisherman",
         "Joined Date",
-        "Last Activity",
+        //  "Last Activity",
       ];
       const rows = dataRows.map((u: UserReportItem) => [
-        u.user_id || "",
+        //  u.user_id || "",
         u.first_name || "",
         u.last_name || "",
         u.display_name || "",
@@ -388,17 +390,13 @@ export default function ReportsPage() {
         u.is_hunter ? "Yes" : "No",
         u.is_fisherman ? "Yes" : "No",
         u.joined_date ? formatExportDate(u.joined_date) : "",
-        u.last_activity_at
-          ? formatExportDate(u.last_activity_at)
-          : "Never",
+        //  u.last_activity_at ? formatExportDate(u.last_activity_at) : "Never",
       ]);
       return { headers, rows };
     }
 
     if (type === "memberships") {
       const headers = [
-        "Membership ID",
-        "User ID",
         "User Name",
         "Email",
         "Membership Plan",
@@ -408,14 +406,12 @@ export default function ReportsPage() {
         "Monthly Rate ($)",
         "Yearly Rate ($)",
         "Start Date",
-        "End Date",
+        // "End Date",
         "Has Saved Card",
         "Trial Active",
         "Created Date",
       ];
       const rows = dataRows.map((m: MembershipReportItem) => [
-        m.user_membership_id || "",
-        m.user_id || "",
         m.user_name || "",
         m.email || "",
         m.membership_name || "",
@@ -425,11 +421,9 @@ export default function ReportsPage() {
         m.monthly_price !== undefined ? Number(m.monthly_price).toFixed(2) : "",
         m.yearly_price !== undefined ? Number(m.yearly_price).toFixed(2) : "",
         m.start_date ? formatExportDate(m.start_date) : "",
-        m.end_date
-          ? formatExportDate(m.end_date)
-          : "Active (Ongoing)",
+        // m.end_date ? formatExportDate(m.end_date) : "Active (Ongoing)",
         m.has_saved_card ? "Yes" : "No",
-        m.trial_start_date && !m.is_trial_expired ? "Trial Active" : "No",
+        m.trial_start_date && !m.is_trial_expired ? "Trial Active" : "N/A",
         m.created_at ? formatExportDate(m.created_at) : "",
       ]);
       return { headers, rows };
@@ -437,26 +431,22 @@ export default function ReportsPage() {
 
     if (type === "licenses") {
       const headers = [
-        "License ID",
         "Holder Name",
         "Holder Email",
         "License Number",
         "Type",
         "State",
-        "Valid From",
         "Expiry Date",
         "Status",
         "Membership Tier",
         "Upload Date",
       ];
       const rows = dataRows.map((l: LicenseReportItem) => [
-        l.license_id || "",
         l.user_name || "",
         l.email || "",
         l.license_number || "",
         l.license_type || "",
         l.state_name || l.state_code || "",
-        l.valid_from ? formatExportDate(l.valid_from) : "-",
         l.expiry_date ? formatExportDate(l.expiry_date) : "",
         l.status || "",
         l.user_membership || "",
@@ -467,7 +457,7 @@ export default function ReportsPage() {
 
     // sponsors
     const headers = [
-      "Sponsor ID",
+      //   "Sponsor ID",
       "Sponsor Name",
       "Company Email",
       "Discount Offer",
@@ -480,7 +470,7 @@ export default function ReportsPage() {
       "Submission Date",
     ];
     const rows = dataRows.map((s: SponsorReportItem) => [
-      s.sponsor_id || "",
+      //  s.sponsor_id || "",
       s.sponsor_name || "",
       s.company_email || "",
       s.company_discount || "",
