@@ -1211,11 +1211,6 @@ export default function RevenuePage() {
                     </tr>
                   ) : (
                     transactions.map((txn) => {
-                      const userDisplayName =
-                        txn.user?.first_name || txn.user?.last_name
-                          ? `${txn.user?.first_name || ""} ${txn.user?.last_name || ""}`.trim()
-                          : txn.user?.email || "Unknown User";
-
                       const statusLower = (txn.status || "").toLowerCase();
                       const isCompleted =
                         statusLower === "completed" ||
@@ -1231,12 +1226,21 @@ export default function RevenuePage() {
                         >
                           {/* User */}
                           <td className="py-3.5 px-3">
-                            <div className="font-medium text-[#1f1f1f]">
-                              {userDisplayName}
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-[#1f1f1f]">
+                                {txn.user_display_name}
+                              </span>
+
+                              {!txn.user?.id && (
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#FEF2F2] text-[#DC2626]">
+                                  Deleted User
+                                </span>
+                              )}
                             </div>
-                            {txn.user?.email && (
+
+                            {txn.user_email && (
                               <div className="text-[11.5px] text-[#7D848D]">
-                                {txn.user.email}
+                                {txn.user_email}
                               </div>
                             )}
                           </td>
