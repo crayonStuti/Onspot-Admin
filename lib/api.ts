@@ -619,6 +619,11 @@ export interface UserItem {
     };
     [key: string]: any;
   };
+  location?: {
+    latitude: number;
+    longitude: number;
+    logged_at?: string;
+  } | null;
   [key: string]: any;
 }
 
@@ -702,6 +707,117 @@ export async function getUsers(
   }
 
   return await fetchApi<UsersResponse>(`/auth/users?${params.toString()}`);
+}
+
+export interface LiveMapUsersParams {
+  minLat?: number | string;
+  maxLat?: number | string;
+  minLng?: number | string;
+  maxLng?: number | string;
+  zoomLevel?: number | string;
+  cluster?: boolean;
+  clusterRadius?: number;
+  search?: string;
+  status?: string;
+  plan_level?: string;
+  state_name?: string;
+  joined_at?: string;
+}
+
+export interface LiveMapCluster {
+  type: "cluster";
+  cluster_id: number;
+  point_count: number;
+  point_count_abbreviated: string | number;
+  latitude: number;
+  longitude: number;
+  expansion_zoom: number;
+  bounds?: {
+    minLat: number;
+    maxLat: number;
+    minLng: number;
+    maxLng: number;
+  };
+  users?: Array<{
+    id: string;
+    display_name: string;
+    email: string;
+    profile_picture?: string | null;
+  }>;
+}
+
+export interface LiveMapPoint extends Partial<UserItem> {
+  type?: "point";
+  presence_status?: string;
+  last_activity_at?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    logged_at?: string;
+  };
+  profile?: any;
+  licenses?: any[];
+}
+
+export type LiveMapItem = LiveMapCluster | LiveMapPoint;
+
+export interface LiveMapSummary {
+  total_active_users: number;
+  returned_items: number;
+  cluster_count: number;
+  point_count: number;
+}
+
+export interface LiveMapResponse {
+  clustered: boolean;
+  zoomLevel: number;
+  summary: LiveMapSummary;
+  data: LiveMapItem[];
+}
+
+export async function getLiveMapUsers(
+  params: LiveMapUsersParams,
+): Promise<any> {
+  const query = new URLSearchParams();
+  if (params.minLat !== undefined && params.minLat !== null) {
+    query.append("minLat", String(params.minLat));
+  }
+  if (params.maxLat !== undefined && params.maxLat !== null) {
+    query.append("maxLat", String(params.maxLat));
+  }
+  if (params.minLng !== undefined && params.minLng !== null) {
+    query.append("minLng", String(params.minLng));
+  }
+  if (params.maxLng !== undefined && params.maxLng !== null) {
+    query.append("maxLng", String(params.maxLng));
+  }
+  if (params.zoomLevel !== undefined && params.zoomLevel !== null) {
+    query.append("zoomLevel", String(params.zoomLevel));
+  }
+
+  // Backend clustering parameters (as per backend-clustering-specification.md)
+  query.append("cluster", params.cluster !== false ? "true" : "false");
+  if (params.clusterRadius !== undefined) {
+    query.append("clusterRadius", String(params.clusterRadius));
+  }
+
+  if (params.search && params.search.trim()) {
+    query.append("search", sanitizeSearchQuery(params.search));
+  }
+  if (params.status && params.status !== "all") {
+    query.append("status", params.status);
+  }
+  if (params.plan_level && params.plan_level !== "all") {
+    query.append("plan_level", params.plan_level.toLowerCase());
+  }
+  if (params.state_name && params.state_name !== "all") {
+    query.append("state_name", params.state_name);
+  }
+  if (params.joined_at) {
+    query.append("joined_at", params.joined_at);
+  }
+
+  return await fetchApi(`/admin/users/live-map?${query.toString()}`);
 }
 
 export async function getUserById(userId: string): Promise<any> {

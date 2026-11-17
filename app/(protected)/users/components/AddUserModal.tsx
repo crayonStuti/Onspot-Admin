@@ -17,10 +17,24 @@ import {
 import { toast } from "sonner";
 import { registerUser } from "@/lib/api";
 
+export interface StateBounds {
+  minLat: number | string;
+  maxLat: number | string;
+  minLng: number | string;
+  maxLng: number | string;
+}
+
 export interface StateItem {
   id?: string;
   state_id?: string;
+  state_code?: string;
   state_name: string;
+  state_flag_image?: string | null;
+  state_description?: string;
+  latitude?: number | string;
+  longitude?: number | string;
+  bounds?: StateBounds;
+  [key: string]: any;
 }
 
 interface AddUserModalProps {

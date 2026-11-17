@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Search,
   AlertCircle,
   X,
-  MapPin,
-  FileBadge,
   Plus,
   Trash2,
   Edit2,
   Loader2,
+  MapPin,
+  Navigation,
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
@@ -22,11 +24,7 @@ import ExportButton, {
 import {
   getUsers,
   deleteUser,
-  getUserById,
   getStates,
-  getUserLicenses,
-  getUserBookmarks,
-  getUserMapPins,
   UserItem,
   API_URL,
 } from "@/lib/api";
@@ -36,8 +34,25 @@ import { EditMembershipModal } from "./components/EditMembershipModal";
 import { SuspendUserModal } from "./components/SuspendUserModal";
 import { ResetPasswordModal } from "./components/ResetPasswordModal";
 import { UserLicensesModal } from "./components/UserLicensesModal";
+import UsersMap from "./components/UsersMap";
 
 export default function UsersPage() {
+  const router = useRouter();
+
+  // Map State & Ref
+  const usersMapRef = useRef<HTMLDivElement>(null);
+  const [focusedMapUser, setFocusedMapUser] = useState<UserItem | null>(null);
+
+  const handleViewUserOnMap = (user: UserItem) => {
+    setFocusedMapUser(user);
+    if (usersMapRef.current) {
+      usersMapRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  };
+
   // State for Users List
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +74,7 @@ export default function UsersPage() {
   }, [searchQuery]);
 
   const [filterStateName, setFilterStateName] = useState("");
+  const [mapSelectedState, setMapSelectedState] = useState("");
   const [filterPlanLevel, setFilterPlanLevel] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterJoinedAt, setFilterJoinedAt] = useState("");
@@ -72,16 +88,6 @@ export default function UsersPage() {
   // States List cache
   const [states, setStates] = useState<StateItem[]>([]);
   const [loadingStates, setLoadingStates] = useState(false);
-
-  // View User Details Modal
-  const [viewUserModal, setViewUserModal] = useState(false);
-  const [selectedUserDetails, setSelectedUserDetails] = useState<any | null>(
-    null,
-  );
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [userLicenses, setUserLicenses] = useState<any[]>([]);
-  const [userBookmarks, setUserBookmarks] = useState<any[]>([]);
-  const [userMapPins, setUserMapPins] = useState<any[]>([]);
 
   // Add & Edit Modals State
   const [addUserModal, setAddUserModal] = useState(false);
@@ -98,9 +104,6 @@ export default function UsersPage() {
     null,
   );
   const [licensesModalUser, setLicensesModalUser] = useState<UserItem | null>(
-    null,
-  );
-  const [previewLicenseImage, setPreviewLicenseImage] = useState<string | null>(
     null,
   );
 
@@ -212,6 +215,7 @@ export default function UsersPage() {
     setSearchQuery("");
     setDebouncedSearch("");
     setFilterStateName("");
+    setMapSelectedState("");
     setFilterPlanLevel("");
     setFilterStatus("");
     setFilterJoinedAt("");
@@ -270,6 +274,29 @@ export default function UsersPage() {
     return `${API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
+  // Helper to check if a user has valid recorded coordinates
+  const hasUserLocation = (u: UserItem): boolean => {
+    const loc = u.location;
+    if (
+      loc &&
+      typeof loc.latitude === "number" &&
+      typeof loc.longitude === "number" &&
+      !isNaN(loc.latitude) &&
+      !isNaN(loc.longitude) &&
+      (loc.latitude !== 0 || loc.longitude !== 0)
+    ) {
+      return true;
+    }
+    const directLat = Number((u as any).latitude ?? u.profile?.latitude);
+    const directLng = Number((u as any).longitude ?? u.profile?.longitude);
+    return (
+      !isNaN(directLat) &&
+      !isNaN(directLng) &&
+      directLat !== 0 &&
+      directLng !== 0
+    );
+  };
+
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       setSelectedUserIds(users.map((u) => u.id));
@@ -284,47 +311,9 @@ export default function UsersPage() {
     );
   };
 
-  // View User Details
-  const handleViewUser = async (user: UserItem) => {
-    setSelectedUserDetails(user);
-    setViewUserModal(true);
-    setDetailsLoading(true);
-    setUserLicenses([]);
-    setUserBookmarks([]);
-    setUserMapPins([]);
-
-    try {
-      const [fullProfileRes, bookmarksRes, mapPinsRes] =
-        await Promise.allSettled([
-          getUserById(user.id),
-          getUserBookmarks(user.email),
-          getUserMapPins(user.email, 10),
-        ]);
-
-      if (fullProfileRes.status === "fulfilled" && fullProfileRes.value) {
-        const payload = fullProfileRes.value;
-        const fullUser =
-          payload.data?.user || payload.user || payload.data || payload;
-        setSelectedUserDetails(fullUser);
-        if (fullUser && Array.isArray(fullUser.licenses)) {
-          setUserLicenses(fullUser.licenses);
-        } else {
-          setUserLicenses([]);
-        }
-      }
-      if (bookmarksRes.status === "fulfilled" && bookmarksRes.value) {
-        const bm = bookmarksRes.value.data || bookmarksRes.value || [];
-        setUserBookmarks(Array.isArray(bm) ? bm : []);
-      }
-      if (mapPinsRes.status === "fulfilled" && mapPinsRes.value) {
-        const mp = mapPinsRes.value.data || mapPinsRes.value || [];
-        setUserMapPins(Array.isArray(mp) ? mp : []);
-      }
-    } catch (err: any) {
-      console.warn("Error fetching deep user details:", err);
-    } finally {
-      setDetailsLoading(false);
-    }
+  // View User Details - Navigate to dedicated user details page
+  const handleViewUser = (user: UserItem) => {
+    router.push(`/user/${user.id}`);
   };
 
   // Open Add User Modal
@@ -454,6 +443,7 @@ export default function UsersPage() {
               value={filterStateName}
               onChange={(e) => {
                 setFilterStateName(e.target.value);
+                setMapSelectedState("");
                 setPage(1);
               }}
               className="w-full h-[42px] px-3.5 pr-9 rounded-[10px] border border-[#e4e4df] bg-[#F9F9F9] text-[13px] text-[#2c2c2c] focus:outline-none focus:border-[#1f3d2a] cursor-pointer"
@@ -542,19 +532,42 @@ export default function UsersPage() {
                 setPage(1);
                 fetchUsersList();
               }}
+              disabled={loading}
               type="button"
-              className="h-[42px] px-6 sm:px-7 rounded-[10px] bg-[#1f3d2a] hover:bg-[#295034] text-white font-semibold text-[13.5px] transition-colors cursor-pointer shadow-xs"
+              className="h-[42px] px-6 sm:px-7 rounded-[10px] bg-[#1f3d2a] hover:bg-[#295034] text-white font-semibold text-[13.5px] transition-colors cursor-pointer shadow-xs disabled:opacity-65 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
             >
-              Filter
+              {loading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
+              <span>{loading ? "Filtering..." : "Filter"}</span>
             </button>
           </div>
         </div>
       </section>
 
-      {/* ===================== DIVISION-SEC: USERS TABLE + MAP  ===================== */}
-      <section className="flex flex-col xl:flex-row items-start gap-6 w-full min-w-0">
-        {/* Table Column (matching HTML .table-card) */}
-        <div className="flex-1 xl:w-[76%] w-full min-w-0 flex flex-col space-y-4">
+      {/* ===================== LIVE ONLINE USERS INTERACTIVE MAP ===================== */}
+      <div ref={usersMapRef} className="w-full">
+        <UsersMap
+          fallbackUsers={users}
+          states={states}
+          mapSelectedState={mapSelectedState}
+          onMapStateChange={(val) => setMapSelectedState(val)}
+          onClearFilterState={() => setFilterStateName("")}
+          isFiltering={loading}
+          filterParams={{
+            search: debouncedSearch,
+            status: filterStatus,
+            plan_level: filterPlanLevel,
+            state_name: filterStateName,
+            joined_at: filterJoinedAt,
+          }}
+          selectedUser={focusedMapUser}
+          onSelectUser={setFocusedMapUser}
+        />
+      </div>
+
+      {/* ===================== USERS TABLE LISTING ===================== */}
+      <section className="w-full min-w-0 space-y-4">
+        {/* Table Column */}
+        <div className="w-full min-w-0 flex flex-col space-y-4">
           <div className="bg-white rounded-[14px] p-4 sm:p-6 border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] overflow-hidden">
             {/* Panel Head */}
             <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 mb-2 border-b border-[#ececec]">
@@ -742,8 +755,11 @@ export default function UsersPage() {
 
                           {/* Name with Avatar */}
                           <td className="py-3.5 px-3 align-middle text-[#111111] font-medium">
-                            <div className="flex items-center gap-3">
-                              <div className="w-[32px] h-[32px] rounded-full bg-[#f1f1ed] text-[#4a4a4a] font-semibold flex items-center justify-center text-xs flex-shrink-0 overflow-hidden relative">
+                            <Link
+                              href={`/user/${user.id}`}
+                              className="flex items-center gap-3 group hover:opacity-85 transition-opacity"
+                            >
+                              <div className="w-[32px] h-[32px] rounded-full bg-[#f1f1ed] text-[#4a4a4a] font-semibold flex items-center justify-center text-xs flex-shrink-0 overflow-hidden relative group-hover:ring-2 group-hover:ring-[#2d4a23]/30 transition-all">
                                 {user.profile?.profile_picture ? (
                                   <Image
                                     src={getProfileImageUrl(
@@ -758,10 +774,10 @@ export default function UsersPage() {
                                   fullName.charAt(0).toUpperCase()
                                 )}
                               </div>
-                              <span className="truncate max-w-[150px] font-medium text-[#111111] text-[13px]">
+                              <span className="truncate max-w-[150px] font-medium text-[#111111] group-hover:text-[#2d4a23] text-[13px] transition-colors">
                                 {fullName}
                               </span>
-                            </div>
+                            </Link>
                           </td>
 
                           {/* Email */}
@@ -811,13 +827,26 @@ export default function UsersPage() {
                           {/* Actions: Eye button + 3-dots with dropdown matching screenshot */}
                           <td className="py-3.5 px-3 align-middle whitespace-nowrap">
                             <div className="flex items-center gap-2 relative">
-                              {/* View Button */}
+                              {/* View on Map & Coordinates Button - Only rendered when user has location */}
+                              {hasUserLocation(user) && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleViewUserOnMap(user)}
+                                  className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#eef5eb] hover:text-[#2d4a23] hover:border-[#b8d6b0] inline-flex items-center justify-center transition-colors cursor-pointer"
+                                  title="View on Map & Coordinates"
+                                  aria-label="View on Map & Coordinates"
+                                >
+                                  <MapPin className="w-4 h-4 text-[#2d4a23]" />
+                                </button>
+                              )}
+
+                              {/* View Profile Button */}
                               <button
                                 type="button"
                                 onClick={() => handleViewUser(user)}
                                 className="w-[30px] h-[30px] border border-[#e2e2dc] rounded-[7px] bg-white text-[#7D848D] hover:bg-[#f7f7f2] hover:text-[#1f1f1f] hover:border-[#d4d4cd] inline-flex items-center justify-center transition-colors cursor-pointer"
-                                title="View"
-                                aria-label="View"
+                                title="View Profile"
+                                aria-label="View Profile"
                               >
                                 <svg
                                   className="w-4 h-4"
@@ -836,6 +865,12 @@ export default function UsersPage() {
                               {/* More Actions 3-dots Menu using Reusable Portal TableActionMenu */}
                               <TableActionMenu
                                 items={[
+                                  {
+                                    label: "View on Map & Coordinates",
+                                    icon: <MapPin className="w-4 h-4 text-[#2d4a23]" />,
+                                    show: hasUserLocation(user),
+                                    onClick: () => handleViewUserOnMap(user),
+                                  },
                                   {
                                     label: "View Profile",
                                     icon: (
@@ -983,20 +1018,6 @@ export default function UsersPage() {
             loading={loading}
           />
         </div>
-
-        {/* Map Section matching HTML template .map-sec-user */}
-        <div className="w-full xl:w-[24%] min-w-[280px] rounded-[14px] overflow-hidden border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] bg-white min-h-[520px]">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d44196.236392315026!2d-93.81033787191589!3d46.185289524094266!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b157a8f77c8e1f%3A0xfbe655e10ff018bc!2sVineland%2C%20MN%2056359%2C%20USA!5e0!3m2!1sen!2sin!4v1781021191340!5m2!1sen!2sin"
-            width="100%"
-            height="100%"
-            style={{ border: 0, minHeight: "520px" }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="Users Live Map"
-          />
-        </div>
       </section>
 
       {/* ===================== ADD USER MODAL ===================== */}
@@ -1051,337 +1072,6 @@ export default function UsersPage() {
         user={licensesModalUser}
         onClose={() => setLicensesModalUser(null)}
       />
-
-      {/* ===================== VIEW USER DETAILS DRAWER / MODAL ===================== */}
-      {viewUserModal && selectedUserDetails && (
-        <div
-          onClick={() => setViewUserModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6 space-y-5"
-          >
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-emerald-50 text-[#2d4a23] font-bold text-lg flex items-center justify-center flex-shrink-0 border border-emerald-100 overflow-hidden relative">
-                  {selectedUserDetails.profile?.profile_picture ? (
-                    <Image
-                      src={getProfileImageUrl(
-                        selectedUserDetails.profile.profile_picture,
-                      )}
-                      alt="Avatar"
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    getUserDisplayName(selectedUserDetails)
-                      .charAt(0)
-                      .toUpperCase()
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-gray-900">
-                    {getUserDisplayName(selectedUserDetails)}
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    {selectedUserDetails.email}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setViewUserModal(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Profile Grid */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs bg-gray-50/70 p-4 rounded-xl border border-gray-100">
-                <div>
-                  <span className="text-gray-400 block font-medium">Role</span>
-                  <span className="font-semibold text-gray-800 capitalize">
-                    {String(
-                      selectedUserDetails?.role ||
-                        selectedUserDetails?.user?.role ||
-                        "user",
-                    )}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-400 block font-medium">
-                    Status
-                  </span>
-                  <span className="font-semibold text-emerald-700 capitalize">
-                    {String(selectedUserDetails.status || "active")}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-400 block font-medium">
-                    Membership Tier
-                  </span>
-                  <span className="font-semibold text-indigo-700">
-                    {String(
-                      selectedUserDetails.profile?.current_tier ||
-                        (typeof selectedUserDetails.profile?.membership ===
-                        "object"
-                          ? selectedUserDetails.profile?.membership?.name
-                          : selectedUserDetails.profile?.membership) ||
-                        "None",
-                    )}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-400 block font-medium">Phone</span>
-                  <span className="font-semibold text-gray-800">
-                    {String(
-                      selectedUserDetails.profile?.phone ||
-                        selectedUserDetails.phone ||
-                        "Not provided",
-                    )}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-400 block font-medium">State</span>
-                  <span className="font-semibold text-gray-800">
-                    {String(
-                      (typeof selectedUserDetails.profile?.state === "object"
-                        ? selectedUserDetails.profile?.state?.state_name
-                        : selectedUserDetails.profile?.state) ||
-                        (typeof selectedUserDetails.state === "object"
-                          ? selectedUserDetails.state?.state_name
-                          : selectedUserDetails.state) ||
-                        "Not specified",
-                    )}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-400 block font-medium">
-                    Joined On
-                  </span>
-                  <span className="font-semibold text-gray-800">
-                    {selectedUserDetails.created_at
-                      ? new Date(
-                          selectedUserDetails.created_at,
-                        ).toLocaleDateString()
-                      : "—"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Auxiliary Tabs / Info */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <FileBadge className="w-4 h-4 text-[#2d4a23]" />
-                    User Licenses ({userLicenses.length})
-                  </h4>
-                  {userLicenses.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLicensesModalUser(selectedUserDetails);
-                      }}
-                      className="text-[11px] font-semibold text-[#2d4a23] hover:underline cursor-pointer"
-                    >
-                      View Full Details
-                    </button>
-                  )}
-                </div>
-                {userLicenses.length === 0 ? (
-                  <p className="text-xs text-gray-400 italic">
-                    No assigned licenses found for this user.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {userLicenses.map((lic, i) => {
-                      const typeName =
-                        lic.license_type || lic.name || lic.title || "License";
-                      const licNum =
-                        lic.license_number ||
-                        (lic.id ? `#${lic.id.slice(0, 8)}` : "");
-                      const stateName = lic.state?.state_name || lic.state_name;
-                      const issuer =
-                        lic.issued_by?.organisation || lic.organisation;
-                      const validTo =
-                        lic.valid_to || lic.expires_at || "Unlimited";
-                      const isExpired =
-                        validTo !== "Unlimited" &&
-                        new Date(validTo) < new Date();
-                      const photos = lic.photos || [];
-                      const rawFrontImg =
-                        photos.length > 0 &&
-                        photos[0] &&
-                        typeof photos[0].front_image === "string"
-                          ? photos[0].front_image.trim()
-                          : "";
-
-                      return (
-                        <div
-                          key={lic.id || i}
-                          className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs space-y-1.5 hover:border-gray-200 transition-colors"
-                        >
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="font-semibold text-gray-900 capitalize">
-                              {typeName} License
-                            </span>
-                            <span
-                              className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                                isExpired
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-emerald-100 text-emerald-800"
-                              }`}
-                            >
-                              {isExpired ? "Expired" : "Active"}
-                            </span>
-                          </div>
-
-                          {licNum && (
-                            <div className="text-[11px] text-gray-600">
-                              License #:{" "}
-                              <span className="font-medium text-gray-800">
-                                {licNum}
-                              </span>
-                            </div>
-                          )}
-
-                          <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1 border-t border-gray-200/60">
-                            <span>
-                              {stateName
-                                ? `${stateName}`
-                                : issuer || "State Agency"}
-                            </span>
-                            <span>Exp: {validTo}</span>
-                          </div>
-
-                          {rawFrontImg && (
-                            <div className="pt-1 flex items-center gap-1.5">
-                              <span className="text-[10px] text-gray-400">
-                                Card Photo:
-                              </span>
-                              <div
-                                onClick={() => {
-                                  const fullImgUrl = rawFrontImg.startsWith(
-                                    "http",
-                                  )
-                                    ? rawFrontImg
-                                    : `${API_URL}${rawFrontImg.startsWith("/") ? "" : "/"}${rawFrontImg}`;
-                                  setPreviewLicenseImage(fullImgUrl);
-                                }}
-                                className="cursor-pointer hover:opacity-80 transition-opacity"
-                                title="Click to view full photo"
-                              >
-                                <Image
-                                  src={
-                                    rawFrontImg.startsWith("http")
-                                      ? rawFrontImg
-                                      : `${API_URL}${rawFrontImg.startsWith("/") ? "" : "/"}${rawFrontImg}`
-                                  }
-                                  alt="License Card"
-                                  width={40}
-                                  height={28}
-                                  className="w-10 h-7 object-cover rounded border border-gray-200 shadow-2xs"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-[#2d4a23]" />
-                  Recent Map Pins ({userMapPins.length})
-                </h4>
-                {userMapPins.length === 0 ? (
-                  <p className="text-xs text-gray-400 italic">
-                    No GPS pins recorded.
-                  </p>
-                ) : (
-                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                    {userMapPins.map((pin, i) => (
-                      <div
-                        key={i}
-                        className="p-2.5 bg-gray-50 rounded-lg text-xs flex items-center justify-between text-gray-700"
-                      >
-                        <span className="font-medium">
-                          {String(pin.title || `Pin #${i + 1}`)}
-                        </span>
-                        <span className="text-[11px] text-gray-400">
-                          {typeof pin.latitude === "number"
-                            ? pin.latitude.toFixed(4)
-                            : pin.latitude}
-                          ,{" "}
-                          {typeof pin.longitude === "number"
-                            ? pin.longitude.toFixed(4)
-                            : pin.longitude}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setViewUserModal(false);
-                    handleOpenEditUser(selectedUserDetails);
-                  }}
-                  className="px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-700 transition-all flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                  <span>Edit Profile</span>
-                </button>
-              </div>
-              <button
-                onClick={() => setViewUserModal(false)}
-                className="px-5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-gray-700 transition-all cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ===================== LICENSE CARD IMAGE PREVIEW MODAL ===================== */}
-      {previewLicenseImage && (
-        <div
-          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200"
-          onClick={() => setPreviewLicenseImage(null)}
-        >
-          <div
-            className="relative max-w-3xl max-h-[90vh] bg-white rounded-2xl overflow-hidden p-2 shadow-2xl flex flex-col items-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setPreviewLicenseImage(null)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-black/60 hover:bg-black text-white transition-colors z-10 cursor-pointer shadow-md"
-              title="Close image preview"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <Image
-              src={previewLicenseImage}
-              alt="License Card Preview"
-              width={800}
-              height={600}
-              className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-xl"
-            />
-          </div>
-        </div>
-      )}
 
       {/* ===================== DELETE CONFIRMATION DIALOG ===================== */}
       {deleteConfirmOpen && userToDelete && (

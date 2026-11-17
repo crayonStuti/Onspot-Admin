@@ -273,7 +273,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
-              (item.href !== "/" && pathname?.startsWith(item.href));
+              (item.href !== "/" && pathname?.startsWith(item.href)) ||
+              (item.href === "/users" && pathname?.startsWith("/user"));
 
             return (
               <Link
