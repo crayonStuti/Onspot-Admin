@@ -318,6 +318,7 @@ export default function UsersMap({
 }: UsersMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const mapInitializedRef = useRef(false);
   const markersMapRef = useRef<Map<string, any>>(new Map());
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasAppliedDefaultCenterRef = useRef(false);
@@ -412,7 +413,6 @@ export default function UsersMap({
         search: filterParams?.search,
         status: filterParams?.status,
         plan_level: filterParams?.plan_level,
-        state_name: filterParams?.state_name,
         joined_at: filterParams?.joined_at,
       };
 
@@ -501,33 +501,41 @@ export default function UsersMap({
     [fallbackUsers, filterParams],
   );
 
+  const fetchMapUsersForBoundsRef = useRef(fetchMapUsersForBounds);
+  fetchMapUsersForBoundsRef.current = fetchMapUsersForBounds;
+
   // Initialize Google Maps SDK
   useEffect(() => {
     let isCancelled = false;
 
     const initializeGoogleMap = () => {
       if (isCancelled || !mapContainerRef.current || !window.google?.maps?.Map) return;
+      if (mapInstanceRef.current || mapInitializedRef.current) return;
+
+      mapInitializedRef.current = true;
 
       try {
         // Initial center check: find first user from table with valid coordinates
         let defaultCenter = { lat: 39.8283, lng: -98.5795 };
         let defaultZoom = 4;
 
-        const firstWithCoords = fallbackUsers.find((u) => {
-          return resolveCoordinates(u, false) !== null;
-        });
+        if (!mapSelectedState) {
+          const firstWithCoords = fallbackUsers.find((u) => {
+            return resolveCoordinates(u, false) !== null;
+          });
 
-        if (firstWithCoords) {
-          const coords = resolveCoordinates(firstWithCoords, false);
-          if (coords) {
-            defaultCenter = { lat: coords[0], lng: coords[1] };
-            defaultZoom = 12;
-            hasAppliedDefaultCenterRef.current = true;
-            setActiveSelectedUser({
-              ...firstWithCoords,
-              latitude: coords[0],
-              longitude: coords[1],
-            });
+          if (firstWithCoords) {
+            const coords = resolveCoordinates(firstWithCoords, false);
+            if (coords) {
+              defaultCenter = { lat: coords[0], lng: coords[1] };
+              defaultZoom = 12;
+              hasAppliedDefaultCenterRef.current = true;
+              setActiveSelectedUser({
+                ...firstWithCoords,
+                latitude: coords[0],
+                longitude: coords[1],
+              });
+            }
           }
         }
 
@@ -557,13 +565,19 @@ export default function UsersMap({
         mapInstanceRef.current = map;
         setMapLoaded(true);
 
+        if (mapSelectedState) {
+          zoomToState(mapSelectedState);
+        }
+
         // Listen for bounds change on 'idle' event (debounced)
         map.addListener("idle", () => {
           if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
           debounceTimerRef.current = setTimeout(() => {
             const currentBounds = map.getBounds();
             const currentZoom = map.getZoom() || 4;
-            fetchMapUsersForBounds(currentBounds, currentZoom);
+            if (fetchMapUsersForBoundsRef.current) {
+              fetchMapUsersForBoundsRef.current(currentBounds, currentZoom);
+            }
           }, 350);
         });
       } catch (err: any) {
@@ -613,7 +627,85 @@ export default function UsersMap({
       if (pollInterval) clearInterval(pollInterval);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
-  }, [apiKey, fallbackUsers, fetchMapUsersForBounds]);
+  }, [apiKey]);
+
+  // Zoom & frame a state using its geographic bounds, coordinates, or centroid
+  const zoomToState = useCallback(
+    (stateVal: string) => {
+      if (!stateVal || !mapInstanceRef.current || !window.google?.maps) return false;
+
+      const cleanVal = stateVal.trim().toUpperCase();
+      const stateObj = states.find(
+        (s) =>
+          s.state_code?.toUpperCase() === cleanVal ||
+          s.state_name?.toUpperCase() === cleanVal ||
+          s.state_id === stateVal,
+      );
+
+      if (!stateObj) {
+        // Fallback to centroid table
+        const centroid =
+          STATE_CENTROIDS[cleanVal] ||
+          STATE_CENTROIDS[cleanVal.replace(/\s+/g, "_")];
+        if (centroid) {
+          mapInstanceRef.current.panTo({ lat: centroid[0], lng: centroid[1] });
+          mapInstanceRef.current.setZoom(7);
+          return true;
+        }
+        return false;
+      }
+
+      // 1. If state has bounds object, use fitBounds (optimal frame)
+      if (stateObj.bounds && typeof stateObj.bounds === "object") {
+        const b = stateObj.bounds;
+        const minLat = Number(b.minLat);
+        const maxLat = Number(b.maxLat);
+        const minLng = Number(b.minLng);
+        const maxLng = Number(b.maxLng);
+
+        if (!isNaN(minLat) && !isNaN(maxLat) && !isNaN(minLng) && !isNaN(maxLng)) {
+          const bounds = new window.google.maps.LatLngBounds(
+            { lat: minLat, lng: minLng },
+            { lat: maxLat, lng: maxLng },
+          );
+          mapInstanceRef.current.fitBounds(bounds, 30);
+          return true;
+        }
+      }
+
+      // 2. Fallback to state's latitude & longitude
+      const sLat = Number(stateObj.latitude);
+      const sLng = Number(stateObj.longitude);
+      if (!isNaN(sLat) && !isNaN(sLng) && sLat !== 0 && sLng !== 0) {
+        mapInstanceRef.current.panTo({ lat: sLat, lng: sLng });
+        mapInstanceRef.current.setZoom(7);
+        return true;
+      }
+
+      // 3. Fallback to centroid table
+      const centroid =
+        STATE_CENTROIDS[stateObj.state_code?.toUpperCase() || ""] ||
+        STATE_CENTROIDS[
+          stateObj.state_name?.toUpperCase()?.replace(/\s+/g, "_") || ""
+        ];
+      if (centroid) {
+        mapInstanceRef.current.panTo({ lat: centroid[0], lng: centroid[1] });
+        mapInstanceRef.current.setZoom(7);
+        return true;
+      }
+
+      return false;
+    },
+    [states],
+  );
+
+  // Synchronize map viewport whenever active map state selection changes
+  useEffect(() => {
+    if (!mapLoaded || !mapInstanceRef.current) return;
+    if (mapSelectedState) {
+      zoomToState(mapSelectedState);
+    }
+  }, [mapSelectedState, mapLoaded, zoomToState]);
 
   // When filter parameters change, arm the ref so the next fallbackUsers update centers the map
   useEffect(() => {
@@ -627,6 +719,11 @@ export default function UsersMap({
   // pan to the first user with coords, or fallback to full US if none have coords
   useEffect(() => {
     if (!mapInstanceRef.current || !window.google?.maps || !mapLoaded) {
+      return;
+    }
+
+    // If a map state is selected, NEVER let fallbackUsers move the camera away!
+    if (mapSelectedState) {
       return;
     }
 
@@ -651,25 +748,16 @@ export default function UsersMap({
         }
       }
 
-      // If fallbackUsers is populated but none have coordinates
-      if (fallbackUsers.length > 0 && !firstWithCoords) {
+      // If fallbackUsers has no users with coords on initial setup
+      if (!hasAppliedDefaultCenterRef.current) {
         shouldCenterOnFilteredUserRef.current = false;
         hasAppliedDefaultCenterRef.current = true;
         mapInstanceRef.current.panTo({ lat: 39.8283, lng: -98.5795 });
         mapInstanceRef.current.setZoom(4);
         setActiveSelectedUser(null);
-        return;
-      }
-
-      // If filter returned 0 users after initial load
-      if (fallbackUsers.length === 0 && hasAppliedDefaultCenterRef.current) {
-        shouldCenterOnFilteredUserRef.current = false;
-        mapInstanceRef.current.panTo({ lat: 39.8283, lng: -98.5795 });
-        mapInstanceRef.current.setZoom(4);
-        setActiveSelectedUser(null);
       }
     }
-  }, [fallbackUsers, mapLoaded]);
+  }, [fallbackUsers, mapLoaded, mapSelectedState]);
 
   // Refetch when filter parameters change
   useEffect(() => {
@@ -847,58 +935,23 @@ export default function UsersMap({
     onSelectUser(null);
   };
 
-  // State selection in map header: uses fitBounds if state.bounds exists, else pans to coordinates
+  // State selection in map header: uses zoomToState
   const handleMapStateSelect = (val: string) => {
     if (onMapStateChange) onMapStateChange(val);
-    if (onClearFilterState) onClearFilterState();
 
-    if (!val || !mapInstanceRef.current || !window.google?.maps) return;
-
-    const stateObj = states.find(
-      (s) =>
-        s.state_code?.toUpperCase() === val.toUpperCase() ||
-        s.state_name?.toUpperCase() === val.toUpperCase(),
-    );
-
-    if (!stateObj) return;
-
-    // 1. If state has bounds, fitBounds gives the optimal frame
-    if (stateObj.bounds && typeof stateObj.bounds === "object") {
-      const b = stateObj.bounds;
-      const minLat = Number(b.minLat);
-      const maxLat = Number(b.maxLat);
-      const minLng = Number(b.minLng);
-      const maxLng = Number(b.maxLng);
-
-      if (!isNaN(minLat) && !isNaN(maxLat) && !isNaN(minLng) && !isNaN(maxLng)) {
-        const bounds = new window.google.maps.LatLngBounds(
-          { lat: minLat, lng: minLng },
-          { lat: maxLat, lng: maxLng },
-        );
-        mapInstanceRef.current.fitBounds(bounds, 30);
-        return;
+    if (!val) {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.panTo({ lat: 39.8283, lng: -98.5795 });
+        mapInstanceRef.current.setZoom(4);
       }
-    }
-
-    // 2. Fallback to state's latitude & longitude
-    const sLat = Number(stateObj.latitude);
-    const sLng = Number(stateObj.longitude);
-    if (!isNaN(sLat) && !isNaN(sLng) && sLat !== 0 && sLng !== 0) {
-      mapInstanceRef.current.panTo({ lat: sLat, lng: sLng });
-      mapInstanceRef.current.setZoom(7);
       return;
     }
 
-    // 3. Fallback to centroid table
-    const centroid =
-      STATE_CENTROIDS[stateObj.state_code?.toUpperCase() || ""] ||
-      STATE_CENTROIDS[
-        stateObj.state_name?.toUpperCase()?.replace(/\s+/g, "_") || ""
-      ];
-    if (centroid) {
-      mapInstanceRef.current.panTo({ lat: centroid[0], lng: centroid[1] });
-      mapInstanceRef.current.setZoom(7);
+    if (onClearFilterState) {
+      onClearFilterState();
     }
+
+    zoomToState(val);
   };
 
   const handleCopyCoords = (lat: number, lng: number) => {
@@ -1442,6 +1495,19 @@ export default function UsersMap({
       : `${API_URL}${raw.startsWith("/") ? "" : "/"}${raw}`;
   };
 
+  // Compute active selected state display value
+  const selectedStateValue = useMemo(() => {
+    if (!mapSelectedState) return "";
+    const cleanActive = mapSelectedState.trim().toUpperCase();
+    const found = states.find(
+      (s) =>
+        s.state_code?.toUpperCase() === cleanActive ||
+        s.state_name?.toUpperCase() === cleanActive ||
+        s.state_id === mapSelectedState,
+    );
+    return found ? (found.state_name || found.state_code || "") : mapSelectedState;
+  }, [mapSelectedState, states]);
+
   return (
     <div className="bg-white rounded-[14px] border border-[#ececec] shadow-[0_6px_20px_rgba(60,60,60,0.10),0_2px_6px_rgba(60,60,60,0.06)] overflow-hidden transition-all duration-300">
       {/* Header bar above Google Map */}
@@ -1494,7 +1560,7 @@ export default function UsersMap({
           {/* Map State Selector */}
           <div className="flex items-center gap-1">
             <select
-              value={mapSelectedState}
+              value={selectedStateValue}
               onChange={(e) => handleMapStateSelect(e.target.value)}
               className="h-[32px] text-xs text-[#2c2c2c] bg-[#F9F9F9] border border-[#e4e4df] rounded-[8px] px-2.5 pr-7 focus:outline-none focus:border-[#1f3d2a] cursor-pointer font-medium appearance-none shrink-0"
               style={{
@@ -1506,7 +1572,7 @@ export default function UsersMap({
             >
               <option value="">Jump to State...</option>
               {states.map((s, idx) => {
-                const val = s.state_code || s.state_name;
+                const val = s.state_name || s.state_code || `state-${idx}`;
                 return (
                   <option key={val + idx} value={val}>
                     {s.state_name}

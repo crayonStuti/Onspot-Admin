@@ -817,6 +817,8 @@ export async function getLiveMapUsers(
     query.append("joined_at", params.joined_at);
   }
 
+  console.log(`/admin/users/live-map?${query.toString()}`);
+
   return await fetchApi(`/admin/users/live-map?${query.toString()}`);
 }
 

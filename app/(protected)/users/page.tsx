@@ -21,13 +21,7 @@ import TableActionMenu from "@/components/admin/TableActionMenu";
 import ExportButton, {
   formatExportDate,
 } from "@/components/admin/ExportButton";
-import {
-  getUsers,
-  deleteUser,
-  getStates,
-  UserItem,
-  API_URL,
-} from "@/lib/api";
+import { getUsers, deleteUser, getStates, UserItem, API_URL } from "@/lib/api";
 import { AddUserModal, StateItem } from "./components/AddUserModal";
 import { EditUserModal } from "./components/EditUserModal";
 import { EditMembershipModal } from "./components/EditMembershipModal";
@@ -215,7 +209,6 @@ export default function UsersPage() {
     setSearchQuery("");
     setDebouncedSearch("");
     setFilterStateName("");
-    setMapSelectedState("");
     setFilterPlanLevel("");
     setFilterStatus("");
     setFilterJoinedAt("");
@@ -297,14 +290,6 @@ export default function UsersPage() {
     );
   };
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedUserIds(users.map((u) => u.id));
-    } else {
-      setSelectedUserIds([]);
-    }
-  };
-
   const handleToggleSelectUser = (id: string) => {
     setSelectedUserIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
@@ -352,7 +337,6 @@ export default function UsersPage() {
     }
   };
 
-  // Full Dataset Export for Users
   const fetchAllUsersForExport = useCallback(async (): Promise<UserItem[]> => {
     const res = await getUsers({
       page: undefined,
@@ -442,8 +426,11 @@ export default function UsersPage() {
             <select
               value={filterStateName}
               onChange={(e) => {
-                setFilterStateName(e.target.value);
-                setMapSelectedState("");
+                const val = e.target.value;
+                setFilterStateName(val);
+                if (val) {
+                  setMapSelectedState("");
+                }
                 setPage(1);
               }}
               className="w-full h-[42px] px-3.5 pr-9 rounded-[10px] border border-[#e4e4df] bg-[#F9F9F9] text-[13px] text-[#2c2c2c] focus:outline-none focus:border-[#1f3d2a] cursor-pointer"
@@ -536,7 +523,9 @@ export default function UsersPage() {
               type="button"
               className="h-[42px] px-6 sm:px-7 rounded-[10px] bg-[#1f3d2a] hover:bg-[#295034] text-white font-semibold text-[13.5px] transition-colors cursor-pointer shadow-xs disabled:opacity-65 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
             >
-              {loading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
+              {loading && (
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+              )}
               <span>{loading ? "Filtering..." : "Filter"}</span>
             </button>
           </div>
@@ -549,8 +538,17 @@ export default function UsersPage() {
           fallbackUsers={users}
           states={states}
           mapSelectedState={mapSelectedState}
-          onMapStateChange={(val) => setMapSelectedState(val)}
-          onClearFilterState={() => setFilterStateName("")}
+          onMapStateChange={(val) => {
+            setMapSelectedState(val);
+            if (val) {
+              setFilterStateName("");
+              setPage(1);
+            }
+          }}
+          onClearFilterState={() => {
+            setFilterStateName("");
+            setPage(1);
+          }}
           isFiltering={loading}
           filterParams={{
             search: debouncedSearch,
@@ -867,7 +865,9 @@ export default function UsersPage() {
                                 items={[
                                   {
                                     label: "View on Map & Coordinates",
-                                    icon: <MapPin className="w-4 h-4 text-[#2d4a23]" />,
+                                    icon: (
+                                      <MapPin className="w-4 h-4 text-[#2d4a23]" />
+                                    ),
                                     show: hasUserLocation(user),
                                     onClick: () => handleViewUserOnMap(user),
                                   },
