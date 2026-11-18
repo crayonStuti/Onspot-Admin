@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -184,7 +190,12 @@ export function resolveCoordinates(
   const directLat = Number(u.latitude ?? u.lat ?? u.profile?.latitude);
   const directLng = Number(u.longitude ?? u.lng ?? u.profile?.longitude);
 
-  if (!isNaN(directLat) && !isNaN(directLng) && directLat !== 0 && directLng !== 0) {
+  if (
+    !isNaN(directLat) &&
+    !isNaN(directLng) &&
+    directLat !== 0 &&
+    directLng !== 0
+  ) {
     return [directLat, directLng];
   }
 
@@ -339,8 +350,11 @@ export default function UsersMap({
   const [mapSummary, setMapSummary] = useState<LiveMapSummary | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [copiedCoords, setCopiedCoords] = useState(false);
-  const [activeSelectedUser, setActiveSelectedUser] = useState<any | null>(null);
-  const [activeSelectedCluster, setActiveSelectedCluster] = useState<LiveMapCluster | null>(null);
+  const [activeSelectedUser, setActiveSelectedUser] = useState<any | null>(
+    null,
+  );
+  const [activeSelectedCluster, setActiveSelectedCluster] =
+    useState<LiveMapCluster | null>(null);
 
   // In-App Route Polylines & Endpoint Markers Ref
   const routePolylinesRef = useRef<any[]>([]);
@@ -456,7 +470,9 @@ export default function UsersMap({
                   item.point_count_abbreviated || item.point_count || 1,
                 latitude: lat,
                 longitude: lng,
-                expansion_zoom: Number(item.expansion_zoom || Math.round(zoomLevel) + 2),
+                expansion_zoom: Number(
+                  item.expansion_zoom || Math.round(zoomLevel) + 2,
+                ),
                 bounds: item.bounds,
                 users: Array.isArray(item.users) ? item.users : [],
               });
@@ -509,10 +525,12 @@ export default function UsersMap({
     let isCancelled = false;
 
     const initializeGoogleMap = () => {
-      if (isCancelled || !mapContainerRef.current || !window.google?.maps?.Map) return;
+      if (isCancelled || !mapContainerRef.current || !window.google?.maps?.Map)
+        return;
       if (mapInstanceRef.current || mapInitializedRef.current) return;
 
       mapInitializedRef.current = true;
+      setMapError(null);
 
       try {
         // Initial center check: find first user from table with valid coordinates
@@ -586,45 +604,95 @@ export default function UsersMap({
       }
     };
 
+    // Global Google Maps Auth Failure hook (e.g. RefererNotAllowedMapError or ApiNotActivatedMapError)
+    if (typeof window !== "undefined") {
+      (window as any).gm_authFailure = () => {
+        console.error("Google Maps authentication failed! Check API key and domain referrer restrictions.");
+        if (!isCancelled) {
+          setMapError("Google Maps authentication failed. Please verify that this domain is added to authorized HTTP referrers in Google Cloud Console, and that billing and Maps JavaScript API are active.");
+        }
+      };
+    }
+
+    const startInitialization = async () => {
+      if (isCancelled || !mapContainerRef.current) return;
+      if (mapInstanceRef.current || mapInitializedRef.current) return;
+
+      if (!apiKey) {
+        setMapError("Google Maps API key is missing (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).");
+        return;
+      }
+
+      // 1. Wait for window.google?.maps to be available
+      let attempts = 0;
+      while (!window.google?.maps && attempts < 50) {
+        if (isCancelled) return;
+        await new Promise((r) => setTimeout(r, 100));
+        attempts++;
+      }
+
+      if (!window.google?.maps) {
+        if (!isCancelled) {
+          setMapError("Google Maps library failed to load. Please verify your connection or disable ad blockers.");
+        }
+        return;
+      }
+
+      // 2. Load modern 'maps' and 'routes' libraries if importLibrary is present
+      if (typeof window.google.maps.importLibrary === "function") {
+        try {
+          await window.google.maps.importLibrary("maps");
+          await window.google.maps.importLibrary("routes");
+        } catch (e) {
+          console.warn("importLibrary warning:", e);
+        }
+      }
+
+      // 3. Ensure Map constructor is ready
+      attempts = 0;
+      while (!window.google?.maps?.Map && attempts < 50) {
+        if (isCancelled) return;
+        await new Promise((r) => setTimeout(r, 100));
+        attempts++;
+      }
+
+      if (!isCancelled && window.google?.maps?.Map) {
+        initializeGoogleMap();
+      } else if (!isCancelled && !mapInitializedRef.current) {
+        setMapError("Google Maps Map component was not initialized. Please disable ad blockers and refresh.");
+      }
+    };
+
     if (window.google?.maps?.Map) {
       initializeGoogleMap();
       return;
     }
 
-    let pollInterval: NodeJS.Timeout | null = null;
-
     const existingScript = document.getElementById("google-maps-script");
     if (!existingScript) {
       const script = document.createElement("script");
       script.id = "google-maps-script";
-      // Added &loading=async to satisfy Google Maps modern async loading requirement
       script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,routes&loading=async`;
       script.async = true;
       script.defer = true;
       script.onload = () => {
-        if (!isCancelled) initializeGoogleMap();
+        if (!isCancelled) startInitialization();
       };
       script.onerror = () => {
         if (!isCancelled) {
-          setMapError("Failed to load Google Maps SDK. Check your API key.");
+          setMapError("Failed to load Google Maps SDK. Please check your network or disable ad blockers.");
         }
       };
       document.head.appendChild(script);
     } else {
       existingScript.addEventListener("load", () => {
-        if (!isCancelled) initializeGoogleMap();
+        if (!isCancelled) startInitialization();
       });
-      pollInterval = setInterval(() => {
-        if (window.google?.maps?.Map) {
-          if (pollInterval) clearInterval(pollInterval);
-          if (!isCancelled) initializeGoogleMap();
-        }
-      }, 100);
+      startInitialization();
     }
 
     return () => {
       isCancelled = true;
-      if (pollInterval) clearInterval(pollInterval);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
   }, [apiKey]);
@@ -632,7 +700,8 @@ export default function UsersMap({
   // Zoom & frame a state using its geographic bounds, coordinates, or centroid
   const zoomToState = useCallback(
     (stateVal: string) => {
-      if (!stateVal || !mapInstanceRef.current || !window.google?.maps) return false;
+      if (!stateVal || !mapInstanceRef.current || !window.google?.maps)
+        return false;
 
       const cleanVal = stateVal.trim().toUpperCase();
       const stateObj = states.find(
@@ -663,7 +732,12 @@ export default function UsersMap({
         const minLng = Number(b.minLng);
         const maxLng = Number(b.maxLng);
 
-        if (!isNaN(minLat) && !isNaN(maxLat) && !isNaN(minLng) && !isNaN(maxLng)) {
+        if (
+          !isNaN(minLat) &&
+          !isNaN(maxLat) &&
+          !isNaN(minLng) &&
+          !isNaN(maxLng)
+        ) {
           const bounds = new window.google.maps.LatLngBounds(
             { lat: minLat, lng: minLng },
             { lat: maxLat, lng: maxLng },
@@ -798,12 +872,18 @@ export default function UsersMap({
       const key = `cluster_${c.cluster_id}`;
       currentMarkerKeys.add(key);
 
-      const clusterIcon = getClusterSvg(c.point_count_abbreviated || c.point_count);
+      const clusterIcon = getClusterSvg(
+        c.point_count_abbreviated || c.point_count,
+      );
       const existingMarker = markersMapRef.current.get(key);
 
       if (existingMarker) {
         const currentPos = existingMarker.getPosition();
-        if (!currentPos || currentPos.lat() !== lat || currentPos.lng() !== lng) {
+        if (
+          !currentPos ||
+          currentPos.lat() !== lat ||
+          currentPos.lng() !== lng
+        ) {
           existingMarker.setPosition({ lat, lng });
         }
         existingMarker.setIcon(clusterIcon);
@@ -850,7 +930,11 @@ export default function UsersMap({
       if (existingMarker) {
         // Update position in-place if changed
         const currentPos = existingMarker.getPosition();
-        if (!currentPos || currentPos.lat() !== lat || currentPos.lng() !== lng) {
+        if (
+          !currentPos ||
+          currentPos.lat() !== lat ||
+          currentPos.lng() !== lng
+        ) {
           existingMarker.setPosition({ lat, lng });
         }
       } else {
@@ -886,9 +970,12 @@ export default function UsersMap({
 
   // React to external selectedUser (e.g. from table row click)
   useEffect(() => {
-    if (!selectedUser || !mapInstanceRef.current || !window.google?.maps) return;
+    if (!selectedUser || !mapInstanceRef.current || !window.google?.maps)
+      return;
 
-    const coords = resolveCoordinates(selectedUser, true) || [39.8283, -98.5795];
+    const coords = resolveCoordinates(selectedUser, true) || [
+      39.8283, -98.5795,
+    ];
     const [lat, lng] = coords;
     const map = mapInstanceRef.current;
 
@@ -1053,7 +1140,9 @@ export default function UsersMap({
       if (!mapInstanceRef.current || !window.google?.maps) return;
 
       const map = mapInstanceRef.current;
-      const destDisplayName = targetUser ? getDisplayName(targetUser) : "Destination";
+      const destDisplayName = targetUser
+        ? getDisplayName(targetUser)
+        : "Destination";
 
       // 1. Origin: Pulsing Blue GPS Beacon with "YOUR LOCATION" badge
       const originIcon = {
@@ -1240,9 +1329,9 @@ export default function UsersMap({
               }
               mapInstanceRef.current.fitBounds(bounds, 50);
 
-              const distMiles = (
-                (route.distanceMeters || 0) / 1609.34
-              ).toFixed(1);
+              const distMiles = ((route.distanceMeters || 0) / 1609.34).toFixed(
+                1,
+              );
               const totalSec = Math.round(
                 Number(route.durationMillis || 0) / 1000,
               );
@@ -1505,7 +1594,9 @@ export default function UsersMap({
         s.state_name?.toUpperCase() === cleanActive ||
         s.state_id === mapSelectedState,
     );
-    return found ? (found.state_name || found.state_code || "") : mapSelectedState;
+    return found
+      ? found.state_name || found.state_code || ""
+      : mapSelectedState;
   }, [mapSelectedState, states]);
 
   return (
@@ -1527,7 +1618,8 @@ export default function UsersMap({
                   </span>
                   {mapSummary.cluster_count > 0 && (
                     <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-700 border border-gray-200">
-                      {mapSummary.cluster_count} Clusters • {mapSummary.point_count} Points
+                      {mapSummary.cluster_count} Clusters •{" "}
+                      {mapSummary.point_count} Points
                     </span>
                   )}
                 </>
@@ -1628,7 +1720,11 @@ export default function UsersMap({
         {(isFiltering || loadingPins) && (
           <div className="absolute top-3.5 left-1/2 -translate-x-1/2 z-20 bg-white/95 backdrop-blur-md px-4 py-1.5 rounded-full shadow-[0_4px_16px_rgba(0,0,0,0.12)] border border-emerald-100 flex items-center gap-2 text-xs font-semibold text-[#1f3d2a] pointer-events-none animate-in fade-in slide-in-from-top-2 duration-200">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
-            <span>{isFiltering ? "Filtering users & map..." : "Updating live pins..."}</span>
+            <span>
+              {isFiltering
+                ? "Filtering users & map..."
+                : "Updating live pins..."}
+            </span>
           </div>
         )}
 
@@ -1637,7 +1733,8 @@ export default function UsersMap({
             <AlertCircle className="w-8 h-8 text-amber-500" />
             <p className="text-xs font-semibold text-gray-800">{mapError}</p>
             <p className="text-[11px] text-gray-500 max-w-sm">
-              Please verify your NEXT_PUBLIC_GOOGLE_MAPS_API_KEY environment variable.
+              Please verify your NEXT_PUBLIC_GOOGLE_MAPS_API_KEY environment
+              variable.
             </p>
           </div>
         )}
@@ -1796,14 +1893,16 @@ export default function UsersMap({
             <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-gray-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-full bg-emerald-50 text-[#1f3d2a] font-bold text-xs flex items-center justify-center flex-shrink-0 border border-emerald-200">
-                  {activeSelectedCluster.point_count_abbreviated || activeSelectedCluster.point_count}
+                  {activeSelectedCluster.point_count_abbreviated ||
+                    activeSelectedCluster.point_count}
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-gray-900 leading-tight">
                     User Cluster ({activeSelectedCluster.point_count} users)
                   </h4>
                   <p className="text-[10px] text-gray-500">
-                    {activeSelectedCluster.latitude.toFixed(4)}, {activeSelectedCluster.longitude.toFixed(4)}
+                    {activeSelectedCluster.latitude.toFixed(4)},{" "}
+                    {activeSelectedCluster.longitude.toFixed(4)}
                   </p>
                 </div>
               </div>
@@ -1818,7 +1917,8 @@ export default function UsersMap({
             </div>
 
             {/* Users sample list in cluster */}
-            {activeSelectedCluster.users && activeSelectedCluster.users.length > 0 ? (
+            {activeSelectedCluster.users &&
+            activeSelectedCluster.users.length > 0 ? (
               <div className="mt-2.5 space-y-1 max-h-52 overflow-y-auto pr-1">
                 <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
                   Active users at this location:
@@ -1846,7 +1946,9 @@ export default function UsersMap({
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          (u.display_name || u.email || "U").charAt(0).toUpperCase()
+                          (u.display_name || u.email || "U")
+                            .charAt(0)
+                            .toUpperCase()
                         )}
                       </div>
                       <div className="min-w-0">
@@ -1866,19 +1968,23 @@ export default function UsersMap({
               </div>
             ) : (
               <p className="text-xs text-gray-500 mt-2">
-                {activeSelectedCluster.point_count} active users clustered at this coordinate.
+                {activeSelectedCluster.point_count} active users clustered at
+                this coordinate.
               </p>
             )}
 
             {/* Expansion button if higher zoom is available */}
             {mapInstanceRef.current &&
-              activeSelectedCluster.expansion_zoom > (mapInstanceRef.current.getZoom() || 4) && (
+              activeSelectedCluster.expansion_zoom >
+                (mapInstanceRef.current.getZoom() || 4) && (
                 <div className="mt-3 pt-2 border-t border-gray-100">
                   <button
                     type="button"
                     onClick={() => {
                       if (mapInstanceRef.current) {
-                        mapInstanceRef.current.setZoom(activeSelectedCluster.expansion_zoom);
+                        mapInstanceRef.current.setZoom(
+                          activeSelectedCluster.expansion_zoom,
+                        );
                         mapInstanceRef.current.panTo({
                           lat: activeSelectedCluster.latitude,
                           lng: activeSelectedCluster.longitude,
@@ -1888,7 +1994,10 @@ export default function UsersMap({
                     }}
                     className="w-full py-1.5 px-3 bg-[#1f3d2a] hover:bg-[#295034] text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <span>Zoom In Closer (Level {activeSelectedCluster.expansion_zoom})</span>
+                    <span>
+                      Zoom In Closer (Level{" "}
+                      {activeSelectedCluster.expansion_zoom})
+                    </span>
                   </button>
                 </div>
               )}
@@ -1909,10 +2018,14 @@ export default function UsersMap({
                   Location Permission Required
                 </h4>
                 <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
-                  In-app navigation requires access to your current GPS location as the starting point. Without permission, route navigation is not possible.
+                  In-app navigation requires access to your current GPS location
+                  as the starting point. Without permission, route navigation is
+                  not possible.
                 </p>
                 <div className="mt-2 text-[10.5px] text-gray-600 bg-amber-50/80 p-2 rounded-md border border-amber-100">
-                  <strong>How to enable:</strong> Click the permissions/lock icon in your browser URL bar, set <em>Location</em> to <em>Allow</em>, and click <strong>Try Again</strong>.
+                  <strong>How to enable:</strong> Click the permissions/lock
+                  icon in your browser URL bar, set <em>Location</em> to{" "}
+                  <em>Allow</em>, and click <strong>Try Again</strong>.
                 </div>
               </div>
               <button
