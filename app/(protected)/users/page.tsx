@@ -14,6 +14,7 @@ import {
   Loader2,
   MapPin,
   Navigation,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
@@ -421,7 +422,7 @@ export default function UsersPage() {
           {/* State */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] font-medium text-[#2c2c2c]">
-              State
+              State (from user's profile)
             </label>
             <select
               value={filterStateName}
@@ -530,9 +531,17 @@ export default function UsersPage() {
             </button>
           </div>
         </div>
+
+        {/* Filter Map Sync Note */}
+        <div className="mt-3.5 pt-3 border-t border-[#f0f0eb] flex items-center gap-2 text-[12.5px] text-red-400">
+          <Info className="w-4 h-4 text-red-400 shrink-0" />
+          <p>
+            The map displays users matching the applied search and filters.
+            Clear the search or reset filters to view all users.
+          </p>
+        </div>
       </section>
 
-      {/* ===================== LIVE ONLINE USERS INTERACTIVE MAP ===================== */}
       <div ref={usersMapRef} className="w-full">
         <UsersMap
           fallbackUsers={users}
