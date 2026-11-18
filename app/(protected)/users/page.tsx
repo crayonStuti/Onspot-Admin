@@ -652,10 +652,16 @@ export default function UsersPage() {
                       Email
                     </th>
                     <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
+                      Role
+                    </th>
+                    <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
                       Membership
                     </th>
                     <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
                       Joined
+                    </th>
+                    <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
+                      Account Status
                     </th>
                     <th className="py-3 px-3 font-semibold text-[#111111] text-[13px]">
                       Status
@@ -713,6 +719,7 @@ export default function UsersPage() {
                     users.map((user, idx) => {
                       const isSelected = selectedUserIds.includes(user.id);
                       const fullName = getUserDisplayName(user);
+                      const role = user.role;
                       const rawMembership =
                         user.profile?.current_tier ||
                         user.profile?.membership?.name ||
@@ -792,6 +799,10 @@ export default function UsersPage() {
                             {user.email}
                           </td>
 
+                          <td className="py-3.5 px-3 align-middle text-[#7D848D] truncate max-w-[160px]">
+                            {user.role}
+                          </td>
+
                           {/* Membership Pill */}
                           <td className="py-3.5 px-3 align-middle">
                             <span
@@ -829,6 +840,58 @@ export default function UsersPage() {
                                   user.status.slice(1)
                                 : "Active"}
                             </span>
+                          </td>
+
+                          <td className="py-3.5 px-3 align-middle">
+                            {user.role === "admin" ? (
+                              <span className="text-[13px] text-gray-400">
+                                N/A
+                              </span>
+                            ) : (
+                              (() => {
+                                const status =
+                                  user.presence_status?.toLowerCase() || "n/a";
+                                console.log(
+                                  "Presence Status:",
+                                  user.presence_status,
+                                  user,
+                                );
+
+                                const statusConfig = {
+                                  active: {
+                                    label: "Online",
+                                    text: "text-[#34A853]",
+                                    dot: "bg-[#2f9e44]",
+                                  },
+                                  idle: {
+                                    label: "Idle",
+                                    text: "text-[#F59E0B]",
+                                    dot: "bg-[#F59E0B]",
+                                  },
+                                  offline: {
+                                    label: "Offline",
+                                    text: "text-[#e03131]",
+                                    dot: "bg-[#e03131]",
+                                  },
+                                };
+
+                                const config =
+                                  statusConfig[
+                                    status as keyof typeof statusConfig
+                                  ] || statusConfig.offline;
+
+                                return (
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 text-[13px] ${config.text}`}
+                                  >
+                                    <span
+                                      className={`w-2 h-2 rounded-full ${config.dot}`}
+                                    />
+                                    {config.label}
+                                  </span>
+                                );
+                              })()
+                            )}
                           </td>
 
                           {/* Actions: Eye button + 3-dots with dropdown matching screenshot */}
