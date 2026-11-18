@@ -35,18 +35,21 @@ import {
   ShieldAlert,
   LocateFixed,
   CornerUpRight,
+  FileBadge,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   UserItem,
   API_URL,
   getLiveMapUsers,
+  getUserLicenses,
   LiveMapUsersParams,
   LiveMapCluster,
   LiveMapPoint,
   LiveMapSummary,
 } from "@/lib/api";
 import { StateItem } from "./AddUserModal";
+import { UserLicensesModal } from "./UserLicensesModal";
 
 declare global {
   interface Window {
@@ -292,6 +295,7 @@ export interface LiveMapUser {
   membership_tier?: string;
   profile_picture?: string | null;
   license_status?: string;
+  licenses?: any[];
   [key: string]: any;
 }
 
@@ -355,6 +359,32 @@ export default function UsersMap({
   );
   const [activeSelectedCluster, setActiveSelectedCluster] =
     useState<LiveMapCluster | null>(null);
+  const [viewingLicensesUser, setViewingLicensesUser] = useState<any | null>(
+    null,
+  );
+
+  // Auto-fetch licenses if activeSelectedUser is selected without licenses array (e.g. from table)
+  useEffect(() => {
+    if (!activeSelectedUser?.id) return;
+    if (activeSelectedUser.licenses !== undefined) return;
+
+    let isCancelled = false;
+    getUserLicenses(activeSelectedUser.id)
+      .then((lics) => {
+        if (!isCancelled && Array.isArray(lics)) {
+          setActiveSelectedUser((prev: any) =>
+            prev && prev.id === activeSelectedUser.id
+              ? { ...prev, licenses: lics }
+              : prev,
+          );
+        }
+      })
+      .catch((err) => console.warn("Failed to fetch user licenses:", err));
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeSelectedUser?.id, activeSelectedUser?.licenses]);
 
   // In-App Route Polylines & Endpoint Markers Ref
   const routePolylinesRef = useRef<any[]>([]);
@@ -607,9 +637,13 @@ export default function UsersMap({
     // Global Google Maps Auth Failure hook (e.g. RefererNotAllowedMapError or ApiNotActivatedMapError)
     if (typeof window !== "undefined") {
       (window as any).gm_authFailure = () => {
-        console.error("Google Maps authentication failed! Check API key and domain referrer restrictions.");
+        console.error(
+          "Google Maps authentication failed! Check API key and domain referrer restrictions.",
+        );
         if (!isCancelled) {
-          setMapError("Google Maps authentication failed. Please verify that this domain is added to authorized HTTP referrers in Google Cloud Console, and that billing and Maps JavaScript API are active.");
+          setMapError(
+            "Google Maps authentication failed. Please verify that this domain is added to authorized HTTP referrers in Google Cloud Console, and that billing and Maps JavaScript API are active.",
+          );
         }
       };
     }
@@ -619,7 +653,9 @@ export default function UsersMap({
       if (mapInstanceRef.current || mapInitializedRef.current) return;
 
       if (!apiKey) {
-        setMapError("Google Maps API key is missing (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).");
+        setMapError(
+          "Google Maps API key is missing (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).",
+        );
         return;
       }
 
@@ -633,7 +669,9 @@ export default function UsersMap({
 
       if (!window.google?.maps) {
         if (!isCancelled) {
-          setMapError("Google Maps library failed to load. Please verify your connection or disable ad blockers.");
+          setMapError(
+            "Google Maps library failed to load. Please verify your connection or disable ad blockers.",
+          );
         }
         return;
       }
@@ -659,7 +697,9 @@ export default function UsersMap({
       if (!isCancelled && window.google?.maps?.Map) {
         initializeGoogleMap();
       } else if (!isCancelled && !mapInitializedRef.current) {
-        setMapError("Google Maps Map component was not initialized. Please disable ad blockers and refresh.");
+        setMapError(
+          "Google Maps Map component was not initialized. Please disable ad blockers and refresh.",
+        );
       }
     };
 
@@ -680,7 +720,9 @@ export default function UsersMap({
       };
       script.onerror = () => {
         if (!isCancelled) {
-          setMapError("Failed to load Google Maps SDK. Please check your network or disable ad blockers.");
+          setMapError(
+            "Failed to load Google Maps SDK. Please check your network or disable ad blockers.",
+          );
         }
       };
       document.head.appendChild(script);
@@ -1801,6 +1843,162 @@ export default function UsersMap({
               </span>
             </div>
 
+            {/* License Details Section */}
+            {(() => {
+              const licensesList: any[] =
+                activeSelectedUser.licenses ||
+                activeSelectedUser.user_licenses ||
+                activeSelectedUser.profile?.licenses ||
+                [];
+
+              return (
+                <div className="mt-2.5 p-2 bg-gray-50/90 rounded-lg border border-gray-200/80">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-800">
+                      <FileBadge className="w-3.5 h-3.5 text-[#1f3d2a]" />
+                      <span>
+                        Licenses{" "}
+                        {licensesList.length > 0
+                          ? `(${licensesList.length})`
+                          : ""}
+                      </span>
+                    </div>
+                  </div>
+
+                  {licensesList.length > 0 ? (
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto pr-0.5">
+                      {licensesList.map((lic: any, idx: number) => {
+                        const rawType = String(lic.license_type || "General");
+                        const isHunting = rawType
+                          .toLowerCase()
+                          .includes("hunt");
+                        const isFishing = rawType
+                          .toLowerCase()
+                          .includes("fish");
+                        const badgeColor = isHunting
+                          ? "bg-amber-50 text-amber-900 border-amber-200"
+                          : isFishing
+                            ? "bg-blue-50 text-blue-900 border-blue-200"
+                            : "bg-emerald-50 text-emerald-900 border-emerald-200";
+
+                        const rawExpiry =
+                          lic.valid_to || lic.expires_at || lic.expiry_date;
+                        const isExpired = Boolean(
+                          rawExpiry &&
+                          new Date(rawExpiry).getTime() < Date.now(),
+                        );
+
+                        return (
+                          <div
+                            key={lic.id || idx}
+                            className={`p-2 rounded-md text-left space-y-1 shadow-2xs transition-colors border ${
+                              isExpired
+                                ? "bg-rose-50/40 border-rose-200/80"
+                                : "bg-white border-gray-200/80"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span
+                                  className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-bold uppercase tracking-wider border ${badgeColor}`}
+                                >
+                                  {rawType}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-bold border ${
+                                    isExpired
+                                      ? "bg-rose-100 text-rose-700 border-rose-200"
+                                      : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  }`}
+                                >
+                                  {isExpired ? "Expired" : "Active"}
+                                </span>
+                              </div>
+                              <span className="font-mono font-bold text-[11px] text-gray-800">
+                                #{lic.license_number || "—"}
+                              </span>
+                            </div>
+
+                            {/* Organisation / Issuer */}
+                            {(lic.issued_by?.organisation ||
+                              lic.organisation) && (
+                              <div className="text-[10px] text-gray-600 truncate flex items-center gap-1 pt-0.5">
+                                <span className="text-gray-400 shrink-0">
+                                  Issuer:
+                                </span>
+                                {lic.issued_by?.agency_website ? (
+                                  <a
+                                    href={lic.issued_by.agency_website}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#1f3d2a] hover:underline truncate inline-flex items-center gap-0.5 font-medium"
+                                    title={lic.issued_by.organisation}
+                                  >
+                                    <span className="truncate">
+                                      {lic.issued_by.organisation}
+                                    </span>
+                                    <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                                  </a>
+                                ) : (
+                                  <span
+                                    className="truncate"
+                                    title={
+                                      lic.issued_by?.organisation ||
+                                      lic.organisation
+                                    }
+                                  >
+                                    {lic.issued_by?.organisation ||
+                                      lic.organisation}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Validity / Expiry */}
+                            {(rawExpiry || lic.valid_from) && (
+                              <div
+                                className={`text-[10px] flex items-center justify-between pt-1 border-t ${
+                                  isExpired
+                                    ? "border-rose-100 text-rose-700"
+                                    : "border-gray-100 text-gray-500"
+                                }`}
+                              >
+                                <span>
+                                  {isExpired ? "Expired on:" : "Valid to:"}
+                                </span>
+                                <span
+                                  className={`font-semibold ${
+                                    isExpired
+                                      ? "text-rose-700 font-bold"
+                                      : "text-gray-800"
+                                  }`}
+                                >
+                                  {rawExpiry
+                                    ? `${new Date(rawExpiry).toLocaleDateString(
+                                        "en-US",
+                                        {
+                                          year: "numeric",
+                                          month: "short",
+                                          day: "numeric",
+                                        },
+                                      )}`
+                                    : "No expiry"}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-gray-400 italic py-0.5">
+                      No active licenses on record
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Coordinates Display */}
             <div className="mt-2.5 p-2 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-between text-[11px] text-gray-700 font-mono">
               <div>
@@ -2243,6 +2441,13 @@ export default function UsersMap({
           </div>
         )}
       </div>
+
+      {/* User Licenses Modal (View Uploaded License Cards & Photos) */}
+      <UserLicensesModal
+        isOpen={!!viewingLicensesUser}
+        user={viewingLicensesUser}
+        onClose={() => setViewingLicensesUser(null)}
+      />
     </div>
   );
 }
