@@ -555,11 +555,11 @@ export default function UserDetailPage() {
       </div>
 
       {/* ===================== TAB NAVIGATION ===================== */}
-      <div className="flex items-center gap-2 border-b border-gray-200">
+      <div className="flex items-center gap-2 border-b border-gray-200 overflow-x-auto whitespace-nowrap scrollbar-hide">
         <button
           type="button"
           onClick={() => setActiveTab("overview")}
-          className={`pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+          className={`shrink-0 pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
             activeTab === "overview"
               ? "border-[#2d4a23] text-[#2d4a23]"
               : "border-transparent text-gray-500 hover:text-gray-800"
@@ -572,7 +572,7 @@ export default function UserDetailPage() {
         <button
           type="button"
           onClick={() => setActiveTab("licenses")}
-          className={`pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+          className={`shrink-0 pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
             activeTab === "licenses"
               ? "border-[#2d4a23] text-[#2d4a23]"
               : "border-transparent text-gray-500 hover:text-gray-800"
@@ -585,7 +585,7 @@ export default function UserDetailPage() {
         <button
           type="button"
           onClick={() => setActiveTab("pins")}
-          className={`pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+          className={`shrink-0 pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
             activeTab === "pins"
               ? "border-[#2d4a23] text-[#2d4a23]"
               : "border-transparent text-gray-500 hover:text-gray-800"
@@ -598,7 +598,7 @@ export default function UserDetailPage() {
         <button
           type="button"
           onClick={() => setActiveTab("bookmarks")}
-          className={`pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+          className={`shrink-0 pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
             activeTab === "bookmarks"
               ? "border-[#2d4a23] text-[#2d4a23]"
               : "border-transparent text-gray-500 hover:text-gray-800"
