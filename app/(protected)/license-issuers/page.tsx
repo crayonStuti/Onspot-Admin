@@ -94,7 +94,7 @@ export default function LicenseIssuersPage() {
         searchQuery,
         filterStateId,
       );
-      console.log(res);
+      //console.log(res);
 
       if (res && res.data) {
         if (Array.isArray(res.data)) {

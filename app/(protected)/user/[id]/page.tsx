@@ -1214,11 +1214,11 @@ export default function UserDetailPage() {
                   className="p-3.5 bg-gray-50/70 rounded-xl border border-gray-100 space-y-1.5"
                 >
                   <span className="font-semibold text-xs text-gray-900 block truncate">
-                    {bm.title || bm.name || `Saved Resource #${i + 1}`}
+                    {bm.resource.title || `Saved Resource #${i + 1}`}
                   </span>
-                  {bm.category && (
+                  {bm.resource.category && (
                     <span className="inline-block text-[10px] px-2 py-0.5 rounded bg-gray-200/70 text-gray-700 font-medium">
-                      {bm.category}
+                      {bm.resource.category}
                     </span>
                   )}
                   {bm.created_at && (

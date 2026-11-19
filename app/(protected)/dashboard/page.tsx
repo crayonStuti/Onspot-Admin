@@ -867,7 +867,7 @@ export default function DashboardPage() {
     try {
       const res = await getDashboardOverview(period, stateLimit);
 
-      console.log(res);
+      //console.log(res);
       if (res && res.data) {
         setData(res.data);
       } else {

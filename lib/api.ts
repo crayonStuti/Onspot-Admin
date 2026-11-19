@@ -817,7 +817,7 @@ export async function getLiveMapUsers(
     query.append("joined_at", params.joined_at);
   }
 
-  console.log(`/admin/users/live-map?${query.toString()}`);
+  // console.log(`/admin/users/live-map?${query.toString()}`);
 
   return await fetchApi(`/admin/users/live-map?${query.toString()}`);
 }
@@ -2324,7 +2324,7 @@ export async function getAdminReports<T = any>(
   if (params.state_id && params.state_id !== "all" && params.state_id !== "")
     query.append("state_id", params.state_id);
 
-  console.log("/admin/reports?" + query.toString());
+  // console.log("/admin/reports?" + query.toString());
 
   return await fetchApi<AdminReportResponse<T>>(
     `/admin/reports?${query.toString()}`,

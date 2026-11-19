@@ -15,6 +15,8 @@ import {
   MapPin,
   Navigation,
   Info,
+  SquareArrowUpRight,
+  ExternalLinkIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import Pagination from "@/components/admin/Pagination";
@@ -851,11 +853,6 @@ export default function UsersPage() {
                               (() => {
                                 const status =
                                   user.presence_status?.toLowerCase() || "n/a";
-                                console.log(
-                                  "Presence Status:",
-                                  user.presence_status,
-                                  user,
-                                );
 
                                 const statusConfig = {
                                   active: {
@@ -918,18 +915,7 @@ export default function UsersPage() {
                                 title="View Profile"
                                 aria-label="View Profile"
                               >
-                                <svg
-                                  className="w-4 h-4"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="1.8"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
-                                  <circle cx="12" cy="12" r="3" />
-                                </svg>
+                                <ExternalLinkIcon className="w-4 h-4 text-[#2d4a23]" />
                               </button>
 
                               {/* More Actions 3-dots Menu using Reusable Portal TableActionMenu */}
